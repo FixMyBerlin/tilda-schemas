@@ -1,4 +1,31 @@
-# Publishing TILDA Schemas (DOI / Zenodo)
+# Publishing TILDA Schemas
+
+Two independent release tracks:
+
+| Track | What | How |
+| --- | --- | --- |
+| **npm** | `@tilda-geo/bicycle-infrastructure` | Changesets, **manual** local publish (see root README **Release**) |
+| **Zenodo / DOI** | Whole-repo archive of schemas + source | GitHub Release → Zenodo (this doc) |
+
+You can publish the TS package without cutting a Zenodo release, and vice versa.
+
+---
+
+## npm (`@tilda-geo/bicycle-infrastructure`)
+
+ESM-only package under `packages/bicycle-infrastructure`. Packaging and release flow match
+[`osm-surface-smoothness-tagging`](https://github.com/osm-editor-kit/osm-surface-smoothness-tagging)
+(manual changesets; no auto-publish CI like `maplibre-editor-layer-index`).
+
+Prerequisites: npm org [`tilda-geo`](https://www.npmjs.com/org/tilda-geo) exists; you are
+logged in with publish rights (`npm whoami`).
+
+See root README **Release** for the step-by-step. First publish uses the current
+`package.json` version after `bun run release` / `changeset publish`.
+
+---
+
+## Zenodo / DOI
 
 We publish **one concept DOI for the whole repository** via Zenodo’s GitHub integration
 ([FixMyBerlin/private-issues#3197](https://github.com/FixMyBerlin/private-issues/issues/3197),

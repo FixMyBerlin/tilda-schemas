@@ -3,12 +3,18 @@
   "private": true,
   "workspaces": ["packages/*", "website"],
   "scripts": {
-    "check": "bun run --filter '@tilda-geo/bicycle-infrastructure' test && bun run --filter '@tilda-geo/bicycle-infrastructure' typecheck",
+    "build": "bun run --filter '@tilda-geo/bicycle-infrastructure' build",
+    "check": "bun run build && bun run --filter '@tilda-geo/bicycle-infrastructure' test && bun run --filter '@tilda-geo/bicycle-infrastructure' typecheck && bun run check-exports",
+    "check-exports": "bun run --filter '@tilda-geo/bicycle-infrastructure' check-exports",
     "test": "bun run --filter '@tilda-geo/bicycle-infrastructure' test",
+    "typecheck": "bun run --filter '@tilda-geo/bicycle-infrastructure' typecheck",
     "website:dev": "bun run --filter website dev",
-    "website:build": "bun run --filter website build"
+    "website:build": "bun run --filter website build",
+    "version-packages": "changeset version",
+    "release": "bun run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.1",
     "@types/bun": "latest",
     "typescript": "^5.6.0"
   }

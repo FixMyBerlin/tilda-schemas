@@ -2,11 +2,13 @@
 
 [npmx](https://npmx.dev/package/@tilda-geo/bicycle-infrastructure) · [npm](https://www.npmjs.com/package/@tilda-geo/bicycle-infrastructure) · [GitHub](https://github.com/FixMyBerlin/tilda-schemas/tree/main/packages/bicycle-infrastructure)
 
-> **Role:** the **public TypeScript library**. Given plain OSM tags (e.g. from Overpass), it produces the same bicycle-infrastructure features TILDA’s LUA pipeline would — so QA tools and apps can classify live data without running osm2pgsql.
+> **Role:** the **public TypeScript library** (ESM-only). Given plain OSM tags (e.g. from Overpass), it produces the same bicycle-infrastructure features TILDA’s LUA pipeline would — so QA tools and apps can classify live data without running osm2pgsql.
 
 Part of the [tilda-schemas](https://github.com/FixMyBerlin/tilda-schemas) monorepo. Schemas (vocabularies + fixtures) live under [`schemas/`](../../schemas/); this package **implements** them.
 
-*(npm publish is planned; until then consume via the monorepo workspace or a git dependency.)*
+```bash
+npm install @tilda-geo/bicycle-infrastructure
+```
 
 ---
 
@@ -65,13 +67,17 @@ From the monorepo root:
 
 ```bash
 bun install
+bun run build
 bun run --filter '@tilda-geo/bicycle-infrastructure' test
+bun run check-exports
 ```
 
 - `test/spec.test.ts` — conformance against `schemas/**/fixtures` (via `test/load-spec.ts`)
 - `test/categories.smoke.test.ts` — cases ported from LUA `__tests__`
 
 Berlin corpus check (category agreement ~100%): see the **internal** [reconciliation](../bicycle-infrastructure-reconciliation/) package.
+
+Releases use [changesets](https://github.com/changesets/changesets) — see the root README **Release** section (manual publish, same as the smoothness packages).
 
 ---
 

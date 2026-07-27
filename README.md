@@ -7,17 +7,40 @@ bicycle-infrastructure data (roads, parking, and CQI to follow).
 | --- | --- |
 | [`schemas/bicycle-infrastructure-category`](schemas/bicycle-infrastructure-category/) | Published category vocabulary + fixtures |
 | [`schemas/bicycle-infrastructure-attributes`](schemas/bicycle-infrastructure-attributes/) | Draft attributes (not yet published) |
-| [`packages/bicycle-infrastructure`](packages/bicycle-infrastructure/) | `@tilda-geo/bicycle-infrastructure` — TS processor |
-| [`packages/bicycle-infrastructure-reconciliation`](packages/bicycle-infrastructure-reconciliation/) | LUA ↔ TS / schema cross-check |
+| [`packages/bicycle-infrastructure`](packages/bicycle-infrastructure/) | [`@tilda-geo/bicycle-infrastructure`](https://www.npmjs.com/package/@tilda-geo/bicycle-infrastructure) — TS processor (ESM-only) |
+| [`packages/bicycle-infrastructure-reconciliation`](packages/bicycle-infrastructure-reconciliation/) | LUA ↔ TS / schema cross-check (**private**, not on npm) |
 | [`website`](website/) | Docs site (Astro + Keystatic) → GitHub Pages |
 
 ## Quick start
 
 ```bash
 bun install
-bun run check          # typecheck schema loader + library tests
+bun run check          # build + typecheck + library tests + export check
 bun run website:dev    # docs site with Keystatic (local)
 ```
+
+## Release (npm)
+
+Same [changesets](https://github.com/changesets/changesets) flow as
+[`osm-surface-smoothness-tagging`](https://github.com/osm-editor-kit/osm-surface-smoothness-tagging),
+run **manually** (no auto-publish CI):
+
+1. After meaningful library changes, create a changeset and commit it with your PR:
+   ```bash
+   bunx changeset
+   ```
+2. On `main`, when you want to publish:
+   ```bash
+   bun run version-packages   # consumes .changeset/*.md, bumps version + CHANGELOG
+   git add -A && git commit -m "chore: release"
+   bun run release            # build + changeset publish
+   git push && git push --tags
+   ```
+
+Publishing is ESM-only. `publishConfig.provenance` is set for npm trusted publishing /
+OIDC when you add a release workflow later.
+
+Schema DOI / Zenodo releases are separate — see [`docs/publishing.md`](docs/publishing.md).
 
 ## Citation
 

@@ -1,18 +1,56 @@
 {
   "name": "@tilda-geo/bicycle-infrastructure",
   "version": "0.1.2",
+  "description": "TypeScript port of TILDA's LUA bicycle-infrastructure processing (category + surface/protection/oneway derivations). Runs on plain OSM tag objects (e.g. live Overpass data).",
+  "keywords": [
+    "bicycle",
+    "bicycle-infrastructure",
+    "openstreetmap",
+    "osm",
+    "tilda",
+    "cycling"
+  ],
+  "homepage": "https://github.com/FixMyBerlin/tilda-schemas/tree/main/packages/bicycle-infrastructure#readme",
+  "bugs": {
+    "url": "https://github.com/FixMyBerlin/tilda-schemas/issues"
+  },
+  "license": "AGPL-3.0-or-later",
+  "author": "Tobias Jordans",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FixMyBerlin/tilda-schemas.git",
+    "directory": "packages/bicycle-infrastructure"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "description": "TypeScript port of Tilda's LUA bicycle-infrastructure processing (category + surface/protection/oneway derivations). Runs on plain OSM tag objects (e.g. live Overpass data).",
-  "main": "src/index.ts",
+  "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
+    "build": "tsup",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check-exports": "attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "@types/bun": "latest"
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/bun": "latest",
+    "tsup": "^8.5.1",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

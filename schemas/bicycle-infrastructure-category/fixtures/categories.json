@@ -1,0 +1,169 @@
+[
+  {
+    "name": "pedestrian area with bicycle=yes",
+    "input": { "highway": "pedestrian", "bicycle": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "pedestrianAreaBicycleYes" }
+  },
+  {
+    "name": "bicycle road via traffic_sign DE:244",
+    "input": { "highway": "residential", "traffic_sign": "DE:244" },
+    "select": { "side": "self" },
+    "expect": { "category": "bicycleRoad" }
+  },
+  {
+    "name": "bicycle road with Kfz frei (vehicleDestination) via 1020-30",
+    "input": { "highway": "residential", "bicycle_road": "yes", "traffic_sign": "DE:244,1020-30" },
+    "select": { "side": "self" },
+    "expect": { "category": "bicycleRoad_vehicleDestination" }
+  },
+  {
+    "name": "bicycle road with motor_vehicle=destination",
+    "input": { "highway": "residential", "bicycle_road": "yes", "motor_vehicle": "destination" },
+    "select": { "side": "self" },
+    "expect": { "category": "bicycleRoad_vehicleDestination" }
+  },
+  {
+    "name": "shared foot+cycleway (DE:240) not a sidepath → adjoiningOrIsolated",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:240" },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewayShared_adjoiningOrIsolated" }
+  },
+  {
+    "name": "shared foot+cycleway on service road → isolated",
+    "osm": "shared via designated+segregated=no on highway=service",
+    "input": {
+      "highway": "service", "service": "emergency_access", "bicycle": "designated",
+      "foot": "designated", "segregated": "no", "motor_vehicle": "no"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewayShared_isolated" }
+  },
+  {
+    "name": "segregated foot+cycleway (DE:241) not a sidepath → adjoiningOrIsolated",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:241" },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoiningOrIsolated" }
+  },
+  {
+    "name": "segregated foot+cycleway with is_sidepath=yes → adjoining",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:241", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoining" }
+  },
+  {
+    "name": "footway bicycle=yes (Gehweg Fahrrad frei) not a sidepath → adjoiningOrIsolated",
+    "input": { "highway": "footway", "bicycle": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "footwayBicycleYes_adjoiningOrIsolated" }
+  },
+  {
+    "name": "footway bicycle=yes with is_sidepath=yes → adjoining",
+    "input": { "highway": "footway", "bicycle": "yes", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "footwayBicycleYes_adjoining" }
+  },
+  {
+    "name": "separated cycleway (DE:237) not a sidepath → adjoiningOrIsolated",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoiningOrIsolated", "oneway": "assumed_no" }
+  },
+  {
+    "name": "separated cycleway with is_sidepath=yes → adjoining",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "separated cycleway with is_sidepath=no → isolated",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "is_sidepath": "no" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_isolated" }
+  },
+  {
+    "name": "cycleway=track on highway=cycleway → separated cycleway",
+    "input": { "highway": "cycleway", "cycleway": "track" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoiningOrIsolated" }
+  },
+  {
+    "name": "crossing (cycleway=crossing)",
+    "input": { "highway": "cycleway", "cycleway": "crossing" },
+    "select": { "side": "self" },
+    "expect": { "category": "crossing" }
+  },
+  {
+    "name": "short crossing (_length<=100) stays a crossing",
+    "input": { "highway": "cycleway", "cycleway": "crossing", "_length": "50" },
+    "select": { "side": "self" },
+    "expect": { "category": "crossing" }
+  },
+  {
+    "name": "long crossing (_length>100) is demoted out of crossing → needsClarification",
+    "osm": "the >100m length guard requires the caller to supply _length (geometry-derived)",
+    "input": { "highway": "cycleway", "cycleway": "crossing", "_length": "150" },
+    "select": { "side": "self" },
+    "expect": { "category": "needsClarification" }
+  },
+  {
+    "name": "cycleway link (routing connector)",
+    "input": { "highway": "cycleway", "cycleway": "link" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayLink" }
+  },
+  {
+    "name": "advisory lane (Schutzstreifen) on the right",
+    "input": { "highway": "secondary", "cycleway:right": "lane", "cycleway:right:lane": "advisory" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "cyclewayOnHighway_advisory", "oneway": "implicit_yes" }
+  },
+  {
+    "name": "exclusive lane (Radfahrstreifen) on the right",
+    "input": { "highway": "secondary", "cycleway:right": "lane", "cycleway:right:lane": "exclusive" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "cyclewayOnHighway_exclusive" }
+  },
+  {
+    "name": "unspecified lane → advisoryOrExclusive",
+    "input": { "highway": "secondary", "cycleway:right": "lane" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "cyclewayOnHighway_advisoryOrExclusive" }
+  },
+  {
+    "name": "shared motor vehicle lane (shared_lane)",
+    "input": { "highway": "residential", "cycleway:right": "shared_lane" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "sharedMotorVehicleLane", "oneway": "assumed_no" }
+  },
+  {
+    "name": "cycleway between motor vehicle lanes (Radweg in Mittellage)",
+    "input": { "highway": "secondary", "cycleway:lanes": "|lane|" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayBetweenLanes" }
+  },
+  {
+    "name": "protected bike lane (separation:left=bollard on a sidepath cycleway)",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "bollard" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "shared bus lane, bus with bike (cycleway=share_busway)",
+    "input": { "highway": "residential", "cycleway:right": "share_busway" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "sharedBusLaneBusWithBike" }
+  },
+  {
+    "name": "shared bus lane, bike with bus (lane=share_busway)",
+    "input": { "highway": "residential", "cycleway:right:lane": "share_busway" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "sharedBusLaneBikeWithBus" }
+  },
+  {
+    "name": "bare highway=cycleway → needsClarification",
+    "input": { "highway": "cycleway" },
+    "select": { "side": "self" },
+    "expect": { "category": "needsClarification" }
+  }
+]

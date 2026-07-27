@@ -1,0 +1,50 @@
+[
+  {
+    "name": "surface=asphalt kept as-is",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "asphalt" },
+    "select": { "side": "self" },
+    "expect": { "surface": "asphalt", "surface_source": "tag", "surface_confidence": "high" }
+  },
+  {
+    "name": "surface=cobblestone normalized to large_sett",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "cobblestone" },
+    "select": { "side": "self" },
+    "expect": { "surface": "large_sett" }
+  },
+  {
+    "name": "surface=earth normalized to ground",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "earth" },
+    "select": { "side": "self" },
+    "expect": { "surface": "ground" }
+  },
+  {
+    "name": "surface=sett with small sett:length → small_sett",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "sett", "sett:length": "0.10" },
+    "select": { "side": "self" },
+    "expect": { "surface": "small_sett" }
+  },
+  {
+    "name": "surface=ice is ignored (silently nulled)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "ice" },
+    "select": { "side": "self" },
+    "expect": { "surface": null }
+  },
+  {
+    "name": "unknown surface value → null (disallowed)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "totally_unknown" },
+    "select": { "side": "self" },
+    "expect": { "surface": null }
+  },
+  {
+    "name": "advisory lane copies surface from parent highway",
+    "input": { "highway": "secondary", "surface": "asphalt", "cycleway:right": "lane", "cycleway:right:lane": "advisory" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "surface": "asphalt", "surface_source": "parent_highway_tag" }
+  },
+  {
+    "name": "separated cycleway does NOT copy surface from parent (copySurfaceSmoothnessFromParent=false)",
+    "input": { "highway": "secondary", "surface": "asphalt", "cycleway:right": "track", "cycleway:right:traffic_sign": "DE:237" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "surface": null }
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fixmyberlin.github.io/tilda-schemas/schemas/bicycle-infrastructure-category/category.schema.json",
+  "title": "TILDA Bicycle Infrastructure Category",
+  "description": "Controlled vocabulary for the bicycle-infrastructure category (Radinfrastrukturkategorie) of one processed bikelane feature. Ported from tilda-geo processing/topics/roads_bikelanes. Part of the tilda-schemas monorepo.",
+  "type": "object",
+  "properties": {
+    "category": {
+      "description": "Bicycle infrastructure category. `*_adjoining|_isolated|_adjoiningOrIsolated` are sidepath subcategories.",
+      "type": "string",
+      "enum": [
+        "pedestrianAreaBicycleYes",
+        "bicycleRoad",
+        "bicycleRoad_vehicleDestination",
+        "footAndCyclewayShared_adjoining",
+        "footAndCyclewayShared_isolated",
+        "footAndCyclewayShared_adjoiningOrIsolated",
+        "footAndCyclewaySegregated_adjoining",
+        "footAndCyclewaySegregated_isolated",
+        "footAndCyclewaySegregated_adjoiningOrIsolated",
+        "footwayBicycleYes_adjoining",
+        "footwayBicycleYes_isolated",
+        "footwayBicycleYes_adjoiningOrIsolated",
+        "cycleway_adjoining",
+        "cycleway_isolated",
+        "cycleway_adjoiningOrIsolated",
+        "crossing",
+        "cyclewayLink",
+        "cyclewayOnHighway_advisory",
+        "cyclewayOnHighway_exclusive",
+        "cyclewayOnHighway_advisoryOrExclusive",
+        "sharedMotorVehicleLane",
+        "cyclewayOnHighwayBetweenLanes",
+        "cyclewayOnHighwayProtected",
+        "sharedBusLaneBusWithBike",
+        "sharedBusLaneBikeWithBus",
+        "needsClarification",
+        "data_no",
+        "separate_geometry",
+        "not_expected"
+      ]
+    }
+  },
+  "required": [
+    "category"
+  ]
+}

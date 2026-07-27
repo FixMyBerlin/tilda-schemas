@@ -1,0 +1,20 @@
+[
+  {
+    "name": "cycleway=no → data_no on both sides (no infrastructure)",
+    "input": { "highway": "residential", "cycleway": "no" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "data_no", "_infrastructureExists": false }
+  },
+  {
+    "name": "cycleway:right=separate → separate_geometry",
+    "input": { "highway": "residential", "cycleway:right": "separate" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "separate_geometry", "_infrastructureExists": false }
+  },
+  {
+    "name": "implicit cycleway=lane on oneway road → left side is not_expected",
+    "input": { "highway": "residential", "oneway": "yes", "cycleway": "lane" },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "category": "not_expected", "_infrastructureExists": false }
+  }
+]

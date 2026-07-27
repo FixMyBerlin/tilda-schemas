@@ -1,0 +1,19 @@
+{
+  "name": "@tilda-geo/schema",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Loader for TILDA schema fixtures and JSON Schemas from the schemas/ folders.",
+  "exports": {
+    "./spec": "./src/spec.ts",
+    "./output-schema": "../../schemas/bicycle-infrastructure-attributes/schema/output.schema.json",
+    "./category-schema": "../../schemas/bicycle-infrastructure-category/schema/category.schema.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/bun": "latest"
+  }
+}

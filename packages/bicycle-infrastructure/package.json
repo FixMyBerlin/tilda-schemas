@@ -1,0 +1,19 @@
+{
+  "name": "@tilda-geo/bicycle-infrastructure",
+  "version": "0.1.2",
+  "type": "module",
+  "description": "TypeScript port of Tilda's LUA bicycle-infrastructure processing (category + surface/protection/oneway derivations). Runs on plain OSM tag objects (e.g. live Overpass data).",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/bun": "latest",
+    "@tilda-geo/schema": "workspace:*"
+  }
+}

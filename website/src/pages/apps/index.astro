@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro'
+import { getCollection } from 'astro:content'
+
+const apps = await getCollection('apps')
+---
+
+<Base title="Apps — TILDA Schemas" description="Applications that use TILDA schemas">
+  <h1>Apps using these schemas</h1>
+  <ul class="card-list">
+    {
+      apps.map((app) => (
+        <li>
+          <a href={app.data.url}>
+            <strong>{app.data.title}</strong>
+          </a>
+          {app.data.description && <div>{app.data.description}</div>}
+        </li>
+      ))
+    }
+  </ul>
+</Base>

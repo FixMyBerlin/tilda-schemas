@@ -1,0 +1,38 @@
+[
+  {
+    "name": "separation:left=fence → separation_left",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:left": "fence" },
+    "select": { "side": "self" },
+    "expect": { "separation_left": "fence", "separation_right": null }
+  },
+  {
+    "name": "separation:both applies to both sides",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:both": "bollard" },
+    "select": { "side": "self" },
+    "expect": { "separation_left": "bollard", "separation_right": "bollard" }
+  },
+  {
+    "name": "unsided separation maps to the left only",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation": "kerb" },
+    "select": { "side": "self" },
+    "expect": { "separation_left": "kerb", "separation_right": null }
+  },
+  {
+    "name": "separation:left=separation_kerb normalized to bump",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:left": "separation_kerb" },
+    "select": { "side": "self" },
+    "expect": { "separation_left": "bump" }
+  },
+  {
+    "name": "unknown separation value → null (disallowed)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:left": "totally_unknown" },
+    "select": { "side": "self" },
+    "expect": { "separation_left": null }
+  },
+  {
+    "name": "marking:left=dashed_line → marking_left",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "marking:left": "dashed_line" },
+    "select": { "side": "self" },
+    "expect": { "marking_left": "dashed_line" }
+  }
+]

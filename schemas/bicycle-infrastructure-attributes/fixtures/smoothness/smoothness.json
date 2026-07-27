@@ -1,0 +1,32 @@
+[
+  {
+    "name": "explicit smoothness=good kept",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "smoothness": "good" },
+    "select": { "side": "self" },
+    "expect": { "smoothness": "good", "smoothness_source": "tag", "smoothness_confidence": "high" }
+  },
+  {
+    "name": "smoothness=very_good normalized to excellent",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "smoothness": "very_good" },
+    "select": { "side": "self" },
+    "expect": { "smoothness": "excellent", "smoothness_source": "tag_normalized" }
+  },
+  {
+    "name": "smoothness derived from surface=asphalt → good (medium)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "asphalt" },
+    "select": { "side": "self" },
+    "expect": { "smoothness": "good", "smoothness_source": "surface_to_smoothness", "smoothness_confidence": "medium" }
+  },
+  {
+    "name": "smoothness from raw surface=cobblestone → very_bad (surface output is large_sett)",
+    "osm": "smoothness derives from the RAW surface tag, not the sanitized output value",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "cobblestone" },
+    "select": { "side": "self" },
+    "expect": {
+      "smoothness": "very_bad",
+      "smoothness_source": "surface_to_smoothness",
+      "smoothness_confidence": "medium",
+      "surface": "large_sett"
+    }
+  }
+]

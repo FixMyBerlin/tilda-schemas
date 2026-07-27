@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Reconciliation reference / generated output (regenerable)
+packages/bicycle-infrastructure-reconciliation/reference/*.json
+packages/bicycle-infrastructure-reconciliation/reference/*.ndjson
+packages/bicycle-infrastructure-reconciliation/reference/*.geojson
+packages/bicycle-infrastructure-reconciliation/out/

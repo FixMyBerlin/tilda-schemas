@@ -1,0 +1,9 @@
+node_modules/
+out/
+*.log
+.DS_Store
+
+# Large reference data — regenerable (see reference/README.md); git-lfs-ready via .gitattributes.
+reference/*.geojson
+reference/*.json
+reference/*.ndjson

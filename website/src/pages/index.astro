@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro'
+import Citation from '../components/Citation.astro'
+import { loadSchemaMetas } from '../lib/schemas'
+
+const schemas = loadSchemaMetas()
+const published = schemas.filter((s) => s.status === 'published')
+const base = import.meta.env.BASE_URL
+---
+
+<Base title="TILDA Schemas">
+  <h1>TILDA Schemas</h1>
+  <p class="lead">
+    Language-agnostic schemas for TILDA geo data — starting with bicycle-infrastructure
+    categories, with attributes, roads, parking, and CQI to follow.
+  </p>
+
+  <Citation />
+
+  <h2>Schemas</h2>
+  <ul class="card-list">
+    {
+      schemas.map((s) => (
+        <li>
+          <span class:list={['badge', s.status !== 'published' && 'badge--draft']}>{s.status}</span>
+          {' '}
+          <a href={`${base}schemas/${s.name}/`}>
+            <strong>{s.title}</strong>
+          </a>
+          <div>{s.description}</div>
+          <small>v{s.version}</small>
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    published.length === 0 && (
+      <p class="lead">No published schemas yet.</p>
+    )
+  }
+
+  <p>
+    <a href={`${base}apps/`}>Apps using these schemas</a>
+    {' · '}
+    <a href={`${base}research/`}>Related research</a>
+  </p>
+</Base>

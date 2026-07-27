@@ -9,7 +9,6 @@ bicycle-infrastructure data (roads, parking, and CQI to follow).
 | [`schemas/bicycle-infrastructure-attributes`](schemas/bicycle-infrastructure-attributes/) | Draft attributes (not yet published) |
 | [`packages/bicycle-infrastructure`](packages/bicycle-infrastructure/) | `@tilda-geo/bicycle-infrastructure` — TS processor |
 | [`packages/bicycle-infrastructure-reconciliation`](packages/bicycle-infrastructure-reconciliation/) | LUA ↔ TS / schema cross-check |
-| [`packages/schema`](packages/schema/) | `@tilda-geo/schema` — fixture/schema loader |
 | [`website`](website/) | Docs site (Astro + Keystatic) → GitHub Pages |
 
 ## Quick start

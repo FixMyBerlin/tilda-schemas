@@ -1,10 +1,9 @@
 /**
- * Conformance: the library must satisfy every case in the language-agnostic spec
- * (@tilda-geo/schema). This is the primary correctness gate — the same spec is used
- * by the LUA cross-check.
+ * Conformance: the library must satisfy every case in the language-agnostic
+ * schemas/ fixtures. This is the primary correctness gate.
  */
 import { expect, test, describe } from 'bun:test'
-import { ALL_CASES, type SpecSelect, type SpecExpect } from '@tilda-geo/schema/spec'
+import { ALL_CASES, type SpecSelect, type SpecExpect } from './load-spec.ts'
 import { processBikelanes, type BikelaneResult } from '../src/index.ts'
 
 function selectFeature(features: BikelaneResult[], select: SpecSelect = {}): BikelaneResult | undefined {

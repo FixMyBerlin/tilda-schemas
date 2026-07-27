@@ -13,7 +13,6 @@
       "name": "@tilda-geo/bicycle-infrastructure",
       "version": "0.1.2",
       "devDependencies": {
-        "@tilda-geo/schema": "workspace:*",
         "@types/bun": "latest",
         "typescript": "^5.6.0",
       },
@@ -23,16 +22,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@tilda-geo/bicycle-infrastructure": "workspace:*",
-        "@tilda-geo/schema": "workspace:*",
       },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5.6.0",
-      },
-    },
-    "packages/schema": {
-      "name": "@tilda-geo/schema",
-      "version": "0.1.0",
       "devDependencies": {
         "@types/bun": "latest",
         "typescript": "^5.6.0",
@@ -581,8 +571,6 @@
     "@tilda-geo/bicycle-infrastructure": ["@tilda-geo/bicycle-infrastructure@workspace:packages/bicycle-infrastructure"],
 
     "@tilda-geo/bicycle-infrastructure-reconciliation": ["@tilda-geo/bicycle-infrastructure-reconciliation@workspace:packages/bicycle-infrastructure-reconciliation"],
-
-    "@tilda-geo/schema": ["@tilda-geo/schema@workspace:packages/schema"],
 
     "@toeverything/y-indexeddb": ["@toeverything/y-indexeddb@0.10.0-canary.9", "", { "dependencies": { "idb": "^7.1.1", "nanoid": "^5.0.1", "y-provider": "0.10.0-canary.9" }, "peerDependencies": { "yjs": "^13" } }, "sha512-3hzktNuOaXut/RgRjKNeqQura1zeYF+tSLSlWDc0rDBOrEpwD/1EOpKVCbgtl8ke7f4oinLfgBNk4HcwqaQUYQ=="],
 

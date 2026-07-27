@@ -1,16 +1,15 @@
 /**
- * Validate the Tilda LUA export against the spec's output schema.
+ * Validate the Tilda LUA export against the draft attributes output schema.
  *
  * Checks that every exported feature's properties use only values from the controlled
- * vocabulary in `@tilda-geo/schema` (output.schema.json). Surfaces drift / new OSM values
- * the spec doesn't know about yet. This is the "LUA export vs spec" leg of the cross-check.
+ * vocabulary in schemas/bicycle-infrastructure-attributes/schema/output.schema.json.
  *
  *   bun run validate-export
  */
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { mkdir } from 'node:fs/promises'
-import schema from '@tilda-geo/schema/output-schema'
+import schema from '../../../schemas/bicycle-infrastructure-attributes/schema/output.schema.json'
 import { parseFeatureLine } from './geojson-feature-line.ts'
 
 const EXPORT = process.argv[2] ?? 'reference/tilda-bikelanes-berlin.geojson'

@@ -14,8 +14,7 @@
     "validate-export": "bun src/validate-export.ts"
   },
   "dependencies": {
-    "@tilda-geo/bicycle-infrastructure": "workspace:*",
-    "@tilda-geo/schema": "workspace:*"
+    "@tilda-geo/bicycle-infrastructure": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["packages/*", "website"],
   "scripts": {
-    "check": "bun run --filter '@tilda-geo/schema' typecheck && bun run --filter '@tilda-geo/bicycle-infrastructure' test && bun run --filter '@tilda-geo/bicycle-infrastructure' typecheck",
+    "check": "bun run --filter '@tilda-geo/bicycle-infrastructure' test && bun run --filter '@tilda-geo/bicycle-infrastructure' typecheck",
     "test": "bun run --filter '@tilda-geo/bicycle-infrastructure' test",
     "website:dev": "bun run --filter website dev",
     "website:build": "bun run --filter website build"

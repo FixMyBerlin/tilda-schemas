@@ -37,8 +37,8 @@ run **manually** (no auto-publish CI):
    git push && git push --tags
    ```
 
-Publishing is ESM-only. `publishConfig.provenance` is set for npm trusted publishing /
-OIDC when you add a release workflow later.
+Publishing is ESM-only. Provenance / trusted publishing (OIDC) is skipped for local
+publishes; enable it when you add a CI release workflow later.
 
 Schema DOI / Zenodo releases are separate — see [`docs/publishing.md`](docs/publishing.md).
 

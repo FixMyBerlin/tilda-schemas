@@ -23,6 +23,9 @@ logged in with publish rights (`npm whoami`).
 See root README **Release** for the step-by-step. First publish uses the current
 `package.json` version after `bun run release` / `changeset publish`.
 
+Do **not** set `publishConfig.provenance` for local publishes — npm only supports
+automatic provenance from CI OIDC (GitHub Actions, etc.).
+
 ---
 
 ## Zenodo / DOI

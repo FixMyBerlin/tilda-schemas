@@ -8,7 +8,6 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "website",
     "@tilda-geo/bicycle-infrastructure-reconciliation"
   ]
 }

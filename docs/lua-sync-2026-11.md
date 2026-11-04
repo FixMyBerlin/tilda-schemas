@@ -136,6 +136,11 @@ Not ported (no counterpart in the package): `bikelanes_presence` (`oneway=-1`), 
    `not has_cycleway_on_highway_between_lanes_conditions(tags)` like `needsClarification`.
 3. Oneway branch: every lane on the road without a side tag is `implicit_yes`, also `sharedMotorVehicleLane` (`cycleway:right=shared_lane`),
    whose category says `implicitOneWay = false` ("the whole road is shared"). `missing_oneway` is gone for them. Intended?
+4. `missing_access_tag_240` says "Expected `bicycle=designated` and `foot=designated`", but the condition is `bicycle ~= 'designated' and foot ~= 'designated'`: it
+   triggers only when neither is designated, so `traffic_sign=DE:240` with `bicycle=designated` and no `foot` gets no todo. Probably `or`. Copied.
+5. `deprecated_cycleway_shared` reads only `cycleway=shared`, but `needs_clarification` skips every side object with `cycleway=shared` ("handled by the road
+   todo"). `cycleway:right=shared` and `cycleway:both=shared` give no bikelane feature and no road todo, so nothing flags them. Found while porting the road todos.
+6. Cosmetic: the `unexpected_highway_path` text says `highway=cyclway`.
 
 Not bugs, but good to know: `parse_length` reads only the exact decimal-comma strings `0,3 0,5 0,6 1,5 2,2 2,5 2,50` (use count in Germany above 10), so `2,0` or
 `1,50` stay unreadable and show up as `unusual_width`; and a check date on the road closes `unusual_width` for all its lanes.

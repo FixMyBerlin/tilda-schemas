@@ -165,6 +165,25 @@ function pickOrBranch(tags: OsmTags, predicates: TagPredicate[]): TagPredicate |
   return best
 }
 
+/**
+ * Preferred tag atoms for macros that classification matches imperatively.
+ * Without these, planTagsForCategory cannot invert the macro and emits only a
+ * cryptic `_category` conflict.
+ */
+const MACRO_PLAN_REQUIREMENTS: Record<string, TagRequirement[]> = {
+  bicycle_road_base: [
+    { key: 'bicycle_road', values: ['yes'], reason: 'Fahrradstraße / bicycle road' },
+  ],
+  bicycle_road_vehicle_destination: [
+    { key: 'bicycle_road', values: ['yes'], reason: 'Fahrradstraße / bicycle road' },
+    {
+      key: 'vehicle',
+      values: ['destination'],
+      reason: 'Motor vehicles only for destination traffic (Anlieger frei)',
+    },
+  ],
+}
+
 function collectFromPredicate(
   predicate: TagPredicate,
   tags: OsmTags,
@@ -188,7 +207,15 @@ function collectFromPredicate(
       if (best) collectFromPredicate(best, tags, reason, out)
       return
     }
-    case 'macro':
+    case 'macro': {
+      const requirements = MACRO_PLAN_REQUIREMENTS[predicate.name]
+      if (requirements) {
+        for (const req of requirements) {
+          out.push({ ...req, values: [...req.values] })
+        }
+      }
+      return
+    }
     case 'literal':
     case 'exists':
     case 'notExists':
@@ -369,8 +396,8 @@ export class UnknownTargetCategoryError extends Error {
  * Returned keys use nested OSM form for left/right cycleway (and sidewalk) sides
  * (`cycleway:right:lane`); bare keys for self-side objects.
  *
- * Predicate macros (`cycleway_on_highway_*`, `needs_clarification`, etc.) are not
- * inverted — plans rely on simple eq/in atoms and gap discriminators.
+ * Most predicate macros are not inverted; a small set (`bicycle_road_*`) has
+ * preferred tag requirements. Remaining macros may still yield a `_category` conflict.
  */
 export function planTagsForCategory(
   wayTags: OsmTags,
@@ -450,11 +477,14 @@ export function planTagsForCategory(
   const aligned = resultCategory === targetCategoryId
 
   if (!aligned) {
+    const suggested =
+      add.length > 0 || change.length > 0
+        ? 'Suggested tag edits are not enough to reach that classification.'
+        : 'No automatic tag edits could be derived for this category (often because it matches via a complex macro).'
     conflicts.push({
       key: '_category',
       value: resultCategory ?? 'null',
-      reason:
-        'After suggested tag adds/changes, classification still does not match the target; additional tags (e.g. from macro predicates) may be required.',
+      reason: `${suggested} Target “${targetCategoryId}” would still classify as ${resultCategory ?? 'none'}.`,
     })
   }
 

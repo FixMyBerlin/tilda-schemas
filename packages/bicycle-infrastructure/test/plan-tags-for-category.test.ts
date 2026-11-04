@@ -74,3 +74,26 @@ test('dry-run plan can reach cyclewayOnHighway_exclusive after applying suggesti
   const results = processBikelanes(next).filter((r) => r._side === 'right')
   expect(results[0]?.category).toBe('cyclewayOnHighway_exclusive')
 })
+
+test('residential → bicycleRoad_vehicleDestination suggests bicycle_road and vehicle', () => {
+  const tags: OsmTags = { highway: 'residential', name: 'Example' }
+  const plan = planTagsForCategory(tags, 'bicycleRoad_vehicleDestination')
+  expect(plan.add).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ key: 'bicycle_road', value: 'yes' }),
+      expect.objectContaining({ key: 'vehicle', value: 'destination' }),
+    ]),
+  )
+  expect(plan.aligned).toBe(true)
+  expect(plan.conflicts).toHaveLength(0)
+
+  const next: OsmTags = { ...tags }
+  for (const a of plan.add) if (next[a.key] == null) next[a.key] = a.value
+  expect(processBikelanes(next)[0]?.category).toBe('bicycleRoad_vehicleDestination')
+})
+
+test('residential → bicycleRoad suggests bicycle_road=yes', () => {
+  const plan = planTagsForCategory({ highway: 'residential' }, 'bicycleRoad')
+  expect(plan.add).toEqual([expect.objectContaining({ key: 'bicycle_road', value: 'yes' })])
+  expect(plan.aligned).toBe(true)
+})

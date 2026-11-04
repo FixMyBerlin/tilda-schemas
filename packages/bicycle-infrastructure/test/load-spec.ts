@@ -2,6 +2,7 @@ import onewayFixtures from '../../../schemas/bicycle-infrastructure-attributes/f
 import separationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/separation/separation.json'
 import smoothnessFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/smoothness/smoothness.json'
 import surfaceFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/surface/surface.json'
+import todosFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/todos/todos.json'
 import transformationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/transformation/transformation.json'
 import widthFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/width/width.json'
 /**
@@ -22,7 +23,8 @@ export type SpecExpect = Record<string, unknown>
 export interface SpecCase {
   name: string
   osm?: string
-  input: Record<string, string>
+  /** OSM tags; `_length` (meters, number) is the length of the way as the processing provides it. */
+  input: Record<string, string | number>
   select?: SpecSelect
   expect?: SpecExpect
   expectFeatures?: Array<{ select: SpecSelect; expect: SpecExpect }>
@@ -41,6 +43,7 @@ export const SPEC: SpecGroup[] = [
   { key: 'separation', cases: separationFixtures as unknown as SpecCase[] },
   { key: 'smoothness', cases: smoothnessFixtures as unknown as SpecCase[] },
   { key: 'transformation', cases: transformationFixtures as unknown as SpecCase[] },
+  { key: 'todos', cases: todosFixtures as unknown as SpecCase[] },
   { key: 'width', cases: widthFixtures as unknown as SpecCase[] },
 ]
 

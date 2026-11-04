@@ -163,6 +163,44 @@
     },
     "width": {
       "type": ["number", "null"]
+    },
+    "todos": {
+      "description": "Ids of the todos that apply to the feature (`_todo_list` in LUA): reasons why the tagging is not good enough, e.g. `needs_clarification_track`, `missing_oneway`, `unusual_width`. Without the todos that need Mapillary, the object age or the sidepath CSV.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "crossing_too_long",
+          "needs_clarification",
+          "adjoining_or_isolated",
+          "advisory_or_exclusive",
+          "needs_clarification_track",
+          "mixed_cycleway_both",
+          "unexpected_highway_path",
+          "missing_traffic_sign_vehicle_destination",
+          "missing_traffic_sign_244",
+          "missing_access_tag_bicycle_road",
+          "missing_traffic_sign",
+          "malformed_traffic_sign",
+          "missing_access_tag_240",
+          "missing_segregated",
+          "unexpected_bicycle_access_on_footway",
+          "missing_width",
+          "unusual_width",
+          "missing_surface",
+          "missing_oneway",
+          "unexpected_oneway_direction"
+        ]
+      }
+    },
+    "todoTagFixes": {
+      "description": "Proposed tag changes per todo id (`unset`: tags to remove), only for todos that propose one (`unexpected_oneway_direction`, tilda-geo-private#34, not merged yet).",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": { "unset": { "type": "array", "items": { "type": "string" } } },
+        "required": ["unset"]
+      }
     }
   },
   "required": ["category", "_side", "_infrastructureExists"],

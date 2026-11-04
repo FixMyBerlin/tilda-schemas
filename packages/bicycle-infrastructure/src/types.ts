@@ -66,4 +66,11 @@ export interface BikelaneResult {
   surface_color?: string | null
   traffic_sign?: string | null
   width?: number | null
+  /**
+   * Ids of the todos that apply to the feature (`_todo_list` in LUA), see `BIKELANE_TODOS`.
+   * Only for features with infrastructure. Without the Mapillary, age and sidepath-CSV todos.
+   */
+  todos?: string[]
+  /** Proposed tag changes per todo id (`unset`: tags to remove), when a todo proposes one. */
+  todoTagFixes?: Record<string, { unset: string[] }>
 }

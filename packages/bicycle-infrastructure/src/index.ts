@@ -1,4 +1,5 @@
 import { categorizeBikelane } from './categories/bikelane-categories.ts'
+import { deriveBikelaneTodos } from './derive/bikelane-todos.ts'
 import { deriveOnewayDirection } from './derive/derive-oneway.ts'
 import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
 import { deriveBikelaneSurface } from './derive/derive-surface.ts'
@@ -86,6 +87,17 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
       result.smoothness = smooth.smoothness ?? null
       result.smoothness_source = smooth.smoothness_source ?? null
       result.smoothness_confidence = smooth.smoothness_confidence ?? null
+
+      const todo = deriveBikelaneTodos(t, {
+        category: category.id,
+        width: result.width,
+        surface: result.surface,
+        surface_source: result.surface_source,
+        oneway: result.oneway,
+        implicitOneWayConfidence: category.implicitOneWayConfidence,
+      })
+      result.todos = todo.todos
+      if (todo.todoTagFixes) result.todoTagFixes = todo.todoTagFixes
     }
 
     results.push(result)
@@ -95,6 +107,13 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
 }
 
 export type { BikelaneResult, OsmTags } from './types.ts'
+export { BIKELANE_TODOS, deriveBikelaneTodos, isUnusualWidth } from './derive/bikelane-todos.ts'
+export type {
+  BikelaneTodoDefinition,
+  BikelaneTodoResult,
+  BikelaneTodos,
+  TodoTagFix,
+} from './derive/bikelane-todos.ts'
 export { parseLength, parseWidth } from './helpers/parse-length.ts'
 export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-categories.ts'
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'

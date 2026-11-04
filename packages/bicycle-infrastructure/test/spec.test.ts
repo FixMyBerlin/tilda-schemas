@@ -3,7 +3,7 @@
  * schemas/ fixtures. This is the primary correctness gate.
  */
 import { expect, test, describe } from 'bun:test'
-import { processBikelanes, type BikelaneResult } from '../src/index.ts'
+import { processBikelanes, type BikelaneResult, type OsmTags } from '../src/index.ts'
 import { ALL_CASES, type SpecSelect, type SpecExpect } from './load-spec.ts'
 
 function selectFeature(
@@ -27,9 +27,28 @@ function eq(a: unknown, b: unknown): boolean {
   return na === nb
 }
 
+/**
+ * Expectation keys that are not plain result fields (see schemas/bicycle-infrastructure-attributes/README.md):
+ * - `todos_include` / `todos_exclude`: todo ids that have to be / must not be in `todos`,
+ * - `todoTagFixes`: an object compared as a whole, or `null` for none.
+ */
 function assertFeature(feature: BikelaneResult | undefined, expect_: SpecExpect, label: string) {
   expect(feature, `${label}: no feature matched the selector`).toBeDefined()
+  const todos = feature?.todos ?? []
   for (const [key, want] of Object.entries(expect_)) {
+    if (key === 'todos_include' || key === 'todos_exclude') {
+      for (const id of want as string[]) {
+        expect(
+          todos.includes(id),
+          `${label}: todo ${id} ${key === 'todos_include' ? 'missing' : 'unexpected'} in ${JSON.stringify(todos)}`,
+        ).toBe(key === 'todos_include')
+      }
+      continue
+    }
+    if (key === 'todoTagFixes') {
+      expect(feature?.todoTagFixes ?? null, `${label}: todoTagFixes`).toEqual(want as never)
+      continue
+    }
     const got = (feature as unknown as Record<string, unknown>)[key]
     expect(
       eq(got, want),
@@ -49,7 +68,7 @@ for (const [group, cases] of byGroup) {
   describe(`spec: ${group}`, () => {
     for (const c of cases) {
       test(c.name, () => {
-        const features = processBikelanes({ ...c.input })
+        const features = processBikelanes({ ...c.input } as OsmTags)
         if (c.expectFeatures) {
           for (const ef of c.expectFeatures) {
             assertFeature(selectFeature(features, ef.select), ef.expect, c.name)

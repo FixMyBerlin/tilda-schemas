@@ -1,0 +1,822 @@
+[
+  {
+    "name": "missing_access_tag_240: cycleway=track with DE:240 does not need access tags",
+    "input": {
+      "highway": "tertiary",
+      "cycleway:left": "track",
+      "cycleway:left:traffic_sign": "DE:240"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["missing_access_tag_240"] }
+  },
+  {
+    "name": "missing_access_tag_240: a path with DE:240 but no bicycle or foot tag",
+    "input": { "highway": "path", "traffic_sign": "DE:240" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_access_tag_240"] }
+  },
+  {
+    "name": "malformed_traffic_sign: well-formed traffic signs are no todo",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "traffic_sign": "DE:244.1,1020-30,1026-36",
+      "traffic_sign:forward": "DE:244.1,1020-30,1026-36"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["malformed_traffic_sign"] }
+  },
+  {
+    "name": "malformed_traffic_sign: a space after the comma is cleaned up",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "traffic_sign": "DE:244.1,1020-30, 1026-36"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["malformed_traffic_sign"] }
+  },
+  {
+    "name": "missing_traffic_sign_244: bicycle road without a sign",
+    "input": { "highway": "residential", "bicycle_road": "yes" },
+    "select": { "side": "self" },
+    "expect": {
+      "todos_include": ["missing_traffic_sign_244"],
+      "todos_exclude": ["missing_traffic_sign", "missing_traffic_sign_vehicle_destination"]
+    }
+  },
+  {
+    "name": "missing_traffic_sign_244: a DE:244 sign closes it",
+    "input": { "highway": "residential", "bicycle_road": "yes", "traffic_sign": "DE:244.1" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_traffic_sign_244", "missing_traffic_sign"] }
+  },
+  {
+    "name": "missing_traffic_sign_vehicle_destination: Anlieger frei without 1020-30",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "vehicle": "destination",
+      "traffic_sign": "DE:244.1"
+    },
+    "select": { "side": "self" },
+    "expect": {
+      "todos_include": ["missing_traffic_sign_vehicle_destination"],
+      "todos_exclude": ["missing_traffic_sign_244"]
+    }
+  },
+  {
+    "name": "missing_access_tag_bicycle_road: vehicle=no without bicycle=designated",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "vehicle": "no",
+      "traffic_sign": "DE:244.1"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_access_tag_bicycle_road"] }
+  },
+  {
+    "name": "missing_traffic_sign: separate cycleway without any sign",
+    "input": { "highway": "cycleway", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_traffic_sign"] }
+  },
+  {
+    "name": "missing_traffic_sign: traffic_sign=none is a sign",
+    "input": { "highway": "cycleway", "traffic_sign": "none" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_traffic_sign"] }
+  },
+  {
+    "name": "missing_traffic_sign: not for cycleway=link",
+    "input": { "highway": "cycleway", "cycleway": "link" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_traffic_sign"] }
+  },
+  {
+    "name": "needs_clarification: bare highway=cycleway",
+    "input": { "highway": "cycleway" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["needs_clarification"] }
+  },
+  {
+    "name": "unsigned cycleway is no needs_clarification any more, only the sidepath question stays (tilda-geo 98e649800)",
+    "input": { "highway": "cycleway", "traffic_sign": "none" },
+    "select": { "side": "self" },
+    "expect": {
+      "todos_include": ["adjoining_or_isolated"],
+      "todos_exclude": ["needs_clarification"]
+    }
+  },
+  {
+    "name": "adjoining_or_isolated is closed by is_sidepath",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["adjoining_or_isolated"] }
+  },
+  {
+    "name": "unexpected_bicycle_access_on_footway: footway with bicycle=designated",
+    "input": { "highway": "footway", "bicycle": "designated" },
+    "select": { "side": "self" },
+    "expect": {
+      "todos_include": ["unexpected_bicycle_access_on_footway"],
+      "todos_exclude": ["needs_clarification"]
+    }
+  },
+  {
+    "name": "unexpected_highway_path: path with bicycle=designated and foot=no",
+    "input": { "highway": "path", "bicycle": "designated", "foot": "no" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unexpected_highway_path"] }
+  },
+  {
+    "name": "missing_segregated instead of needs_clarification: path with bicycle and foot designated",
+    "osm": "tilda-geo e337199a7: one todo is enough",
+    "input": { "highway": "path", "bicycle": "designated", "foot": "designated" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_segregated"], "todos_exclude": ["needs_clarification"] }
+  },
+  {
+    "name": "missing_segregated instead of needs_clarification: cycleway with bicycle and foot designated",
+    "input": { "highway": "cycleway", "bicycle": "designated", "foot": "designated" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_segregated"], "todos_exclude": ["needs_clarification"] }
+  },
+  {
+    "name": "crossing_too_long: crossing over 100 m is needsClarification",
+    "input": { "highway": "cycleway", "cycleway": "crossing", "_length": 150 },
+    "select": { "side": "self" },
+    "expect": { "category": "needsClarification", "todos_include": ["crossing_too_long"] }
+  },
+  {
+    "name": "crossing_too_long: a short crossing is a crossing",
+    "input": { "highway": "cycleway", "cycleway": "crossing", "_length": 50 },
+    "select": { "side": "self" },
+    "expect": { "category": "crossing", "todos_exclude": ["crossing_too_long"] }
+  },
+  {
+    "name": "advisory_or_exclusive: cycleway:both=lane gives a todo on both sides",
+    "input": { "highway": "secondary", "cycleway:both": "lane" },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["advisory_or_exclusive"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_include": ["advisory_or_exclusive"] }
+      }
+    ]
+  },
+  {
+    "name": "advisory_or_exclusive: cycleway=lane gives a todo on both sides",
+    "input": { "highway": "secondary", "cycleway": "lane" },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["advisory_or_exclusive"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_include": ["advisory_or_exclusive"] }
+      }
+    ]
+  },
+  {
+    "name": "advisory_or_exclusive: one side only",
+    "input": { "highway": "secondary", "cycleway:right": "lane" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_include": ["advisory_or_exclusive"] }
+  },
+  {
+    "name": "advisory_or_exclusive: lane=advisory closes it",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["advisory_or_exclusive"] }
+  },
+  {
+    "name": "needs_clarification_track: cycleway:both=track gives a todo on both sides",
+    "osm": "tilda-geo 48b04faf5",
+    "input": { "highway": "secondary", "cycleway:both": "track" },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["needs_clarification_track"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_include": ["needs_clarification_track"] }
+      }
+    ]
+  },
+  {
+    "name": "needs_clarification_track: closes only on the side with a sign",
+    "osm": "tilda-geo 48b04faf5",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:left:traffic_sign": "DE:241-30"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["needs_clarification_track"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_include": ["needs_clarification_track"] }
+      }
+    ]
+  },
+  {
+    "name": "needs_clarification_track: cycleway:both:segregated closes both sides",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:both:segregated": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["needs_clarification_track"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["needs_clarification_track"] }
+      }
+    ]
+  },
+  {
+    "name": "needs_clarification_track: segregated on one side closes only that side",
+    "osm": "tilda-geo 48b04faf5",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:right:segregated": "no"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["needs_clarification_track"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["needs_clarification_track"] }
+      }
+    ]
+  },
+  {
+    "name": "needs_clarification_track: DE:237 closes it",
+    "osm": "tilda-geo 48b04faf5",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "track",
+      "cycleway:right:traffic_sign": "DE:237"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["needs_clarification_track"] }
+  },
+  {
+    "name": "needs_clarification_track: DE:240 closes it",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "track",
+      "cycleway:right:traffic_sign": "DE:240"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["needs_clarification_track"] }
+  },
+  {
+    "name": "needs_clarification_track: not for a separate way",
+    "input": { "highway": "cycleway", "cycleway": "track" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["needs_clarification_track"] }
+  },
+  {
+    "name": "mixed_cycleway_both: cycleway=track with cycleway:left",
+    "input": { "highway": "secondary", "cycleway": "track", "cycleway:left": "lane" },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["mixed_cycleway_both"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_include": ["mixed_cycleway_both"] }
+      }
+    ]
+  },
+  {
+    "name": "missing_oneway: separate cycleway without oneway",
+    "input": { "highway": "cycleway", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_oneway"] }
+  },
+  {
+    "name": "missing_oneway: not for cycleway=link",
+    "input": { "highway": "cycleway", "cycleway": "link" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_oneway", "missing_width"] }
+  },
+  {
+    "name": "missing_oneway: not for implicitOneWayConfidence=high",
+    "input": { "highway": "cycleway", "cycleway": "share_busway" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_oneway"] }
+  },
+  {
+    "name": "missing_oneway: not for a track on the road, the side has a default direction",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": { "highway": "secondary", "cycleway:left": "track" },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["missing_oneway"] }
+  },
+  {
+    "name": "missing_oneway: not for a shared path on the road, the side has a default direction",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:both:segregated": "no",
+      "cycleway:both:traffic_sign": "DE:240"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["missing_oneway"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["missing_oneway"] }
+      }
+    ]
+  },
+  {
+    "name": "missing_oneway: not for an advisory lane with implicit_yes",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "oneway": "implicit_yes", "todos_exclude": ["missing_oneway"] }
+  },
+  {
+    "name": "missing_oneway: oneway=-1 on a separate way is explicit",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "oneway": "-1" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_oneway"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: defaults on a two-way road are no todo",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:both:segregated": "no",
+      "cycleway:both:traffic_sign": "DE:240"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      }
+    ]
+  },
+  {
+    "name": "unexpected_oneway_direction: the defaults tagged explicitly (left=-1, right=yes) are no todo",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "advisory",
+      "cycleway:left:oneway": "-1",
+      "cycleway:right:oneway": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      }
+    ]
+  },
+  {
+    "name": "unexpected_oneway_direction: cycleway:left:oneway=yes",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "advisory",
+      "cycleway:left:oneway": "yes"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": {
+      "todos_include": ["unexpected_oneway_direction"],
+      "todoTagFixes": { "unexpected_oneway_direction": { "unset": ["cycleway:left:oneway"] } }
+    }
+  },
+  {
+    "name": "unexpected_oneway_direction: cycleway:both:oneway=yes puts the todo and the fix on both sides",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive",
+      "cycleway:both:oneway": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": {
+          "todos_include": ["unexpected_oneway_direction"],
+          "todoTagFixes": { "unexpected_oneway_direction": { "unset": ["cycleway:both:oneway"] } }
+        }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": {
+          "todos_include": ["unexpected_oneway_direction"],
+          "todoTagFixes": { "unexpected_oneway_direction": { "unset": ["cycleway:both:oneway"] } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "unexpected_oneway_direction: cycleway:both:oneway=yes with cycleway:left:oneway=-1 is the default direction",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive",
+      "cycleway:both:oneway": "yes",
+      "cycleway:left:oneway": "-1"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      }
+    ]
+  },
+  {
+    "name": "unexpected_oneway_direction: cycleway:left:oneway=yes only flags the left side",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive",
+      "cycleway:left:oneway": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "todos_include": ["unexpected_oneway_direction"] }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+      }
+    ]
+  },
+  {
+    "name": "unexpected_oneway_direction: cycleway:right:oneway=-1 is a todo without a proposed fix",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:oneway": "-1"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_include": ["unexpected_oneway_direction"], "todoTagFixes": null }
+  },
+  {
+    "name": "unexpected_oneway_direction: no todo and no fix without the tag",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"], "todoTagFixes": null }
+  },
+  {
+    "name": "unexpected_oneway_direction: no todo on oneway roads, both directions are plausible on the left",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:left:oneway": "yes",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: contraflow lane with left=-1 is no todo",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:left:oneway": "-1",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: two-way track (left=no) is no todo",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "track",
+      "cycleway:left:oneway": "no",
+      "cycleway:left:traffic_sign": "DE:237"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: contraflow lane without a side tag is no todo",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction", "missing_oneway"] }
+  },
+  {
+    "name": "missing_width and missing_surface: separate cycleway without both",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_width", "missing_surface"] }
+  },
+  {
+    "name": "missing_width and missing_surface are closed by width and surface",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "2.5",
+      "surface": "asphalt"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_width", "missing_surface"] }
+  },
+  {
+    "name": "missing_width: not for lanes on the road",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["missing_width", "missing_surface"] }
+  },
+  {
+    "name": "missing_width: width=0 is no width, so it is missing and unusual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_width", "unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=0",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=-1",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "-1" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=narrow",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "narrow" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=1-2",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "1-2" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=0.5;1",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0.5;1" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=5,7",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "5,7" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=3 ft",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "3 ft" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=50.5",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "50.5" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=250",
+    "osm": "tilda-geo 106dbd049, 588cbb371",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "250" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=3 is usual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "3" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width", "missing_width"] }
+  },
+  {
+    "name": "unusual_width: width=2.5 m is usual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "2.5 m" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width", "missing_width"] }
+  },
+  {
+    "name": "unusual_width: width=100 cm is usual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "100 cm" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width", "missing_width"] }
+  },
+  {
+    "name": "unusual_width: width=2,5 is usual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "2,5" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width", "missing_width"] }
+  },
+  {
+    "name": "unusual_width: width=50 is usual",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "50" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width", "missing_width"] }
+  },
+  {
+    "name": "unusual_width: no width, no todo",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237" },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: check_date closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "check_date": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: check_date:width closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "check_date:width": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: survey:date closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "survey:date": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: survey:date:width closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "survey:date:width": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: survey_date closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "survey_date": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: a check date with the year only closes it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "check_date": "2026"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: the check date of another attribute does not close it",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "width": "250",
+      "check_date:surface": "2026-05-01"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: the check date of the road closes the todo of its lane",
+    "input": {
+      "highway": "secondary",
+      "check_date": "2026-05-01",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:width": "250"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: reads the width of the lane, not of the road",
+    "input": {
+      "highway": "residential",
+      "width": "6",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:width": "narrow"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: the width of the road does not count for a lane without width",
+    "input": {
+      "highway": "residential",
+      "width": "250",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  }
+]

@@ -1,6 +1,8 @@
-import { expect, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
+  categorySignOptions,
   listTargetCategories,
+  planTagVariantsForCategory,
   planTagsForCategory,
   processBikelanes,
   isIncompleteCategoryId,
@@ -96,4 +98,135 @@ test('residential → bicycleRoad suggests bicycle_road=yes', () => {
   const plan = planTagsForCategory({ highway: 'residential' }, 'bicycleRoad')
   expect(plan.add).toEqual([expect.objectContaining({ key: 'bicycle_road', value: 'yes' })])
   expect(plan.aligned).toBe(true)
+})
+
+const entries = (plan: {
+  add: { key: string; value: string }[]
+  change: { key: string; to: string }[]
+}) => [...plan.add.map((e) => `${e.key}=${e.value}`), ...plan.change.map((e) => `${e.key}=${e.to}`)]
+
+function applied(
+  tags: OsmTags,
+  plan: { add: { key: string; value: string }[]; change: { key: string; to: string }[] },
+) {
+  const next: OsmTags = { ...tags }
+  for (const c of plan.change) next[c.key] = c.to
+  for (const a of plan.add) next[a.key] ??= a.value
+  return next
+}
+
+describe('alternatives: a sign or the tags, never both', () => {
+  test('bare path → segregated: segregated=yes, no sign', () => {
+    const plan = planTagsForCategory({ highway: 'path' }, 'footAndCyclewaySegregated_isolated')
+    expect(plan.aligned).toBe(true)
+    expect(entries(plan)).toContain('segregated=yes')
+    expect(entries(plan).some((e) => e.startsWith('traffic_sign='))).toBe(false)
+  })
+
+  test('DE:241 already holds → no segregated tag added', () => {
+    const tags = { highway: 'path', traffic_sign: 'DE:241', is_sidepath: 'no' }
+    const plan = planTagsForCategory(tags, 'footAndCyclewaySegregated_isolated')
+    expect(plan.currentCategoryId).toBe('footAndCyclewaySegregated_isolated')
+    expect(plan.add).toHaveLength(0)
+    expect(plan.change).toHaveLength(0)
+  })
+
+  test('segregated=yes with access holds → no sign added', () => {
+    const tags = { highway: 'path', segregated: 'yes', bicycle: 'designated', foot: 'designated' }
+    const plan = planTagsForCategory(tags, 'footAndCyclewaySegregated_adjoining')
+    expect(entries(plan)).toEqual(['is_sidepath=yes'])
+  })
+
+  test('bare cycleway → cycleway_isolated needs only is_sidepath', () => {
+    const plan = planTagsForCategory({ highway: 'cycleway' }, 'cycleway_isolated')
+    expect(entries(plan)).toEqual(['is_sidepath=no'])
+  })
+})
+
+describe('traffic_sign=none is an observed fact', () => {
+  for (const target of [
+    'footAndCyclewayShared_isolated',
+    'footAndCyclewaySegregated_isolated',
+    'cycleway_isolated',
+    'footwayBicycleYes_isolated',
+  ]) {
+    test(`${target} keeps traffic_sign=none`, () => {
+      const tags = {
+        highway: target.startsWith('footway') ? 'footway' : 'path',
+        traffic_sign: 'none',
+      }
+      const plan = planTagsForCategory(tags, target)
+      expect(plan.change.map((c) => c.key)).not.toContain('traffic_sign')
+      if (plan.aligned) expect(processBikelanes(applied(tags, plan))[0]?.category).toBe(target)
+    })
+  }
+
+  test('a fixed sign may overwrite it', () => {
+    const tags = { highway: 'path', traffic_sign: 'none' }
+    const plan = planTagsForCategory(tags, 'footAndCyclewayShared_isolated', {
+      fixed: { traffic_sign: 'DE:240' },
+    })
+    expect(plan.change).toContainEqual(
+      expect.objectContaining({ key: 'traffic_sign', from: 'none', to: 'DE:240' }),
+    )
+    expect(plan.aligned).toBe(true)
+  })
+})
+
+test('target _adjoining changes is_sidepath=no to yes', () => {
+  const tags = { highway: 'path', segregated: 'yes', is_sidepath: 'no' }
+  const plan = planTagsForCategory(tags, 'footAndCyclewaySegregated_adjoining')
+  expect(plan.change).toContainEqual(
+    expect.objectContaining({ key: 'is_sidepath', from: 'no', to: 'yes' }),
+  )
+  expect(plan.aligned).toBe(true)
+  expect(processBikelanes(applied(tags, plan))[0]?.category).toBe(
+    'footAndCyclewaySegregated_adjoining',
+  )
+})
+
+describe('planTagVariantsForCategory', () => {
+  test('the first variant is the plan of planTagsForCategory', () => {
+    const tags = { highway: 'path' }
+    const variants = planTagVariantsForCategory(tags, 'footAndCyclewayShared_isolated')
+    expect(variants[0]).toEqual({
+      ...planTagsForCategory(tags, 'footAndCyclewayShared_isolated'),
+      variantId: 'default',
+    })
+  })
+
+  test('with sign and without sign', () => {
+    const tags = { highway: 'path' }
+    const variants = planTagVariantsForCategory(tags, 'footAndCyclewayShared_isolated')
+    expect(variants.map((v) => v.variantId)).toEqual(['default', 'with_sign', 'without_sign'])
+    expect(entries(variants[1]!)).toEqual(['traffic_sign=DE:240', 'is_sidepath=no'])
+    expect(entries(variants[2]!)).toEqual(
+      expect.arrayContaining(['traffic_sign=none', 'segregated=no']),
+    )
+    for (const variant of variants) {
+      expect(variant.aligned).toBe(true)
+      expect(processBikelanes(applied(tags, variant))[0]?.category).toBe(
+        'footAndCyclewayShared_isolated',
+      )
+    }
+  })
+
+  test('no variants for categories without a sign', () => {
+    const variants = planTagVariantsForCategory(
+      { highway: 'secondary', 'cycleway:right': 'lane' },
+      'cyclewayOnHighway_exclusive',
+      { side: 'right' },
+    )
+    expect(variants.map((v) => v.variantId)).toEqual(['default'])
+  })
+
+  test('categorySignOptions reads the signs from the specs', () => {
+    expect(categorySignOptions('footAndCyclewayShared_adjoining')).toEqual({
+      signs: ['DE:240'],
+      unsignedPossible: true,
+    })
+    expect(categorySignOptions('footAndCyclewaySegregated_isolated').signs).toEqual(['DE:241'])
+    expect(categorySignOptions('cycleway_isolated').signs).toEqual(['DE:237'])
+    expect(categorySignOptions('cyclewayOnHighway_exclusive').signs).toEqual([])
+  })
 })

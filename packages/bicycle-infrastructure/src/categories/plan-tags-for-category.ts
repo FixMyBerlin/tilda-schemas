@@ -1,9 +1,16 @@
+import { containsSubstring, hasPrefix } from '../helpers/strings.ts'
 import { prepareTags } from '../transform/prepare-tags.ts'
 import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
 /**
  * Plan OSM tag adds/changes to reach a target bikelane category.
  * Works in transformed tag space internally; returns nested OSM keys for left/right
  * cycleway (and sidewalk) sides, bare keys for self.
+ *
+ * The planner reads the same category specs the classifier uses. The match predicate of the
+ * target (and of its refining child, e.g. `_adjoining`) is expanded into alternatives: each
+ * alternative is a set of tags that is enough on its own (`segregated=yes` + `bicycle` + `foot`,
+ * or `traffic_sign=DE:241`). Every alternative becomes a candidate plan; the planner classifies the
+ * planned tags and keeps the cheapest candidate that gives the target.
  */
 import type { BikelaneResult, OsmTags } from '../types.ts'
 import { categorizeBikelane } from './bikelane-categories.ts'
@@ -13,7 +20,6 @@ import {
   isIncompleteCategoryId,
   specByCategoryId,
   type CategorySpec,
-  type GapDiscriminator,
   type RefiningChild,
 } from './category-specs.ts'
 import { type TagPredicate } from './tag-predicate.ts'
@@ -46,6 +52,17 @@ export interface CategoryTagPlan {
   conflicts: TagConflictEntry[]
 }
 
+/**
+ * `default`: the cheapest plan, the one `planTagsForCategory` returns.
+ * `with_sign`: reaches the target with the traffic sign of the category (DE:240, DE:241, ...).
+ * `without_sign`: reaches the target with `traffic_sign=none` and the tags that say the same.
+ */
+export type CategoryTagPlanVariantId = 'default' | 'with_sign' | 'without_sign'
+
+export interface CategoryTagPlanVariant extends CategoryTagPlan {
+  variantId: CategoryTagPlanVariantId
+}
+
 export interface ListTargetCategoriesOptions {
   /** Current category id — unlock candidates from its gapDiscriminators are listed first. */
   fromCategory?: string
@@ -53,11 +70,17 @@ export interface ListTargetCategoriesOptions {
   fromIncomplete?: boolean
 }
 
-interface TagRequirement {
+/** One tag condition of an alternative. `value` is what the planner writes when it does not hold. */
+interface PlanAtom {
   key: string
-  values: string[]
+  accepts: (value: string | undefined) => boolean
+  /** Value to write; `undefined` when the condition cannot be written (`exists`) */
+  value?: string
   reason: string
 }
+
+/** An alternative: all atoms together are enough for the match. */
+type PlanAlternative = PlanAtom[]
 
 function isPreciseTargetCategoryId(id: string): boolean {
   const def = CATEGORY_DEFINITIONS.find((c) => c.id === id)
@@ -115,130 +138,180 @@ export function writeKeyForSide(
   return transformedKey
 }
 
-function tagValue(tags: OsmTags, key: string): string | undefined {
-  return tags[key]
+/** `traffic_sign=none` (or `no`) is an observed fact: no sign. The planner never overwrites it. */
+function isNoSign(value: string | undefined): boolean {
+  return value === 'none' || value === 'no'
 }
 
-function positiveMatchScore(tags: OsmTags, predicate: TagPredicate): number {
-  switch (predicate.op) {
-    case 'eq':
-      return tagValue(tags, predicate.key) === predicate.value ? 1 : 0
-    case 'in': {
-      const v = tagValue(tags, predicate.key)
-      return v != null && predicate.values.includes(v) ? 1 : 0
-    }
-    case 'and':
-      return predicate.predicates.reduce((sum, p) => sum + positiveMatchScore(tags, p), 0)
-    case 'or':
-      return Math.max(0, ...predicate.predicates.map((p) => positiveMatchScore(tags, p)))
-    default:
-      return 0
-  }
+const eqAtom = (key: string, value: string, reason: string): PlanAtom => ({
+  key,
+  accepts: (v) => v === value,
+  value,
+  reason,
+})
+
+/**
+ * Alternatives for macros that the classifier evaluates imperatively. Each entry is a list of
+ * alternatives (any one is enough). Macros without an entry are opaque: the planner writes nothing
+ * for them and relies on the dry run.
+ */
+const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
+  bicycle_road_base: [
+    [eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road')],
+    [
+      {
+        key: 'traffic_sign',
+        accepts: (v) => hasPrefix(v, 'DE:244'),
+        value: 'DE:244.1',
+        reason: 'Fahrradstraße sign (DE:244.1)',
+      },
+    ],
+  ],
+  bicycle_road_vehicle_destination: [
+    [
+      eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road'),
+      eqAtom(
+        'vehicle',
+        'destination',
+        'Motor vehicles only for destination traffic (Anlieger frei)',
+      ),
+    ],
+    [
+      {
+        key: 'traffic_sign',
+        accepts: (v) => hasPrefix(v, 'DE:244') && containsSubstring(v, '1020-30'),
+        value: 'DE:244.1,1020-30',
+        reason: 'Fahrradstraße sign with Anlieger frei (DE:244.1,1020-30)',
+      },
+    ],
+  ],
+  unsigned_cycleway: [
+    [
+      eqAtom('highway', 'cycleway', 'Unsigned cycleway'),
+      {
+        key: 'traffic_sign',
+        accepts: isNoSign,
+        value: 'none',
+        reason: 'Unsigned cycleway (traffic_sign=none)',
+      },
+    ],
+  ],
+  footway_bicycle_yes: [
+    [eqAtom('bicycle', 'yes', 'Bicycle allowed on footway')],
+    [
+      {
+        key: 'traffic_sign',
+        accepts: (v) => containsSubstring(v, '1022-10'),
+        value: 'DE:239,1022-10',
+        reason: 'Footway sign with bicycles allowed (DE:239,1022-10)',
+      },
+    ],
+  ],
+  cycleway_on_highway_advisory_or_exclusive_base: [
+    [
+      eqAtom('highway', 'cycleway', 'On-highway cycle lane'),
+      {
+        key: 'cycleway',
+        accepts: (v) => v === 'lane' || v === 'opposite_lane',
+        value: 'lane',
+        reason: 'On-highway cycle lane',
+      },
+    ],
+  ],
+  shared_bus_lane_bus_with_bike: [
+    [
+      eqAtom('highway', 'cycleway', 'Bus lane with bicycles allowed'),
+      eqAtom('cycleway', 'share_busway', 'Bus lane with bicycles allowed'),
+    ],
+  ],
+  shared_bus_lane_bike_with_bus: [
+    [
+      eqAtom('highway', 'cycleway', 'Cycle lane shared with buses'),
+      eqAtom('lane', 'share_busway', 'Cycle lane shared with buses'),
+    ],
+  ],
+  crossing: [
+    [
+      eqAtom('highway', 'cycleway', 'Cycleway crossing'),
+      eqAtom('cycleway', 'crossing', 'Cycleway crossing'),
+    ],
+  ],
 }
 
-function countEqInLeaves(predicate: TagPredicate): number {
-  switch (predicate.op) {
-    case 'eq':
-    case 'in':
-      return 1
-    case 'and':
-      return predicate.predicates.reduce((sum, p) => sum + countEqInLeaves(p), 0)
-    case 'or':
-      return Math.max(0, ...predicate.predicates.map((p) => countEqInLeaves(p)))
-    default:
-      return 0
-  }
-}
-
-function pickOrBranch(tags: OsmTags, predicates: TagPredicate[]): TagPredicate | undefined {
-  let best: TagPredicate | undefined
-  let bestScore = -1
-  let bestLeaves = -1
-  for (const child of predicates) {
-    const score = positiveMatchScore(tags, child)
-    const leaves = countEqInLeaves(child)
-    if (score > bestScore || (score === bestScore && leaves > bestLeaves)) {
-      bestScore = score
-      bestLeaves = leaves
-      best = child
-    }
-  }
-  return best
+/** The value to write for a substring condition: traffic sign numbers get the `DE:` prefix. */
+function valueForSubstring(key: string, substring: string): string {
+  if (key === 'traffic_sign' && /^\d/.test(substring)) return `DE:${substring}`
+  return substring
 }
 
 /**
- * Preferred tag atoms for macros that classification matches imperatively.
- * Without these, planTagsForCategory cannot invert the macro and emits only a
- * cryptic `_category` conflict.
+ * Expand a predicate into alternatives (disjunctive normal form over the positive tag conditions).
+ * Negative conditions (`neq`, `notIn`, `notExists`, `not`) write nothing: the dry run checks them.
  */
-const MACRO_PLAN_REQUIREMENTS: Record<string, TagRequirement[]> = {
-  bicycle_road_base: [
-    { key: 'bicycle_road', values: ['yes'], reason: 'Fahrradstraße / bicycle road' },
-  ],
-  bicycle_road_vehicle_destination: [
-    { key: 'bicycle_road', values: ['yes'], reason: 'Fahrradstraße / bicycle road' },
-    {
-      key: 'vehicle',
-      values: ['destination'],
-      reason: 'Motor vehicles only for destination traffic (Anlieger frei)',
-    },
-  ],
-}
-
-function collectFromPredicate(
-  predicate: TagPredicate,
-  tags: OsmTags,
-  reason: string,
-  out: TagRequirement[],
-): void {
+function alternativesOf(predicate: TagPredicate, reason: string): PlanAlternative[] {
   switch (predicate.op) {
     case 'eq':
-      out.push({ key: predicate.key, values: [predicate.value], reason })
-      return
-    case 'in':
-      out.push({ key: predicate.key, values: [...predicate.values], reason })
-      return
-    case 'and':
-      for (const child of predicate.predicates) {
-        collectFromPredicate(child, tags, reason, out)
-      }
-      return
-    case 'or': {
-      const best = pickOrBranch(tags, predicate.predicates)
-      if (best) collectFromPredicate(best, tags, reason, out)
-      return
+      return [[eqAtom(predicate.key, predicate.value, reason)]]
+    case 'in': {
+      const values = predicate.values
+      return [
+        [
+          {
+            key: predicate.key,
+            accepts: (v) => v != null && values.includes(v),
+            value: values[0],
+            reason,
+          },
+        ],
+      ]
     }
-    case 'macro': {
-      const requirements = MACRO_PLAN_REQUIREMENTS[predicate.name]
-      if (requirements) {
-        for (const req of requirements) {
-          out.push({ ...req, values: [...req.values] })
-        }
-      }
-      return
+    case 'includes': {
+      const { key, substring } = predicate
+      return [
+        [
+          {
+            key,
+            accepts: (v) => containsSubstring(v, substring),
+            value: valueForSubstring(key, substring),
+            reason,
+          },
+        ],
+      ]
     }
-    case 'literal':
+    case 'hasPrefix': {
+      const { key, prefix } = predicate
+      return [[{ key, accepts: (v) => hasPrefix(v, prefix), value: prefix, reason }]]
+    }
     case 'exists':
-    case 'notExists':
+      return [[{ key: predicate.key, accepts: (v) => v != null, reason }]]
+    case 'and': {
+      let result: PlanAlternative[] = [[]]
+      for (const child of predicate.predicates) {
+        const childAlternatives = alternativesOf(child, reason)
+        const next: PlanAlternative[] = []
+        for (const left of result) {
+          for (const right of childAlternatives) next.push([...left, ...right])
+        }
+        result = next
+      }
+      return result
+    }
+    case 'or':
+      return predicate.predicates.flatMap((child) => alternativesOf(child, reason))
+    case 'macro':
+      return MACRO_PLAN_ALTERNATIVES[predicate.name] ?? [[]]
+    case 'literal':
+      return predicate.value ? [[]] : []
     case 'neq':
     case 'notIn':
-    case 'includes':
-    case 'hasPrefix':
+    case 'notExists':
     case 'hasSuffix':
     case 'hasTagWithPrefix':
     case 'not':
-      return
+      return [[]]
     default:
-      return
+      return [[]]
   }
-}
-
-function discriminatorBaseId(targetCategoryId: string): string {
-  return targetCategoryId
-    .replace(/_adjoining$/, '')
-    .replace(/_isolated$/, '')
-    .replace(/_advisory$/, '')
-    .replace(/_exclusive$/, '')
 }
 
 function findParentSpecAndRefining(targetCategoryId: string):
@@ -257,79 +330,83 @@ function findParentSpecAndRefining(targetCategoryId: string):
   return undefined
 }
 
-function discriminatorsForTarget(
-  parent: CategorySpec,
-  targetCategoryId: string,
-): GapDiscriminator[] {
-  if (!parent.gapDiscriminators?.length) return []
-  const baseId = discriminatorBaseId(targetCategoryId)
-  return parent.gapDiscriminators.filter((d) => {
-    const unlocked = resolveUnlockCategory(baseId, d.unlocksCategory)
-    return unlocked === targetCategoryId
-  })
-}
-
-function requirementsFromSpec(targetCategoryId: string, tags: OsmTags): TagRequirement[] {
+function targetAlternatives(targetCategoryId: string): PlanAlternative[] {
   const resolved = findParentSpecAndRefining(targetCategoryId)
   if (!resolved) return []
-
   const { parent, refining } = resolved
-  const requirements: TagRequirement[] = []
-
-  if (parent.match) {
-    collectFromPredicate(parent.match, tags, `Required for ${targetCategoryId}`, requirements)
-  }
-
-  if (refining) {
-    collectFromPredicate(
-      refining.match,
-      tags,
-      `Discriminator for ${targetCategoryId}`,
-      requirements,
-    )
-  }
-
-  for (const disc of discriminatorsForTarget(parent, targetCategoryId)) {
-    for (const value of disc.values) {
-      requirements.push({
-        key: disc.key,
-        values: [value],
-        reason: disc.reason,
-      })
-    }
-  }
-
-  const needsClarificationSpec = CATEGORY_SPECS.find((s) => s.id === 'needsClarification')
-  const baseForTarget = discriminatorBaseId(targetCategoryId)
-  if (needsClarificationSpec?.gapDiscriminators) {
-    for (const disc of needsClarificationSpec.gapDiscriminators) {
-      const unlocked = resolveUnlockCategory('', disc.unlocksCategory)
-      if (unlocked !== baseForTarget && unlocked !== targetCategoryId) continue
-      for (const value of disc.values) {
-        requirements.push({
-          key: disc.key,
-          values: [value],
-          reason: disc.reason,
-        })
-      }
-    }
-  }
-
-  return requirements
+  const base = parent.match
+    ? alternativesOf(parent.match, `Required for ${targetCategoryId}`)
+    : [[]]
+  if (!refining) return base
+  const refined = alternativesOf(refining.match, `Discriminator for ${targetCategoryId}`)
+  return base.flatMap((left) => refined.map((right) => [...left, ...right]))
 }
 
-function dedupeRequirements(requirements: TagRequirement[]): TagRequirement[] {
-  const byKey = new Map<string, TagRequirement>()
-  for (const req of requirements) {
-    const existing = byKey.get(req.key)
-    if (!existing) {
-      byKey.set(req.key, { ...req, values: [...req.values] })
-      continue
-    }
-    const values = new Set([...existing.values, ...req.values])
-    byKey.set(req.key, { ...existing, values: [...values], reason: existing.reason || req.reason })
+/** The traffic signs that settle `categoryId` on their own, and whether it works without a sign. */
+export interface CategorySignOptions {
+  /** Signs the planner writes for the category (`DE:240`); never `none` */
+  signs: string[]
+  /** Some alternative of the category needs no traffic sign (or `traffic_sign=none`) */
+  unsignedPossible: boolean
+}
+
+/** Which traffic signs settle `categoryId`, read from the category specs. */
+export function categorySignOptions(categoryId: string): CategorySignOptions {
+  const signs = new Set<string>()
+  let unsignedPossible = false
+  for (const alternative of targetAlternatives(categoryId)) {
+    const signAtoms = alternative.filter(
+      (atom) => atom.key === 'traffic_sign' && atom.value != null && !isNoSign(atom.value),
+    )
+    for (const atom of signAtoms) signs.add(atom.value!)
+    if (signAtoms.length === 0) unsignedPossible = true
   }
-  return [...byKey.values()]
+  return { signs: [...signs], unsignedPossible }
+}
+
+interface Candidate {
+  /** transformed key → value */
+  edits: Map<string, { value: string; reason: string }>
+  cost: number
+}
+
+function editCost(key: string, from: string | undefined, to: string, side: string): number {
+  if (key === 'highway') return 10
+  if (key === 'traffic_sign') {
+    if (from == null) return isNoSign(to) ? 1 : 4
+    return 5
+  }
+  if (from != null) return 3
+  // `cycleway=*` on a way of its own is a transformed-tag shape of road sides
+  if (key === 'cycleway' && side === 'self') return 3
+  return 1
+}
+
+function candidateFor(
+  alternative: PlanAlternative,
+  base: OsmTags,
+  fixedKeys: ReadonlySet<string>,
+  side: string,
+): Candidate | undefined {
+  const edits: Candidate['edits'] = new Map()
+  // Writable conditions first, so `exists` sees the values planned in the same alternative.
+  const ordered = [...alternative].sort(
+    (a, b) => Number(a.value === undefined) - Number(b.value === undefined),
+  )
+  let cost = 0
+  for (const atom of ordered) {
+    const planned = edits.get(atom.key)?.value
+    const current = planned ?? base[atom.key]
+    if (atom.accepts(current)) continue
+    if (planned !== undefined) return undefined // two conditions on one key contradict
+    if (atom.value === undefined) return undefined
+    if (atom.key.startsWith('_')) return undefined // derived by the processing, not a tag
+    if (fixedKeys.has(atom.key)) return undefined
+    if (atom.key === 'traffic_sign' && isNoSign(base.traffic_sign)) return undefined
+    edits.set(atom.key, { value: atom.value, reason: atom.reason })
+    cost += editCost(atom.key, base[atom.key], atom.value, side)
+  }
+  return { edits, cost }
 }
 
 function applyPlanToWayTags(
@@ -345,19 +422,6 @@ function applyPlanToWayTags(
     if (next[entry.key] == null) next[entry.key] = entry.value
   }
   return next
-}
-
-function trafficSignSatisfied(tags: OsmTags, value: string): boolean {
-  return tags.traffic_sign?.includes(value) === true
-}
-
-function pickPreferredValue(req: TagRequirement, tags: OsmTags): string {
-  if (req.key === 'traffic_sign') {
-    return req.values[0]!
-  }
-  const current = tagValue(tags, req.key)
-  if (current != null && req.values.includes(current)) return current
-  return req.values[0]!
 }
 
 export function listTargetCategories(options?: ListTargetCategoriesOptions): string[] {
@@ -390,6 +454,12 @@ export function listTargetCategories(options?: ListTargetCategoriesOptions): str
 
 export interface PlanTagsForCategoryOptions {
   side?: BikelaneResult['_side']
+  /**
+   * Tags the plan must contain, in transformed (bare) keys: `{ traffic_sign: 'DE:240' }`. They are
+   * written for the side (`cycleway:right:traffic_sign`) and may overwrite `traffic_sign=none`: a
+   * fixed tag is an explicit choice of the mapper (a mapping target).
+   */
+  fixed?: Record<string, string>
 }
 
 export class UnknownTargetCategoryError extends Error {
@@ -399,14 +469,20 @@ export class UnknownTargetCategoryError extends Error {
   }
 }
 
+const FIXED_REASON = 'Fixed tag of the mapping target'
+
 /**
  * Plan tag adds/changes to reach `targetCategoryId` for the given way and side.
  *
  * Returned keys use nested OSM form for left/right cycleway (and sidewalk) sides
  * (`cycleway:right:lane`); bare keys for self-side objects.
  *
- * Most predicate macros are not inverted; a small set (`bicycle_road_*`) has
- * preferred tag requirements. Remaining macros may still yield a `_category` conflict.
+ * - Tags that settle a category are alternatives: `segregated=yes` (with `bicycle` and `foot`) or
+ *   `traffic_sign=DE:241` is enough, the plan never asks for both. Plans that add no traffic sign
+ *   come first.
+ * - `traffic_sign=none` is never overwritten (unless `options.fixed` says so).
+ * - Macros the classifier evaluates imperatively have preferred tags (`MACRO_PLAN_ALTERNATIVES`);
+ *   the rest (e.g. `cyclewayOnHighwayProtected`) may still yield a `_category` conflict.
  */
 export function planTagsForCategory(
   wayTags: OsmTags,
@@ -419,12 +495,23 @@ export function planTagsForCategory(
   }
 
   const side = options?.side ?? 'self'
+  const fixed = options?.fixed ?? {}
   const transformed = findTransformedTags(wayTags, side)
   const prefix = transformed?._prefix ?? null
   const currentCategoryId = categorizeSide(wayTags, side)
   const tags = transformed ?? wayTags
 
-  if (currentCategoryId === targetCategoryId) {
+  const fixedAdd: TagPlanEntry[] = []
+  const fixedChange: TagChangeEntry[] = []
+  for (const [key, value] of Object.entries(fixed)) {
+    const writeKey = writeKeyForSide(key, side, prefix)
+    const current = wayTags[writeKey] ?? tags[key]
+    if (current === value) continue
+    if (current == null) fixedAdd.push({ key: writeKey, value, reason: FIXED_REASON })
+    else fixedChange.push({ key: writeKey, from: current, to: value, reason: FIXED_REASON })
+  }
+
+  if (currentCategoryId === targetCategoryId && !fixedAdd.length && !fixedChange.length) {
     return {
       targetCategoryId,
       currentCategoryId,
@@ -435,77 +522,115 @@ export function planTagsForCategory(
     }
   }
 
-  const requirements = dedupeRequirements(requirementsFromSpec(targetCategoryId, tags))
-  const add: TagPlanEntry[] = []
-  const change: TagChangeEntry[] = []
-  const conflicts: TagConflictEntry[] = []
+  const base: OsmTags = { ...tags, ...fixed }
+  const fixedKeys = new Set(Object.keys(fixed))
 
-  for (const req of requirements) {
-    const writeKey = writeKeyForSide(req.key, side, prefix)
-    const wayValue = wayTags[writeKey] ?? tags[req.key]
-    const transformedValue = tags[req.key]
+  // The empty alternative first: the fixed tags alone may be enough.
+  const candidates: Candidate[] = [{ edits: new Map(), cost: 0 }]
+  for (const alternative of targetAlternatives(targetCategoryId)) {
+    const candidate = candidateFor(alternative, base, fixedKeys, side)
+    if (candidate) candidates.push(candidate)
+  }
+  candidates.sort((a, b) => a.cost - b.cost) // stable: spec order breaks ties
 
-    if (req.key === 'traffic_sign') {
-      const satisfied = req.values.some((v) => trafficSignSatisfied(tags, v))
-      if (satisfied) continue
-      const preferred = pickPreferredValue(req, tags)
-      if (wayValue == null && transformedValue == null) {
-        add.push({ key: writeKey, value: preferred, reason: req.reason })
-      } else if (
-        transformedValue != null &&
-        !req.values.some((v) => transformedValue.includes(v))
-      ) {
-        change.push({
-          key: writeKey,
-          from: wayValue ?? transformedValue,
-          to: preferred,
-          reason: req.reason,
-        })
-      }
-      continue
+  const seen = new Set<string>()
+  let fallback: { add: TagPlanEntry[]; change: TagChangeEntry[]; result: string | null } | undefined
+
+  for (const candidate of candidates) {
+    const signature = [...candidate.edits.entries()]
+      .map(([k, v]) => `${k}=${v.value}`)
+      .sort()
+      .join(';')
+    if (seen.has(signature)) continue
+    seen.add(signature)
+
+    const add: TagPlanEntry[] = [...fixedAdd]
+    const change: TagChangeEntry[] = [...fixedChange]
+    for (const [key, edit] of candidate.edits) {
+      const writeKey = writeKeyForSide(key, side, prefix)
+      const current = wayTags[writeKey] ?? tags[key]
+      if (current == null) add.push({ key: writeKey, value: edit.value, reason: edit.reason })
+      else change.push({ key: writeKey, from: current, to: edit.value, reason: edit.reason })
     }
 
-    if (transformedValue != null && !req.values.includes(transformedValue)) {
-      change.push({
-        key: writeKey,
-        from: wayValue ?? transformedValue,
-        to: pickPreferredValue(req, tags),
-        reason: req.reason,
-      })
-      continue
+    const result = categorizeSide(applyPlanToWayTags(wayTags, add, change), side)
+    if (result === targetCategoryId) {
+      return { targetCategoryId, currentCategoryId, aligned: true, add, change, conflicts: [] }
     }
-
-    if (transformedValue == null && wayValue == null) {
-      add.push({
-        key: writeKey,
-        value: pickPreferredValue(req, tags),
-        reason: req.reason,
-      })
+    // The first candidate with edits explains best why the target is out of reach.
+    if (!fallback || (!fallback.add.length && !fallback.change.length)) {
+      fallback = { add, change, result }
     }
   }
 
-  const dryRunTags = applyPlanToWayTags(wayTags, add, change)
-  const resultCategory = categorizeSide(dryRunTags, side)
-  const aligned = resultCategory === targetCategoryId
-
-  if (!aligned) {
-    const suggested =
-      add.length > 0 || change.length > 0
-        ? 'Suggested tag edits are not enough to reach that classification.'
-        : 'No automatic tag edits could be derived for this category (often because it matches via a complex macro).'
-    conflicts.push({
-      key: '_category',
-      value: resultCategory ?? 'null',
-      reason: `${suggested} Target “${targetCategoryId}” would still classify as ${resultCategory ?? 'none'}.`,
-    })
-  }
-
+  const add = fallback?.add ?? []
+  const change = fallback?.change ?? []
+  const resultCategory = fallback?.result ?? currentCategoryId
+  const suggested =
+    add.length > 0 || change.length > 0
+      ? 'Suggested tag edits are not enough to reach that classification.'
+      : 'No automatic tag edits could be derived for this category (often because it matches via a complex macro).'
   return {
     targetCategoryId,
     currentCategoryId,
-    aligned,
+    aligned: false,
     add,
     change,
-    conflicts,
+    conflicts: [
+      {
+        key: '_category',
+        value: resultCategory ?? 'null',
+        reason: `${suggested} Target “${targetCategoryId}” would still classify as ${resultCategory ?? 'none'}.`,
+      },
+    ],
   }
+}
+
+function planSignature(plan: CategoryTagPlan): string {
+  return [
+    ...plan.add.map((e) => `+${e.key}=${e.value}`),
+    ...plan.change.map((e) => `~${e.key}=${e.to}`),
+  ]
+    .sort()
+    .join(';')
+}
+
+/**
+ * The ways to reach `targetCategoryId`, the plan of `planTagsForCategory` first (`default`).
+ * For categories a traffic sign can settle, further variants: `with_sign` (the sign of the
+ * category) and `without_sign` (`traffic_sign=none` plus the tags that say the same). Variants that
+ * do not reach the target or repeat an earlier one are left out.
+ */
+export function planTagVariantsForCategory(
+  wayTags: OsmTags,
+  targetCategoryId: string,
+  options?: PlanTagsForCategoryOptions,
+): CategoryTagPlanVariant[] {
+  const first = planTagsForCategory(wayTags, targetCategoryId, options)
+  const variants: CategoryTagPlanVariant[] = [{ ...first, variantId: 'default' }]
+  if (options?.fixed?.traffic_sign !== undefined) return variants
+
+  const { signs, unsignedPossible } = categorySignOptions(targetCategoryId)
+  if (!signs.length) return variants
+
+  const seen = new Set([planSignature(first)])
+  const push = (variantId: CategoryTagPlanVariantId, fixedSign: string) => {
+    const plan = planTagsForCategory(wayTags, targetCategoryId, {
+      ...options,
+      fixed: { ...options?.fixed, traffic_sign: fixedSign },
+    })
+    const signature = planSignature(plan)
+    if (!plan.aligned || seen.has(signature)) return
+    seen.add(signature)
+    variants.push({ ...plan, variantId })
+  }
+
+  const side = options?.side ?? 'self'
+  const currentSign = findTransformedTags(wayTags, side)?.traffic_sign
+  const signHolds = signs.some(
+    (sign) => currentSign != null && containsSubstring(currentSign, sign),
+  )
+  if (!signHolds) push('with_sign', signs[0]!)
+  if (unsignedPossible && !isNoSign(currentSign)) push('without_sign', 'none')
+  return variants
 }

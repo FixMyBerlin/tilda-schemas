@@ -134,13 +134,18 @@ export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'
 export type { CategoryGap, CategoryGapResult } from './categories/analyze-category-gaps.ts'
 export {
+  categorySignOptions,
   listTargetCategories,
   planTagsForCategory,
+  planTagVariantsForCategory,
   writeKeyForSide,
   UnknownTargetCategoryError,
 } from './categories/plan-tags-for-category.ts'
 export type {
+  CategorySignOptions,
   CategoryTagPlan,
+  CategoryTagPlanVariant,
+  CategoryTagPlanVariantId,
   ListTargetCategoriesOptions,
   PlanTagsForCategoryOptions,
   TagChangeEntry,

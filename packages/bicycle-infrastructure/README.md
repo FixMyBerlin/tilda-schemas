@@ -78,6 +78,8 @@ bun run check-exports
 - `test/spec.test.ts` — conformance against `schemas/**/fixtures` (via `test/load-spec.ts`)
 - `test/categories.smoke.test.ts` — cases ported from LUA `__tests__`
 
+Editor helpers (planner wrapper, required attributes, widths, extract and merge paths) are in [`@tilda-geo/bicycle-infrastructure-tagging`](../bicycle-infrastructure-tagging/). `planTagsForCategory` stays here because it needs the category specs; the tagging package depends on this one.
+
 Berlin corpus check (category agreement ~100%): see the **internal** [reconciliation](../bicycle-infrastructure-reconciliation/) package.
 
 Releases use [changesets](https://github.com/changesets/changesets), see [`.changeset/README.md`](../../.changeset/README.md) and the root README **Release** section.

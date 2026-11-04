@@ -42,6 +42,13 @@ export interface BikelaneResult {
   _infrastructureExists: boolean
   category: string
   oneway?: string
+  /**
+   * Whether the published line runs against the OSM way (`_line_reversed` in LUA).
+   * follows tilda-geo-private#34 (not merged yet).
+   */
+  _lineReversed?: boolean
+  /** Sideways offset in meters of left|right lanes, signed relative to the published line. */
+  offset?: number
   surface?: string | null
   surface_source?: string | null
   surface_confidence?: string | null

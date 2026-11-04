@@ -55,6 +55,14 @@
       "type": ["string", "null"],
       "enum": ["yes", "no", "car_not_bike", "assumed_no", "implicit_yes", null]
     },
+    "_lineReversed": {
+      "description": "Whether the published line runs against the OSM way (`_line_reversed` in LUA). One-way lines point in the riding direction, `car_not_bike` lines in the motor direction, two-way lines keep the side convention (left against the way, right and self with it). Follows tilda-geo-private#34 (not merged yet).",
+      "type": "boolean"
+    },
+    "offset": {
+      "description": "Sideways offset in meters of a left|right lane, signed relative to the published line (+ left / - right of its direction). Half the road width. Follows tilda-geo-private#34 (not merged yet).",
+      "type": ["number", "null"]
+    },
     "surface": {
       "type": ["string", "null"],
       "enum": [

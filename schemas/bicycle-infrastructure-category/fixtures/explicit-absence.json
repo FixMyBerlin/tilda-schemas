@@ -16,5 +16,24 @@
     "input": { "highway": "residential", "oneway": "yes", "cycleway": "lane" },
     "select": { "side": "left", "prefix": "cycleway" },
     "expect": { "category": "not_expected", "_infrastructureExists": false }
+  },
+  {
+    "name": "implicit cycleway=lane on oneway=-1 road → right side is not_expected",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": { "highway": "residential", "oneway": "-1", "cycleway": "lane" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "not_expected", "_infrastructureExists": false }
+  },
+  {
+    "name": "implicit cycleway=lane on oneway=-1 road with oneway:bicycle=no → both sides expected",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "-1",
+      "oneway:bicycle": "no",
+      "cycleway": "lane"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "_infrastructureExists": true }
   }
 ]

@@ -1,10 +1,11 @@
 import { categorizeBikelane } from './categories/bikelane-categories.ts'
-import { deriveOneway } from './derive/derive-oneway.ts'
+import { deriveOnewayDirection } from './derive/derive-oneway.ts'
 import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
 import { deriveBikelaneSurface } from './derive/derive-surface.ts'
 import { deriveTrafficMode } from './derive/derive-traffic-mode.ts'
 import { deriveTrafficSigns } from './derive/derive-traffic-signs.ts'
 import { parseWidth } from './helpers/parse-length.ts'
+import { roadWidth } from './helpers/road-width.ts'
 import { separation, marking, buffer, surfaceColor } from './sanitize/sanitize-road-tags.ts'
 import { prepareTags } from './transform/prepare-tags.ts'
 import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
@@ -49,7 +50,17 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
     }
 
     if (category.infrastructureExists) {
-      result.oneway = deriveOneway(t, category)
+      // follows tilda-geo-private#34 (not merged yet): riding direction and line direction.
+      const direction = deriveOnewayDirection(t, category)
+      result.oneway = direction.oneway
+      result._lineReversed = direction.lineReversed
+      if (t._side === 'left' || t._side === 'right') {
+        // Sideways offset in meters, signed relative to the published line (+ left / - right of its
+        // direction). A left lane lies to the right of its line when the line runs against the way,
+        // so in right-hand traffic the usual value is negative on both sides of the road.
+        const laneLeftOfLine = (t._side === 'left') !== direction.lineReversed
+        result.offset = ((laneLeftOfLine ? 1 : -1) * roadWidth(t._parent ?? tags)) / 2
+      }
       result.width = parseWidth(t.width) ?? null
       result.surface_color = clean(surfaceColor(t))
       result.separation_left = clean(separation(t, 'left'))

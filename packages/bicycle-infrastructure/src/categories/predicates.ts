@@ -99,10 +99,18 @@ export function crossing(tags: OsmTags): boolean | undefined {
   return isCrossingPattern(tags) || undefined
 }
 
+/**
+ * `not_expected`: on a oneway road the side against the flow has no infrastructure by default.
+ * `oneway=-1` flows against the way, so there it is the right side (follows tilda-geo-private#34,
+ * not merged yet).
+ */
 export function implicitOneWay(tags: OsmTags): boolean | undefined {
   let result = tags._prefix === 'cycleway' && tags._infix === ''
-  result = result && tags._parent?.oneway === 'yes' && tags._parent?.['oneway:bicycle'] !== 'no'
-  result = result && tags._side === 'left'
+  result = result && tags._parent?.['oneway:bicycle'] !== 'no'
+  result =
+    result &&
+    ((tags._parent?.oneway === 'yes' && tags._side === 'left') ||
+      (tags._parent?.oneway === '-1' && tags._side === 'right'))
   return result || undefined
 }
 

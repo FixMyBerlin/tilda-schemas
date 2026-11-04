@@ -69,26 +69,45 @@ export function transformLifecycleTags(tags: OsmTags): void {
   }
 }
 
+/**
+ * Where the contraflow lane|track of a oneway road lies and which `cycleway:<side>:oneway` says
+ * "against the road direction". `oneway=-1` flows against the way, so both are mirrored.
+ * Mirrored `oneway=-1` and the explicit side direction follow tilda-geo-private#34 (not merged yet).
+ */
+const CONTRAFLOW: Record<
+  string,
+  { side: 'left' | 'right'; otherSide: 'left' | 'right'; oneway: string }
+> = {
+  yes: { side: 'left', otherSide: 'right', oneway: '-1' },
+  '-1': { side: 'right', otherSide: 'left', oneway: 'yes' },
+}
+
+const OPPOSITE_INFRASTRUCTURE: Record<string, string> = {
+  opposite_lane: 'lane',
+  opposite_track: 'track',
+}
+
 /** transform_cycleway_opposite_schema.lua — `cycleway=opposite*` → oneway schema. */
 export function transformCyclewayOppositeSchema(tags: OsmTags): void {
-  if (tags.oneway !== 'yes') return
+  const direction = tags.oneway === undefined ? undefined : CONTRAFLOW[tags.oneway]
+  if (direction === undefined) return
 
   if (tags.cycleway === 'opposite') {
     tags.cycleway = 'no'
     tags['oneway:bicycle'] = 'no'
     return
   }
-  if (tags.cycleway === 'opposite_lane') {
+
+  const infrastructure =
+    tags.cycleway === undefined ? undefined : OPPOSITE_INFRASTRUCTURE[tags.cycleway]
+  if (infrastructure !== undefined) {
+    const sideKey = `cycleway:${direction.side}`
+    const sideOnewayKey = `${sideKey}:oneway`
     tags.cycleway = undefined
-    tags['cycleway:right'] = 'no'
-    tags['cycleway:left'] = 'lane'
-    tags['oneway:bicycle'] = 'no'
-    return
-  }
-  if (tags.cycleway === 'opposite_track') {
-    tags.cycleway = undefined
-    tags['cycleway:right'] = 'no'
-    tags['cycleway:left'] = 'track'
+    tags[`cycleway:${direction.otherSide}`] = 'no'
+    tags[sideKey] = infrastructure
+    // Explicit, because the default on a oneway road is "with the road direction" on both sides.
+    tags[sideOnewayKey] = tags[sideOnewayKey] ?? direction.oneway
     tags['oneway:bicycle'] = 'no'
   }
 }

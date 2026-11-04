@@ -49,5 +49,421 @@
     },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "oneway": "implicit_yes" }
+  },
+  {
+    "name": "oneway=-1 on a separate way is an explicit oneway against the way",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "oneway": "-1" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "yes", "_lineReversed": true, "offset": null }
+  },
+  {
+    "name": "oneway=1 is the same as oneway=yes",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "oneway": "1" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "yes", "_lineReversed": false }
+  },
+  {
+    "name": "oneway=yes runs with the way",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "oneway": "yes" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "yes", "_lineReversed": false }
+  },
+  {
+    "name": "oneway:bicycle=-1 is an explicit oneway against the way",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "oneway:bicycle": "-1" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "yes", "_lineReversed": true }
+  },
+  {
+    "name": "oneway:bicycle=no on a oneway=-1 way → car_not_bike, line along the motor direction (tilda-geo ef8fcdebf)",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "oneway": "-1",
+      "oneway:bicycle": "no"
+    },
+    "select": { "side": "self" },
+    "expect": { "oneway": "car_not_bike", "_lineReversed": true }
+  },
+  {
+    "name": "oneway:bicycle=no on a oneway=yes way → car_not_bike, line with the way",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "oneway": "yes",
+      "oneway:bicycle": "no"
+    },
+    "select": { "side": "self" },
+    "expect": { "oneway": "car_not_bike", "_lineReversed": false }
+  },
+  {
+    "name": "bicycle road on a oneway=-1 road with oneway:bicycle=no → car_not_bike",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "oneway": "-1",
+      "oneway:bicycle": "no"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "bicycleRoad", "oneway": "car_not_bike", "_lineReversed": true }
+  },
+  {
+    "name": "missing oneway keeps the category default and runs with the way (implicit_yes)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:240" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "implicit_yes", "_lineReversed": false }
+  },
+  {
+    "name": "missing oneway keeps the category default and runs with the way (assumed_no)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237" },
+    "select": { "side": "self" },
+    "expect": { "oneway": "assumed_no", "_lineReversed": false }
+  },
+  {
+    "name": "missing oneway on a service way is assumed_no even for a shared path",
+    "input": {
+      "highway": "service",
+      "service": "emergency_access",
+      "bicycle": "designated",
+      "foot": "designated",
+      "segregated": "no",
+      "motor_vehicle": "no"
+    },
+    "select": { "side": "self" },
+    "expect": {
+      "category": "footAndCyclewayShared_isolated",
+      "oneway": "assumed_no",
+      "_lineReversed": false
+    }
+  },
+  {
+    "name": "oneway=-1 uses traffic_sign:backward",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "cycleway",
+      "oneway": "-1",
+      "traffic_sign:forward": "DE:240",
+      "traffic_sign:backward": "DE:237"
+    },
+    "select": { "side": "self" },
+    "expect": {
+      "category": "cycleway_adjoiningOrIsolated",
+      "traffic_sign": "DE:237",
+      "oneway": "yes",
+      "_lineReversed": true
+    }
+  },
+  {
+    "name": "oneway=yes uses traffic_sign:forward",
+    "input": {
+      "highway": "cycleway",
+      "oneway": "yes",
+      "traffic_sign:forward": "DE:237",
+      "traffic_sign:backward": "DE:240"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoiningOrIsolated", "traffic_sign": "DE:237" }
+  },
+  {
+    "name": "lanes on a two-way road without cycleway:<side>:oneway: default direction per side",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "track",
+      "cycleway:both:segregated": "no",
+      "cycleway:both:traffic_sign": "DE:240"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": true, "offset": -4 }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": false, "offset": -4 }
+      }
+    ]
+  },
+  {
+    "name": "the documented defaults tagged explicitly (left=-1, right=yes): explicit yes, same direction",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "advisory",
+      "cycleway:left:oneway": "-1",
+      "cycleway:right:oneway": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": true, "offset": -4 }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": false, "offset": -4 }
+      }
+    ]
+  },
+  {
+    "name": "cycleway:left:oneway=yes is followed literally: with the way, lane to the left of its line",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "advisory",
+      "cycleway:left:oneway": "yes"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "yes", "_lineReversed": false, "offset": 4 }
+  },
+  {
+    "name": "cycleway:right:oneway=-1 is followed literally: against the way, lane to the left of its line",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:oneway": "-1"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "oneway": "yes", "_lineReversed": true, "offset": 4 }
+  },
+  {
+    "name": "cycleway:both:oneway=yes: only the left side runs against its default",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive",
+      "cycleway:both:oneway": "yes"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": false, "offset": 4 }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": false, "offset": -4 }
+      }
+    ]
+  },
+  {
+    "name": "cycleway:both:oneway=yes with cycleway:left:oneway=-1 is the default direction",
+    "input": {
+      "highway": "secondary",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive",
+      "cycleway:both:oneway": "yes",
+      "cycleway:left:oneway": "-1"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": true, "offset": -4 }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "yes", "_lineReversed": false, "offset": -4 }
+      }
+    ]
+  },
+  {
+    "name": "two-way track (cycleway:left:oneway=no) keeps the side convention",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "track",
+      "cycleway:left:oneway": "no",
+      "cycleway:left:traffic_sign": "DE:237"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": {
+      "category": "cycleway_adjoining",
+      "oneway": "no",
+      "_lineReversed": true,
+      "offset": -4
+    }
+  },
+  {
+    "name": "two-way track on a oneway road keeps the side convention",
+    "input": {
+      "highway": "secondary",
+      "oneway": "yes",
+      "cycleway:left": "track",
+      "cycleway:left:oneway": "no",
+      "cycleway:left:traffic_sign": "DE:237"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "no", "_lineReversed": true }
+  },
+  {
+    "name": "offset follows est_width and width of the road, not of the lane",
+    "input": {
+      "highway": "residential",
+      "width": "7",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:width": "1.5"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "width": 1.5, "offset": -3.5 }
+  },
+  {
+    "name": "oneway=yes road: left lane without cycleway:left:oneway runs with the road (wiki default)",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "oneway": "yes",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "implicit_yes", "_lineReversed": false, "offset": 4 }
+  },
+  {
+    "name": "oneway=yes road: both sides default to with the road",
+    "input": {
+      "highway": "secondary",
+      "oneway": "yes",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": false }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": false }
+      }
+    ]
+  },
+  {
+    "name": "oneway=yes road with oneway:bicycle=no: the left lane is the contraflow lane (German mapping guide)",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "implicit_yes", "_lineReversed": true, "offset": -3 }
+  },
+  {
+    "name": "contraflow lane with cycleway:left:oneway=-1 runs against the road",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:left:oneway": "-1",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "yes", "_lineReversed": true, "offset": -3 }
+  },
+  {
+    "name": "contraflow lane with cycleway:left:oneway=yes is followed literally",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "cycleway:left:oneway": "yes",
+      "cycleway:right": "no"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "oneway": "yes", "_lineReversed": false }
+  },
+  {
+    "name": "oneway=yes road with oneway:bicycle=no: the right lane flows with the road",
+    "input": {
+      "highway": "residential",
+      "oneway": "yes",
+      "oneway:bicycle": "no",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "oneway": "implicit_yes", "_lineReversed": false }
+  },
+  {
+    "name": "oneway=-1 road: both sides default to against the road",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "oneway": "-1",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": true }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": true }
+      }
+    ]
+  },
+  {
+    "name": "oneway=-1 road with oneway:bicycle=no: the right lane is the contraflow lane",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "residential",
+      "oneway": "-1",
+      "oneway:bicycle": "no",
+      "cycleway:both": "lane",
+      "cycleway:both:lane": "exclusive"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": true }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "oneway": "implicit_yes", "_lineReversed": false }
+      }
+    ]
+  },
+  {
+    "name": "oneway=-1 road: cycleway=lane is expected on the left only (mirrored), line against the road",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": {
+      "highway": "secondary",
+      "oneway": "-1",
+      "cycleway": "lane",
+      "cycleway:lane": "exclusive"
+    },
+    "expectFeatures": [
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "category": "not_expected" }
+      },
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "category": "cyclewayOnHighway_exclusive", "_lineReversed": true, "offset": -4 }
+      }
+    ]
+  },
+  {
+    "name": "shared lane tagged on the road also gets the side default (implicit_yes)",
+    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "input": { "highway": "residential", "cycleway:right": "shared_lane" },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": {
+      "category": "sharedMotorVehicleLane",
+      "oneway": "implicit_yes",
+      "_lineReversed": false
+    }
   }
 ]

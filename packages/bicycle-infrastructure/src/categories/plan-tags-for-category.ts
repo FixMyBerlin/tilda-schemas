@@ -151,6 +151,13 @@ const eqAtom = (key: string, value: string, reason: string): PlanAtom => ({
   reason,
 })
 
+const footwayOrPath: PlanAtom = {
+  key: 'highway',
+  accepts: (v) => v === 'footway' || v === 'path',
+  value: 'footway',
+  reason: 'Footway with bicycles allowed',
+}
+
 /**
  * Alternatives for macros that the classifier evaluates imperatively. Each entry is a list of
  * alternatives (any one is enough). Macros without an entry are opaque: the planner writes nothing
@@ -198,8 +205,9 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
     ],
   ],
   footway_bicycle_yes: [
-    [eqAtom('bicycle', 'yes', 'Bicycle allowed on footway')],
+    [footwayOrPath, eqAtom('bicycle', 'yes', 'Bicycle allowed on footway')],
     [
+      footwayOrPath,
       {
         key: 'traffic_sign',
         accepts: (v) => containsSubstring(v, '1022-10'),

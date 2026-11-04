@@ -19,19 +19,19 @@ ESM only. `@tilda-geo/bicycle-infrastructure` is a dependency.
 
 ## What it does
 
-| Area                                                                     | What for                                                                                                               |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `pathRole`                                                               | One definition of "path for foot and bicycle": mapped on the centerline, as one line or as two lines.                  |
-| `planCategoryChange`                                                     | The tags to add, change or remove so that a way or road side gets a TILDA category.                                    |
-| `MAPPING_TARGETS`, `planForMappingTarget`                                | What a mapper picks: a TILDA category plus fixed tags (signed / unsigned), grouped like tilda-geo's map legend.        |
-| `requiredAttributes`, `roadAttributes`, `tildaQaState`, `reminders`      | The attributes a dataset needs per category, their state (tagged, inherited, guessed, missing), how complete a way is. |
-| `profiles/radnetz-berlin`                                                | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders.         |
-| `roadWidthFromTags`, `partWidthMode`, ...                                | Fallback widths, which width keys exist, whether part widths add up.                                                   |
-| `extractOptions`, `planExtraction`, `mergeSelection`, `combinedPathTags` | Tags for extracting a road side into a way of its own and for merging cycleway and footway.                            |
-| `cyclewayOnewayFindings`                                                 | The first validation rule: `cycleway:<side>:oneway` that is wrong or repeats the default.                              |
-| `TILDA_LABELS`, `categoryLabel`, `groupCategories`                       | German category names and groups as data, no localizer.                                                                |
+| Area                                                                     | What for                                                                                                                                         |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pathRole`                                                               | One definition of "path for foot and bicycle": mapped on the centerline, as one line or as two lines.                                            |
+| `planCategoryChange`                                                     | The tags to add, change or remove so that a way or road side gets a TILDA category.                                                              |
+| `MAPPING_TARGETS`, `planForMappingTarget`                                | What a mapper picks: a TILDA category plus fixed tags (signed / unsigned), grouped like tilda-geo's map legend.                                  |
+| `requiredAttributes`, `roadAttributes`, `tildaQaState`, `reminders`      | The attributes a dataset needs per category, their state (tagged, inherited, guessed, missing), how complete a way is.                           |
+| `profiles/radnetz-berlin`                                                | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders.                                   |
+| `roadWidthFromTags`, `partWidthMode`, ...                                | Fallback widths, which width keys exist, whether part widths add up.                                                                             |
+| `extractOptions`, `planExtraction`, `mergeSelection`, `combinedPathTags` | Tags for extracting a road side into a way of its own and for merging cycleway and footway.                                                      |
+| `validateTags`, `RULES`, `MESSAGES` (`/validation`)                      | 26 validation rules (the todos of tilda-geo and the rules of the Radnetz Berlin editor): findings with severity, keys, a message code and fixes. |
+| `TILDA_LABELS`, `categoryLabel`, `groupCategories`                       | German category names and groups as data, no localizer.                                                                                          |
 
-Messages are codes with parameters (`geometry_lane_needs_road`, `cycleway_oneway_wrong`), never sentences: the app writes the text.
+Messages are codes with parameters (`geometry_lane_needs_road`, `cycleway_oneway_wrong`), never sentences: the app writes the text. The validation rules bring their texts (de, en) as data: see [validation-rules.md](../../docs/validation-rules.md).
 
 Riding direction follows tilda-geo-private#34 (not merged yet), as the core package does.
 

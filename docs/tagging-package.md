@@ -4,15 +4,16 @@
 
 ## Where the fork files went
 
-| Fork file                                                                 | Package                                                                        |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `tilda/category_plan.ts`                                                  | `planner/category-plan.ts` (`planCategoryChange`, `planCategoryVariants`, ...) |
-| `tilda/category_labels.ts`, `data/tilda_labels.de.json`, update script    | `labels/`, `scripts/update-labels.ts`                                          |
-| `tilda/required_attributes.ts`, `qa_state.ts`, `reminders.ts`             | `requirements/`; the dataset's data is `profiles/radnetz-berlin.ts`            |
-| `width/width_tags.ts`, `part_widths.ts`                                   | `widths/`                                                                      |
-| `sidepath/extract_tags.ts`, `merge_tags.ts`                               | `sidepath/`                                                                    |
-| `validations/cycleway_side_oneway.ts` (the pure `cyclewayOnewayFindings`) | `validations/cycleway-oneway.ts`                                               |
-| three definitions of "foot and cycle path"                                | `path-role.ts`                                                                 |
+| Fork file                                                                 | Package                                                                                           |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `tilda/category_plan.ts`                                                  | `planner/category-plan.ts` (`planCategoryChange`, `planCategoryVariants`, ...)                    |
+| `tilda/category_labels.ts`, `data/tilda_labels.de.json`, update script    | `labels/`, `scripts/update-labels.ts`                                                             |
+| `tilda/required_attributes.ts`, `qa_state.ts`, `reminders.ts`             | `requirements/`; the dataset's data is `profiles/radnetz-berlin.ts`                               |
+| `width/width_tags.ts`, `part_widths.ts`                                   | `widths/`                                                                                         |
+| `sidepath/extract_tags.ts`, `merge_tags.ts`                               | `sidepath/`                                                                                       |
+| `validations/cycleway_side_oneway.ts` (the pure `cyclewayOnewayFindings`) | `validations/cycleway-oneway.ts`, as rules in `validations/radnetz-rules.ts`                      |
+| `validations/width_parts.ts`                                              | `validations/radnetz-rules.ts`; the whole rule system: [validation-rules.md](validation-rules.md) |
+| three definitions of "foot and cycle path"                                | `path-role.ts`                                                                                    |
 
 `planTagsForCategory` stays in the core (it needs the category specs; moving it would make the core depend on the tagging package for its re-export). The tagging package wraps it.
 

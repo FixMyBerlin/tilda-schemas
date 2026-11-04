@@ -4,6 +4,7 @@ import {
   listTargetCategories,
   planTagVariantsForCategory,
   planTagsForCategory,
+  TAG_REASON_CODES,
   processBikelanes,
   isIncompleteCategoryId,
   CATEGORY_DEFINITIONS,
@@ -236,4 +237,64 @@ test('protected lane: a protective separation from the spec', () => {
   const plan = planTagsForCategory(tags, 'cyclewayOnHighwayProtected', { side: 'right' })
   expect(entries(plan)).toEqual(['cycleway:right:separation:left=bollard'])
   expect(plan.aligned).toBe(true)
+})
+
+describe('reason codes', () => {
+  test('every entry has a reasonCode from TAG_REASON_CODES, the English reason stays', () => {
+    const cases: [Record<string, string>, string, { side?: 'left' | 'right' | 'self' }?][] = [
+      [{ highway: 'cycleway' }, 'footAndCyclewaySegregated_adjoining'],
+      [{ highway: 'cycleway' }, 'cycleway_isolated'],
+      [{ highway: 'path' }, 'bicycleRoad'],
+      [{ highway: 'path' }, 'bicycleRoad_vehicleDestination'],
+      [{ highway: 'path' }, 'footwayBicycleYes_adjoining'],
+      [
+        { highway: 'residential', 'cycleway:right': 'lane' },
+        'cyclewayOnHighway_exclusive',
+        { side: 'right' },
+      ],
+      [{ highway: 'residential' }, 'cyclewayOnHighwayProtected', { side: 'right' }],
+      [{ highway: 'residential' }, 'cyclewayOnHighwayBetweenLanes', { side: 'right' }],
+      [{ highway: 'path' }, 'crossing'],
+    ]
+    const seen = new Set<string>()
+    for (const [tags, target, options] of cases) {
+      const plan = planTagsForCategory(tags, target, options)
+      for (const entry of [...plan.add, ...plan.change, ...plan.conflicts]) {
+        expect(TAG_REASON_CODES).toContain(entry.reasonCode)
+        expect(entry.reason.length).toBeGreaterThan(0)
+        seen.add(entry.reasonCode)
+      }
+    }
+    expect(seen.has('required_for_category')).toBe(true)
+    // `required_for_category` names the category, so the app can write "needed for X"
+    const plan = planTagsForCategory({ highway: 'cycleway' }, 'footAndCyclewaySegregated_adjoining')
+    expect(plan.add[0]).toMatchObject({
+      reasonCode: 'required_for_category',
+      reasonParams: { category: 'footAndCyclewaySegregated_adjoining' },
+    })
+  })
+
+  test('a fixed tag of a mapping target says so', () => {
+    const plan = planTagsForCategory(
+      { highway: 'path', bicycle: 'designated', foot: 'designated' },
+      'footAndCyclewayShared_isolated',
+      {
+        fixed: { traffic_sign: 'none' },
+      },
+    )
+    expect(plan.add).toContainEqual(
+      expect.objectContaining({ key: 'traffic_sign', reasonCode: 'fixed_by_mapping_target' }),
+    )
+  })
+
+  test('a conflict carries target and result', () => {
+    const plan = planTagsForCategory({ highway: 'residential' }, 'cyclewayOnHighwayBetweenLanes', {
+      side: 'right',
+    })
+    expect(plan.aligned).toBe(false)
+    expect(plan.conflicts[0]).toMatchObject({
+      reasonCode: expect.stringMatching(/^plan_(not_enough|no_edits)$/),
+      reasonParams: { target: 'cyclewayOnHighwayBetweenLanes' },
+    })
+  })
 })

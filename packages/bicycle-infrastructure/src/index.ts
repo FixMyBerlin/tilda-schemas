@@ -140,6 +140,7 @@ export {
   listTargetCategories,
   planTagsForCategory,
   planTagVariantsForCategory,
+  TAG_REASON_CODES,
   writeKeyForSide,
   UnknownTargetCategoryError,
 } from './categories/plan-tags-for-category.ts'
@@ -153,6 +154,8 @@ export type {
   TagChangeEntry,
   TagConflictEntry,
   TagPlanEntry,
+  TagReason,
+  TagReasonCode,
 } from './categories/plan-tags-for-category.ts'
 export {
   CATEGORY_SPECS,

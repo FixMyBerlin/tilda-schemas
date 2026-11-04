@@ -25,23 +25,31 @@ import {
 } from './category-specs.ts'
 import { type TagPredicate } from './tag-predicate.ts'
 
-export interface TagPlanEntry {
-  key: string
-  value: string
+/**
+ * Why a tag is planned: `reason` is an English sentence, `reasonCode` a stable code for apps that
+ * write their own text (for example `required_for_category`), `reasonParams` fills its placeholders.
+ * The codes are listed in `TAG_REASON_CODES`.
+ */
+export interface TagReason {
   reason: string
+  reasonCode: TagReasonCode
+  reasonParams?: Record<string, string>
 }
 
-export interface TagChangeEntry {
+export interface TagPlanEntry extends TagReason {
+  key: string
+  value: string
+}
+
+export interface TagChangeEntry extends TagReason {
   key: string
   from: string
   to: string
-  reason: string
 }
 
-export interface TagConflictEntry {
+export interface TagConflictEntry extends TagReason {
   key: string
   value: string
-  reason: string
 }
 
 export interface CategoryTagPlan {
@@ -71,6 +79,36 @@ export interface ListTargetCategoriesOptions {
   fromIncomplete?: boolean
 }
 
+/** The codes of `TagReason.reasonCode`; `{x}` names a parameter. */
+export const TAG_REASON_CODES = [
+  /** `{category}`: a tag the category needs */
+  'required_for_category',
+  /** `{category}`: a tag that tells the refined category apart */
+  'discriminator_for_category',
+  'fixed_by_mapping_target',
+  'bicycle_road',
+  'bicycle_road_sign',
+  'vehicle_destination',
+  'bicycle_road_sign_vehicle_destination',
+  'unsigned_cycleway',
+  'unsigned_cycleway_no_sign',
+  'footway_bicycles_allowed',
+  'bicycle_allowed_on_footway',
+  'footway_sign_bicycles_allowed',
+  'on_highway_cycle_lane',
+  'bus_lane_with_bicycles',
+  'cycle_lane_shared_with_buses',
+  'protected_lane_separation',
+  'protected_lane_parking',
+  'cycleway_crossing',
+  /** conflict, `{target}` `{result}`: the suggested edits do not reach the target */
+  'plan_not_enough',
+  /** conflict, `{target}` `{result}`: nothing could be derived */
+  'plan_no_edits',
+] as const
+
+export type TagReasonCode = (typeof TAG_REASON_CODES)[number]
+
 /** One tag condition of an alternative. `value` is what the planner writes when it does not hold. */
 interface PlanAtom {
   key: string
@@ -78,6 +116,8 @@ interface PlanAtom {
   /** Value to write; `undefined` when the condition cannot be written (`exists`) */
   value?: string
   reason: string
+  reasonCode: TagReasonCode
+  reasonParams?: Record<string, string>
 }
 
 /** An alternative: all atoms together are enough for the match. */
@@ -144,11 +184,17 @@ function isNoSign(value: string | undefined): boolean {
   return value === 'none' || value === 'no'
 }
 
-const eqAtom = (key: string, value: string, reason: string): PlanAtom => ({
+const eqAtom = (
+  key: string,
+  value: string,
+  reason: string,
+  reasonCode: TagReasonCode,
+): PlanAtom => ({
   key,
   accepts: (v) => v === value,
   value,
   reason,
+  reasonCode,
 })
 
 const footwayOrPath: PlanAtom = {
@@ -156,6 +202,7 @@ const footwayOrPath: PlanAtom = {
   accepts: (v) => v === 'footway' || v === 'path',
   value: 'footway',
   reason: 'Footway with bicycles allowed',
+  reasonCode: 'footway_bicycles_allowed',
 }
 
 /**
@@ -165,23 +212,25 @@ const footwayOrPath: PlanAtom = {
  */
 const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
   bicycle_road_base: [
-    [eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road')],
+    [eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road', 'bicycle_road')],
     [
       {
         key: 'traffic_sign',
         accepts: (v) => hasPrefix(v, 'DE:244'),
         value: 'DE:244.1',
         reason: 'Fahrradstraße sign (DE:244.1)',
+        reasonCode: 'bicycle_road_sign',
       },
     ],
   ],
   bicycle_road_vehicle_destination: [
     [
-      eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road'),
+      eqAtom('bicycle_road', 'yes', 'Fahrradstraße / bicycle road', 'bicycle_road'),
       eqAtom(
         'vehicle',
         'destination',
         'Motor vehicles only for destination traffic (Anlieger frei)',
+        'vehicle_destination',
       ),
     ],
     [
@@ -190,22 +239,27 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
         accepts: (v) => hasPrefix(v, 'DE:244') && containsSubstring(v, '1020-30'),
         value: 'DE:244.1,1020-30',
         reason: 'Fahrradstraße sign with Anlieger frei (DE:244.1,1020-30)',
+        reasonCode: 'bicycle_road_sign_vehicle_destination',
       },
     ],
   ],
   unsigned_cycleway: [
     [
-      eqAtom('highway', 'cycleway', 'Unsigned cycleway'),
+      eqAtom('highway', 'cycleway', 'Unsigned cycleway', 'unsigned_cycleway'),
       {
         key: 'traffic_sign',
         accepts: isNoSign,
         value: 'none',
         reason: 'Unsigned cycleway (traffic_sign=none)',
+        reasonCode: 'unsigned_cycleway_no_sign',
       },
     ],
   ],
   footway_bicycle_yes: [
-    [footwayOrPath, eqAtom('bicycle', 'yes', 'Bicycle allowed on footway')],
+    [
+      footwayOrPath,
+      eqAtom('bicycle', 'yes', 'Bicycle allowed on footway', 'bicycle_allowed_on_footway'),
+    ],
     [
       footwayOrPath,
       {
@@ -213,30 +267,42 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
         accepts: (v) => containsSubstring(v, '1022-10'),
         value: 'DE:239,1022-10',
         reason: 'Footway sign with bicycles allowed (DE:239,1022-10)',
+        reasonCode: 'footway_sign_bicycles_allowed',
       },
     ],
   ],
   cycleway_on_highway_advisory_or_exclusive_base: [
     [
-      eqAtom('highway', 'cycleway', 'On-highway cycle lane'),
+      eqAtom('highway', 'cycleway', 'On-highway cycle lane', 'on_highway_cycle_lane'),
       {
         key: 'cycleway',
         accepts: (v) => v === 'lane' || v === 'opposite_lane',
         value: 'lane',
         reason: 'On-highway cycle lane',
+        reasonCode: 'on_highway_cycle_lane',
       },
     ],
   ],
   shared_bus_lane_bus_with_bike: [
     [
-      eqAtom('highway', 'cycleway', 'Bus lane with bicycles allowed'),
-      eqAtom('cycleway', 'share_busway', 'Bus lane with bicycles allowed'),
+      eqAtom('highway', 'cycleway', 'Bus lane with bicycles allowed', 'bus_lane_with_bicycles'),
+      eqAtom(
+        'cycleway',
+        'share_busway',
+        'Bus lane with bicycles allowed',
+        'bus_lane_with_bicycles',
+      ),
     ],
   ],
   shared_bus_lane_bike_with_bus: [
     [
-      eqAtom('highway', 'cycleway', 'Cycle lane shared with buses'),
-      eqAtom('lane', 'share_busway', 'Cycle lane shared with buses'),
+      eqAtom('highway', 'cycleway', 'Cycle lane shared with buses', 'cycle_lane_shared_with_buses'),
+      eqAtom(
+        'lane',
+        'share_busway',
+        'Cycle lane shared with buses',
+        'cycle_lane_shared_with_buses',
+      ),
     ],
   ],
   cycleway_on_highway_protected: [
@@ -246,14 +312,22 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
         accepts: (v) => v != null && (PROTECTIVE_SEPARATION as readonly string[]).includes(v),
         value: PROTECTIVE_SEPARATION[0],
         reason: 'Protected cycle lane: physical separation towards the road',
+        reasonCode: 'protected_lane_separation',
       },
     ],
-    [eqAtom('traffic_mode:left', 'parking', 'Protected cycle lane: parking towards the road')],
+    [
+      eqAtom(
+        'traffic_mode:left',
+        'parking',
+        'Protected cycle lane: parking towards the road',
+        'protected_lane_parking',
+      ),
+    ],
   ],
   crossing: [
     [
-      eqAtom('highway', 'cycleway', 'Cycleway crossing'),
-      eqAtom('cycleway', 'crossing', 'Cycleway crossing'),
+      eqAtom('highway', 'cycleway', 'Cycleway crossing', 'cycleway_crossing'),
+      eqAtom('cycleway', 'crossing', 'Cycleway crossing', 'cycleway_crossing'),
     ],
   ],
 }
@@ -268,10 +342,11 @@ function valueForSubstring(key: string, substring: string): string {
  * Expand a predicate into alternatives (disjunctive normal form over the positive tag conditions).
  * Negative conditions (`neq`, `notIn`, `notExists`, `not`) write nothing: the dry run checks them.
  */
-function alternativesOf(predicate: TagPredicate, reason: string): PlanAlternative[] {
+function alternativesOf(predicate: TagPredicate, why: TagReason): PlanAlternative[] {
+  const { reason, reasonCode, reasonParams } = why
   switch (predicate.op) {
     case 'eq':
-      return [[eqAtom(predicate.key, predicate.value, reason)]]
+      return [[{ ...eqAtom(predicate.key, predicate.value, reason, reasonCode), reasonParams }]]
     case 'in': {
       const values = predicate.values
       return [
@@ -281,6 +356,8 @@ function alternativesOf(predicate: TagPredicate, reason: string): PlanAlternativ
             accepts: (v) => v != null && values.includes(v),
             value: values[0],
             reason,
+            reasonCode,
+            reasonParams,
           },
         ],
       ]
@@ -294,20 +371,33 @@ function alternativesOf(predicate: TagPredicate, reason: string): PlanAlternativ
             accepts: (v) => containsSubstring(v, substring),
             value: valueForSubstring(key, substring),
             reason,
+            reasonCode,
+            reasonParams,
           },
         ],
       ]
     }
     case 'hasPrefix': {
       const { key, prefix } = predicate
-      return [[{ key, accepts: (v) => hasPrefix(v, prefix), value: prefix, reason }]]
+      return [
+        [
+          {
+            key,
+            accepts: (v) => hasPrefix(v, prefix),
+            value: prefix,
+            reason,
+            reasonCode,
+            reasonParams,
+          },
+        ],
+      ]
     }
     case 'exists':
-      return [[{ key: predicate.key, accepts: (v) => v != null, reason }]]
+      return [[{ key: predicate.key, accepts: (v) => v != null, reason, reasonCode, reasonParams }]]
     case 'and': {
       let result: PlanAlternative[] = [[]]
       for (const child of predicate.predicates) {
-        const childAlternatives = alternativesOf(child, reason)
+        const childAlternatives = alternativesOf(child, why)
         const next: PlanAlternative[] = []
         for (const left of result) {
           for (const right of childAlternatives) next.push([...left, ...right])
@@ -317,7 +407,7 @@ function alternativesOf(predicate: TagPredicate, reason: string): PlanAlternativ
       return result
     }
     case 'or':
-      return predicate.predicates.flatMap((child) => alternativesOf(child, reason))
+      return predicate.predicates.flatMap((child) => alternativesOf(child, why))
     case 'macro':
       return MACRO_PLAN_ALTERNATIVES[predicate.name] ?? [[]]
     case 'literal':
@@ -355,10 +445,18 @@ function targetAlternatives(targetCategoryId: string): PlanAlternative[] {
   if (!resolved) return []
   const { parent, refining } = resolved
   const base = parent.match
-    ? alternativesOf(parent.match, `Required for ${targetCategoryId}`)
+    ? alternativesOf(parent.match, {
+        reason: `Required for ${targetCategoryId}`,
+        reasonCode: 'required_for_category',
+        reasonParams: { category: targetCategoryId },
+      })
     : [[]]
   if (!refining) return base
-  const refined = alternativesOf(refining.match, `Discriminator for ${targetCategoryId}`)
+  const refined = alternativesOf(refining.match, {
+    reason: `Discriminator for ${targetCategoryId}`,
+    reasonCode: 'discriminator_for_category',
+    reasonParams: { category: targetCategoryId },
+  })
   return base.flatMap((left) => refined.map((right) => [...left, ...right]))
 }
 
@@ -386,7 +484,7 @@ export function categorySignOptions(categoryId: string): CategorySignOptions {
 
 interface Candidate {
   /** transformed key → value */
-  edits: Map<string, { value: string; reason: string }>
+  edits: Map<string, TagReason & { value: string }>
   cost: number
 }
 
@@ -423,10 +521,21 @@ function candidateFor(
     if (atom.key.startsWith('_')) return undefined // derived by the processing, not a tag
     if (fixedKeys.has(atom.key)) return undefined
     if (atom.key === 'traffic_sign' && isNoSign(base.traffic_sign)) return undefined
-    edits.set(atom.key, { value: atom.value, reason: atom.reason })
+    edits.set(atom.key, {
+      value: atom.value,
+      reason: atom.reason,
+      reasonCode: atom.reasonCode,
+      reasonParams: atom.reasonParams,
+    })
     cost += editCost(atom.key, base[atom.key], atom.value, side)
   }
   return { edits, cost }
+}
+
+/** Drops `reasonParams` when it is empty, so plans stay free of `undefined` fields. */
+function reasonOf(why: TagReason): TagReason {
+  const { reason, reasonCode, reasonParams } = why
+  return reasonParams ? { reason, reasonCode, reasonParams } : { reason, reasonCode }
 }
 
 function applyPlanToWayTags(
@@ -489,7 +598,10 @@ export class UnknownTargetCategoryError extends Error {
   }
 }
 
-const FIXED_REASON = 'Fixed tag of the mapping target'
+const FIXED_REASON: TagReason = {
+  reason: 'Fixed tag of the mapping target',
+  reasonCode: 'fixed_by_mapping_target',
+}
 
 /**
  * Plan tag adds/changes to reach `targetCategoryId` for the given way and side.
@@ -527,8 +639,8 @@ export function planTagsForCategory(
     const writeKey = writeKeyForSide(key, side, prefix)
     const current = wayTags[writeKey] ?? tags[key]
     if (current === value) continue
-    if (current == null) fixedAdd.push({ key: writeKey, value, reason: FIXED_REASON })
-    else fixedChange.push({ key: writeKey, from: current, to: value, reason: FIXED_REASON })
+    if (current == null) fixedAdd.push({ key: writeKey, value, ...FIXED_REASON })
+    else fixedChange.push({ key: writeKey, from: current, to: value, ...FIXED_REASON })
   }
 
   if (currentCategoryId === targetCategoryId && !fixedAdd.length && !fixedChange.length) {
@@ -569,8 +681,8 @@ export function planTagsForCategory(
     for (const [key, edit] of candidate.edits) {
       const writeKey = writeKeyForSide(key, side, prefix)
       const current = wayTags[writeKey] ?? tags[key]
-      if (current == null) add.push({ key: writeKey, value: edit.value, reason: edit.reason })
-      else change.push({ key: writeKey, from: current, to: edit.value, reason: edit.reason })
+      if (current == null) add.push({ key: writeKey, value: edit.value, ...reasonOf(edit) })
+      else change.push({ key: writeKey, from: current, to: edit.value, ...reasonOf(edit) })
     }
 
     const result = categorizeSide(applyPlanToWayTags(wayTags, add, change), side)
@@ -601,6 +713,8 @@ export function planTagsForCategory(
         key: '_category',
         value: resultCategory ?? 'null',
         reason: `${suggested} Target “${targetCategoryId}” would still classify as ${resultCategory ?? 'none'}.`,
+        reasonCode: add.length > 0 || change.length > 0 ? 'plan_not_enough' : 'plan_no_edits',
+        reasonParams: { target: targetCategoryId, result: resultCategory ?? 'none' },
       },
     ],
   }

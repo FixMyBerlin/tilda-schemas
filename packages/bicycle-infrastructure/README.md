@@ -19,6 +19,8 @@ npm install @tilda-geo/bicycle-infrastructure
 3. Returns **1..N features** (centerline `self` plus transformed `left`/`right` sides), each with:
    - **`category`** — `Radinfrastrukturkategorie` (primary focus; see [`schemas/bicycle-infrastructure-category`](../../schemas/bicycle-infrastructure-category/))
    - plus surface, smoothness, oneway, separation / buffer / marking, traffic_mode, traffic_sign, surface_color, width
+   - `_lineReversed` and `offset` (riding direction of the published line, follows tilda-geo-private#34, not merged yet)
+   - `todos` (what is missing or wrong in the tagging) and `todoTagFixes`
 
 Disallowed sanitizer values become `null`, matching TILDA’s GeoJSON export.
 
@@ -56,7 +58,8 @@ Ported module-for-module from `tilda-geo` → `processing/topics/roads_bikelanes
 | `transform/prepare-tags.ts`     | `helper/transform_tags/*`                                       |
 | `transform/transformations.ts`  | `bikelanes/transformations.lua`                                 |
 | `categories/*`                  | `bikelanes/bikelane_categories.lua` (+ decision view, sidepath) |
-| `sanitize/*`, `derive/*`        | `helper/sanitize_*`, `derive_*`                                 |
+| `sanitize/*`, `derive/*`        | `helper/sanitize_*`, `derive_*`, `bikelane_todo_categories.lua` |
+| `helpers/parse-length.ts`       | `helper/parse_length.lua`, `helper/parse_width.lua`             |
 | `index.ts` → `processBikelanes` | `bikelanes/bikelanes.lua`                                       |
 
 ---

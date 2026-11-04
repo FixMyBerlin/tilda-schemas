@@ -33,7 +33,10 @@ page covers the workflow and what is easy to get wrong.
    vocabulary per key. Package: `src/sanitize/`.
 5. **Derivations** (`derive_surface`, `derive_smoothness`, `derive_oneway`, `derive_traffic_mode`,
    `derive_traffic_signs`; separation, buffer, marking, width, lifecycle). Package: `src/derive/`.
-6. **Result tags**: the exported per-geometry properties (`category`, `oneway`, `surface`,
+6. **Todos** (`bikelane_todo_categories.lua`): reasons why the tagging is not good enough, from the transformed
+   tags and the result. Package: `src/derive/bikelane-todos.ts`, without the todos that need Mapillary,
+   the object age or the sidepath CSV.
+7. **Result tags**: the exported per-geometry properties (`category`, `oneway`, `surface`,
    `separation_left/right`, `width`, `todos`, ...). Vocabulary: `schemas/bicycle-infrastructure-attributes`.
 
 The LUA tests (`bikelanes/__tests__/*.test.lua`) are written as tags in, expected value out. They seed
@@ -42,6 +45,9 @@ the fixtures in `schemas/`.
 ## Workflow when LUA changes
 
 1. Read the tilda-geo commit (changes under `processing/topics/roads_bikelanes` and `processing/topics/helper`).
+   To catch up after a while, list them all and decide per commit whether it touches the per-way tag logic:
+   `git -C ~/Development/FMC/tilda-geo log --since=<last sync> --format='%h %ad %s' --date=short develop -- processing/topics/roads_bikelanes processing/topics/helper`,
+   plus `processing/CHANGELOG.md`. Write the decisions down like in [lua-sync-2026-11.md](lua-sync-2026-11.md).
 2. Add or adjust a **fixture** in `schemas/` first (input tags, expected category or attribute).
 3. Change the package until `bun run test-run` passes. Keep the order of the category list identical to LUA:
    first match wins, and the decision view must behave the same.
@@ -54,11 +60,21 @@ cd packages/bicycle-infrastructure-reconciliation
 bun run check             # raw OSM tags <-> LUA export, writes out/joined.ndjson
 bun run compare           # package vs LUA export, field by field
 bun run validate-export   # LUA values inside the attributes vocabulary
+bun run explain-diffs     # differences to an older LUA export, grouped by cause
 ```
 
 Status of the snapshot (LUA export of 2026-06-12, Overpass of 2026-06-13): 99.79 % of the base ways match
-raw input; category agreement of package and LUA is 100 % on 43,258 features, other fields about 100 %
-(`traffic_sign` 99.95 %, `smoothness` 99.98 %).
+raw input. The package was in sync with that LUA (category agreement 100 % on 43,258 features, other fields
+about 100 %). Since 2026-11-04 the package follows tilda-geo `develop` of that day (plus the oneway branch, see
+[lua-sync-2026-11.md](lua-sync-2026-11.md)), so `compare` shows differences that the old export cannot know:
+
+- category 99.60 % (172 ways: `highway=cycleway` + `traffic_sign=none` is a cycleway now), 3 features only the package
+  emits (a LUA side effect of the same rule, see the sync log),
+- `oneway` 92.60 % (3,200 features: lanes on the road without `cycleway:<side>:oneway` are `implicit_yes`, `oneway=-1` is explicit),
+- `width` 99.99 % (`width=0` is no width).
+
+`bun run explain-diffs` groups the differences by cause, so a new, unexplained difference stands out. Build a new
+snapshot (below) when the numbers should be 100 % again.
 
 The snapshot files are large and **gitignored** (`reference/*.json|ndjson|geojson`, `out/`). They are
 not downloadable under the same date any more: a new Overpass download will not match an old LUA export.
@@ -78,7 +94,9 @@ and download Overpass on the same day.
 4. **Category list is ordered and order-dependent.** Port and change it in the same order as
    `bikelane_categories.lua`. Sub-categories re-invoke the base condition.
 5. **Decision view.** Implemented as a JS `Proxy`: `<base>_left/right` resolve through the sided sanitizer,
-   and any `disallowed` value reads as missing.
+   and any `disallowed` value reads as missing. LUA dropped its decision view in `df5a54bed` (performance) and
+   calls the sanitizers explicitly in `footAndCyclewaySegregated` and `cyclewayOnHighwayProtected`. The result is
+   the same, the package keeps the Proxy.
 6. **Pre-transforms run before categorization** (see step 1 above). Without them about 40 features diverge
    (`cycleway=no` suppressing `bicycleRoad`, `cycleway=opposite*`).
 7. **`is_sidepath` drives the category, not `_is_sidepath`.** `_is_sidepath` is only an output column computed

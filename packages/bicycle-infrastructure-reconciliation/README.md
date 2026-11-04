@@ -36,17 +36,19 @@ From this package directory (after `bun install` at the monorepo root):
 bun run check              # raw OSM input ↔ LUA output → out/joined.ndjson
 bun run compare            # TS library vs LUA export (field-by-field)
 bun run validate-export    # LUA export vs draft attributes output schema
+bun run explain-diffs      # differences to an older LUA export, grouped by cause
 bun run overpass:query     # print the Overpass QL
 bun run overpass:download  # one-time Overpass download (refuses to overwrite)
 bun run overpass:derive-tags
 bun run clip <full-export.geojson> reference/tilda-bikelanes-berlin.geojson
 ```
 
-| Script            | Leg of the cross-check                                                 |
-| ----------------- | ---------------------------------------------------------------------- |
-| `check`           | Input↔output reconciliation; flags `constructionGap` vs real anomalies |
-| `compare`         | TS ≡ LUA on the Berlin corpus                                          |
-| `validate-export` | LUA values ⊆ draft `output.schema.json` vocabulary                     |
+| Script            | Leg of the cross-check                                                   |
+| ----------------- | ------------------------------------------------------------------------ |
+| `check`           | Input↔output reconciliation; flags `constructionGap` vs real anomalies   |
+| `compare`         | TS ≡ LUA on the Berlin corpus                                            |
+| `validate-export` | LUA values ⊆ draft `output.schema.json` vocabulary                       |
+| `explain-diffs`   | Differences to an older export grouped by the tilda-geo rule behind them |
 
 ---
 

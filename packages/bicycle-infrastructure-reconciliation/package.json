@@ -12,6 +12,7 @@
     "check": "bun src/check.ts",
     "type-check": "tsc --noEmit",
     "compare": "bun src/compare.ts",
+    "explain-diffs": "bun --smol src/explain-diffs.ts",
     "validate-export": "bun src/validate-export.ts"
   },
   "dependencies": {

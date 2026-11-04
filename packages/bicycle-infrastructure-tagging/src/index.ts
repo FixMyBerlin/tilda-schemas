@@ -172,6 +172,7 @@ export {
   MESSAGES,
   RADNETZ_RULES,
   RULES,
+  RULE_DESCRIPTIONS,
   TILDA_GEO_RULES,
   activeRules,
   applyTagFix,
@@ -179,6 +180,7 @@ export {
   isMessageLanguage,
   renderMessage,
   ruleById,
+  ruleDescription,
   validateTags,
 } from './validations/index.ts'
 export type {

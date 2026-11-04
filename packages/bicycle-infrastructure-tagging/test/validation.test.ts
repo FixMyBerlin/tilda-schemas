@@ -4,10 +4,12 @@ import {
   MESSAGES,
   RADNETZ_RULES,
   RULES,
+  RULE_DESCRIPTIONS,
   TILDA_GEO_RULES,
   activeRules,
   applyTagFix,
   renderMessage,
+  ruleDescription,
   validateTags,
   type Finding,
   type OsmTags,
@@ -463,5 +465,35 @@ describe('fixes', () => {
     })
     expect(next).toEqual({ highway: 'path', width: '3', surface: 'asphalt' })
     expect(tags.width).toBe('4')
+  })
+})
+
+describe('rule descriptions', () => {
+  test('every rule has a plain description in German and English', () => {
+    for (const language of ['de', 'en'] as const) {
+      for (const rule of RULES) {
+        const text = ruleDescription(rule.id, language)
+        expect(text, `${language} ${rule.id}`).toBeTruthy()
+        // a description is for rules without a finding: no placeholders, no unfinished text
+        expect(text, `${language} ${rule.id}`).not.toMatch(/[{}]/)
+        expect(text!.length, `${language} ${rule.id}`).toBeGreaterThan(30)
+        expect(text, `${language} ${rule.id}`).toMatch(/[.)]$/)
+      }
+    }
+  })
+
+  test('there is no description for a rule that does not exist', () => {
+    const ids = new Set(RULES.map((rule) => rule.id))
+    for (const language of ['de', 'en'] as const) {
+      for (const id of Object.keys(RULE_DESCRIPTIONS[language])) expect(ids.has(id), id).toBe(true)
+      expect(Object.keys(RULE_DESCRIPTIONS[language]).length).toBe(RULES.length)
+    }
+    expect(ruleDescription('nope', 'de')).toBeUndefined()
+  })
+
+  test('a description differs from the message of the rule', () => {
+    for (const rule of RULES) {
+      expect(ruleDescription(rule.id, 'en')).not.toBe(MESSAGES.en[rule.message.code])
+    }
   })
 })

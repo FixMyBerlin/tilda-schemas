@@ -109,7 +109,7 @@ The package brings German and English texts as data, so an app (or an editor wit
 
 | What                            | Export                                                                                      | Source                                                            |
 | ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Validation rules and fixes      | `MESSAGES`, `renderMessage`                                                                 | written for the package                                           |
+| Validation rules and fixes      | `MESSAGES`, `renderMessage`, `RULE_DESCRIPTIONS`, `ruleDescription`                         | written for the package                                           |
 | Plan conflicts and plan reasons | `PLAN_MESSAGES`, `renderPlanConflict`, `renderPlanReason` (core: `reasonCode`)              | written for the package                                           |
 | Attribute labels, notes, hints  | `ATTRIBUTE_LABELS`, `ATTRIBUTE_NOTES`, `ATTRIBUTE_HINTS`, `attributeLabel`, `attributeNote` | iD fork `inspector.tilda.*`, copied                               |
 | Reminders                       | `REMINDER_TEXTS`, `reminderText`                                                            | iD fork, copied                                                   |

@@ -11,13 +11,14 @@ Two sources:
 
 The documented entry is the subpath `@tilda-geo/bicycle-infrastructure-tagging/validation`: an adapter takes the rules and nothing of the planner or the requirement engine. The root of the package exports the same names for tools that use the whole package (the viewer).
 
-| Export                                     | What                                                                                                          |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `validateTags(tags, options?)`             | `Finding[]`, in the order of `RULES`. Does not change `tags`.                                                 |
-| `RULES`                                    | The whole catalogue (`Rule[]`), to list all rules and mark the ones with a finding. `ruleById(id)` finds one. |
-| `MESSAGES`, `renderMessage(message, lang)` | The texts, `MESSAGES.de[code]` and `MESSAGES.en[code]`, with `{placeholders}` filled from `message.params`.   |
-| `applyTagFix(tags, fix)`                   | The tags after a fix.                                                                                         |
-| `activeRules(options)`                     | The rules a run with these options uses.                                                                      |
+| Export                                           | What                                                                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `validateTags(tags, options?)`                   | `Finding[]`, in the order of `RULES`. Does not change `tags`.                                                  |
+| `RULES`                                          | The whole catalogue (`Rule[]`), to list all rules and mark the ones with a finding. `ruleById(id)` finds one.  |
+| `MESSAGES`, `renderMessage(message, lang)`       | The texts, `MESSAGES.de[code]` and `MESSAGES.en[code]`, with `{placeholders}` filled from `message.params`.    |
+| `RULE_DESCRIPTIONS`, `ruleDescription(id, lang)` | A plain description of every rule (de, en, no placeholders), for a catalogue where most rules have no finding. |
+| `applyTagFix(tags, fix)`                         | The tags after a fix.                                                                                          |
+| `activeRules(options)`                           | The rules a run with these options uses.                                                                       |
 
 ### Options
 

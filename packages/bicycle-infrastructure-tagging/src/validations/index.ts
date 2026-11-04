@@ -5,6 +5,7 @@
  * - `validateTags(tags, options)` → `Finding[]`
  * - `RULES`: the catalogue, to list all rules and mark the ones that were found
  * - `MESSAGES` / `renderMessage`: the texts (de, en) by code
+ * - `RULE_DESCRIPTIONS` / `ruleDescription`: a plain description per rule, for a catalogue
  * - `applyTagFix`: the tags after a fix
  *
  * Also exported from the root of the package.
@@ -12,6 +13,7 @@
 export { RULES, activeRules, ruleById, validateTags } from './validate.ts'
 export { MESSAGES, isMessageLanguage, renderMessage } from './messages.ts'
 export type { MessageLanguage } from './messages.ts'
+export { RULE_DESCRIPTIONS, ruleDescription } from './descriptions.ts'
 export { applyTagFix } from './fix.ts'
 export { RADNETZ_RULES } from './radnetz-rules.ts'
 export { TILDA_GEO_RULES } from './tilda-geo-rules.ts'

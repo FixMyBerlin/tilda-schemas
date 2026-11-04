@@ -1,7 +1,7 @@
 name: bicycle-infrastructure-category
 title: TILDA Bicycle Infrastructure Category
 status: published
-version: '0.1.0'
+version: '0.2.0'
 description: Controlled vocabulary and fixtures for the bicycle-infrastructure category (Radinfrastrukturkategorie).
 schema: schema/category.schema.json
 fixtures: fixtures/

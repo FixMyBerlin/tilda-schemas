@@ -5,8 +5,9 @@ shows what the package returns for a tag set (category, side, attributes, valida
 not compute anything itself. The cases below are the hard distinctions mappers get wrong.
 
 The expected categories were checked against `processBikelanes` of `@tilda-geo/bicycle-infrastructure`
-(0.1.2 plus the `main` state of this repo). Rows marked **target** describe the intended result that the
-package does not reach yet (see "Open differences").
+(the `main` state of this repo, synced with tilda-geo until 2026-11-04, see [lua-sync-2026-11.md](lua-sync-2026-11.md)).
+Rows marked **target** would describe an intended result that the package does not reach yet (see "Open differences");
+there are none at the moment.
 
 Tag notation as in the URL: `key=value` joined by `;`, e.g. `?tags=highway=cycleway;bicycle=designated`.
 For a road with side tags the result has one entry per side (`_side` = `left` | `right`); for a separate
@@ -14,24 +15,24 @@ way it has one entry with `_side=self`.
 
 ## Separate way (`_side=self`)
 
-| Case                                                                      | Tags                                                                                 | Category                                                                                        |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Bare cycleway, the classic trap                                           | `highway=cycleway`                                                                   | `needsClarification`                                                                            |
-| Cycleway with both modes designated, nothing else                         | `highway=cycleway;bicycle=designated;foot=designated`                                | `needsClarification`                                                                            |
-| Cycleway, no sign (**target**)                                            | `highway=cycleway;traffic_sign=none`                                                 | `cycleway_adjoiningOrIsolated` (tilda-geo `98e649800`); package still says `needsClarification` |
-| Cycleway along a road                                                     | `highway=cycleway;is_sidepath=yes`                                                   | `cycleway_adjoining`                                                                            |
-| Cycleway, away from a road                                                | `highway=cycleway;is_sidepath=no`                                                    | `cycleway_isolated`                                                                             |
-| Segregated foot and cycle path, one line                                  | `highway=cycleway;bicycle=designated;foot=designated;segregated=yes`                 | `footAndCyclewaySegregated_adjoiningOrIsolated`                                                 |
-| Same, with sign DE:241                                                    | `highway=path;bicycle=designated;foot=designated;segregated=yes;traffic_sign=DE:241` | `footAndCyclewaySegregated_adjoiningOrIsolated`                                                 |
-| Same along a road                                                         | `highway=path;bicycle=designated;foot=designated;segregated=yes;is_sidepath=yes`     | `footAndCyclewaySegregated_adjoining`                                                           |
-| Shared foot and cycle path, sign DE:240                                   | `highway=path;bicycle=designated;foot=designated;segregated=no;traffic_sign=DE:240`  | `footAndCyclewayShared_adjoiningOrIsolated`                                                     |
-| Shared foot and cycle path, no sign                                       | `highway=path;bicycle=designated;foot=designated;segregated=no`                      | `footAndCyclewayShared_adjoiningOrIsolated`                                                     |
-| Two lines: cycleway line carries the foot traffic of the adjacent footway | `highway=cycleway;is_sidepath=yes;bicycle=designated;traffic_mode:right=foot`        | `footAndCyclewaySegregated_adjoining`                                                           |
-| Footway with bicycles allowed                                             | `highway=footway;footway=sidewalk;bicycle=yes`                                       | `footwayBicycleYes_adjoining`                                                                   |
-| Footway with both designated, nothing else                                | `highway=footway;footway=sidewalk;bicycle=designated;foot=designated`                | `needsClarification`                                                                            |
-| Protected bike lane as separate sidepath                                  | `highway=cycleway;is_sidepath=yes;separation:left=bollard`                           | `cyclewayOnHighwayProtected`                                                                    |
-| Same, parking as protection                                               | `highway=cycleway;is_sidepath=yes;traffic_mode:left=parking`                         | `cyclewayOnHighwayProtected`                                                                    |
-| Protection does not count with `segregated=yes`                           | `highway=cycleway;is_sidepath=yes;separation:left=bollard;segregated=yes`            | `cycleway_adjoining`                                                                            |
+| Case                                                                      | Tags                                                                                 | Category                                        |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Bare cycleway, the classic trap                                           | `highway=cycleway`                                                                   | `needsClarification`                            |
+| Cycleway with both modes designated, nothing else                         | `highway=cycleway;bicycle=designated;foot=designated`                                | `needsClarification`                            |
+| Cycleway, no sign (tilda-geo `98e649800`)                                 | `highway=cycleway;traffic_sign=none`                                                 | `cycleway_adjoiningOrIsolated`                  |
+| Cycleway along a road                                                     | `highway=cycleway;is_sidepath=yes`                                                   | `cycleway_adjoining`                            |
+| Cycleway, away from a road                                                | `highway=cycleway;is_sidepath=no`                                                    | `cycleway_isolated`                             |
+| Segregated foot and cycle path, one line                                  | `highway=cycleway;bicycle=designated;foot=designated;segregated=yes`                 | `footAndCyclewaySegregated_adjoiningOrIsolated` |
+| Same, with sign DE:241                                                    | `highway=path;bicycle=designated;foot=designated;segregated=yes;traffic_sign=DE:241` | `footAndCyclewaySegregated_adjoiningOrIsolated` |
+| Same along a road                                                         | `highway=path;bicycle=designated;foot=designated;segregated=yes;is_sidepath=yes`     | `footAndCyclewaySegregated_adjoining`           |
+| Shared foot and cycle path, sign DE:240                                   | `highway=path;bicycle=designated;foot=designated;segregated=no;traffic_sign=DE:240`  | `footAndCyclewayShared_adjoiningOrIsolated`     |
+| Shared foot and cycle path, no sign                                       | `highway=path;bicycle=designated;foot=designated;segregated=no`                      | `footAndCyclewayShared_adjoiningOrIsolated`     |
+| Two lines: cycleway line carries the foot traffic of the adjacent footway | `highway=cycleway;is_sidepath=yes;bicycle=designated;traffic_mode:right=foot`        | `footAndCyclewaySegregated_adjoining`           |
+| Footway with bicycles allowed                                             | `highway=footway;footway=sidewalk;bicycle=yes`                                       | `footwayBicycleYes_adjoining`                   |
+| Footway with both designated, nothing else                                | `highway=footway;footway=sidewalk;bicycle=designated;foot=designated`                | `needsClarification`                            |
+| Protected bike lane as separate sidepath                                  | `highway=cycleway;is_sidepath=yes;separation:left=bollard`                           | `cyclewayOnHighwayProtected`                    |
+| Same, parking as protection                                               | `highway=cycleway;is_sidepath=yes;traffic_mode:left=parking`                         | `cyclewayOnHighwayProtected`                    |
+| Protection does not count with `segregated=yes`                           | `highway=cycleway;is_sidepath=yes;separation:left=bollard;segregated=yes`            | `cycleway_adjoining`                            |
 
 ## Tags on the road (one result per side)
 
@@ -71,8 +72,6 @@ way it has one entry with `_side=self`.
 
 ## Open differences (to settle before the viewer ships)
 
-- `highway=cycleway` + `traffic_sign=none` is a plain cycleway in tilda-geo (`98e649800`); the package
-  still returns `needsClarification`. Planned for the next sync with tilda-geo.
 - The iD fork's category dropdown only lists TILDA categories; a signed (DE:240/241) and an unsigned
   variant of the same category are different mapping goals. The viewer needs the same list of
   mapping targets as the editors (see the overnight concept, part D4).

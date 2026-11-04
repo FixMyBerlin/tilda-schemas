@@ -19,6 +19,7 @@ import {
   needsClarification,
   sharedBusLaneBikeWithBus,
   sharedBusLaneBusWithBike,
+  unsignedCycleway,
 } from './predicates.ts'
 import { ADJOINING_OR_ISOLATED_REFINING, advisoryOrExclusiveRefining } from './refine-predicates.ts'
 import type { TagPredicate } from './tag-predicate.ts'
@@ -149,9 +150,10 @@ const NEEDS_CLARIFICATION_GAP_DISCRIMINATORS: GapDiscriminator[] = [
   },
   {
     key: 'traffic_sign',
-    values: ['DE:237'],
+    values: ['DE:237', 'none'],
     unlocksCategory: 'cycleway',
-    reason: 'German cycleway sign',
+    reason:
+      'German cycleway sign; on highway=cycleway also traffic_sign=none (unsigned cycleway, anderer Radweg)',
   },
   {
     key: 'cycleway',
@@ -228,6 +230,8 @@ const CYCLEWAY_SEPARATED_BASE_MATCH: TagPredicate = pred.or(
       pred.exists('is_sidepath'),
     ),
   ),
+  // Unsigned cycleway: `highway=cycleway` + `traffic_sign=none` (tilda-geo 98e649800).
+  pred.macro('unsigned_cycleway'),
   pred.and(
     pred.in('highway', [
       'living_street',
@@ -441,6 +445,7 @@ export const CATEGORY_MACROS = {
   shared_bus_lane_bike_with_bus: sharedBusLaneBikeWithBus,
   needs_clarification: needsClarification,
   footway_bicycle_yes: footwayBicycleYes,
+  unsigned_cycleway: unsignedCycleway,
 } as const
 
 /** separation_right / traffic_mode_right branch not expressible as simple tag equality. */

@@ -66,6 +66,16 @@ export function bicycleRoadVehicleDestination(tags: OsmTags): boolean | undefine
   return undefined
 }
 
+/**
+ * Unsigned cycleway ('anderer Radweg', tilda-geo 98e649800): `highway=cycleway` with an explicit
+ * `traffic_sign=none`. Shared and segregated foot paths match their own categories first.
+ * `highway=cycleway` without any `traffic_sign` stays `needsClarification`.
+ */
+export function unsignedCycleway(tags: OsmTags): boolean | undefined {
+  if (tags.highway === 'cycleway' && sanitizeTrafficSign(tags.traffic_sign) === 'none') return true
+  return undefined
+}
+
 export function footwayBicycleYes(tags: OsmTags): boolean | undefined {
   if (isCrossingPattern(tags)) return false
   if (tags.highway !== 'footway' && tags.highway !== 'path') return undefined

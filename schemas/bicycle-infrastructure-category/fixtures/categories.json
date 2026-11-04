@@ -177,5 +177,60 @@
     "input": { "highway": "cycleway" },
     "select": { "side": "self" },
     "expect": { "category": "needsClarification" }
+  },
+  {
+    "name": "unsigned cycleway (traffic_sign=none) → adjoiningOrIsolated",
+    "osm": "tilda-geo 98e649800: 'anderer Radweg'; only the sidepath question stays open",
+    "input": { "highway": "cycleway", "traffic_sign": "none" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoiningOrIsolated" }
+  },
+  {
+    "name": "unsigned cycleway with is_sidepath=yes → adjoining",
+    "input": { "highway": "cycleway", "traffic_sign": "none", "is_sidepath": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "unsigned cycleway with is_sidepath=no → isolated",
+    "input": { "highway": "cycleway", "traffic_sign": "none", "is_sidepath": "no" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_isolated" }
+  },
+  {
+    "name": "traffic_sign=no counts as traffic_sign=none",
+    "input": { "highway": "cycleway", "traffic_sign": "no" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoiningOrIsolated" }
+  },
+  {
+    "name": "unsigned cycleway with segregated=no stays footAndCyclewayShared",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "none",
+      "segregated": "no",
+      "bicycle": "designated",
+      "foot": "designated"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewayShared_adjoiningOrIsolated" }
+  },
+  {
+    "name": "unsigned cycleway with segregated=yes stays footAndCyclewaySegregated",
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "none",
+      "segregated": "yes",
+      "bicycle": "designated",
+      "foot": "designated"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoiningOrIsolated" }
+  },
+  {
+    "name": "traffic_sign=none on a footway does not make a cycleway",
+    "input": { "highway": "footway", "traffic_sign": "none", "bicycle": "designated" },
+    "select": { "side": "self" },
+    "expect": { "category": "needsClarification" }
   }
 ]

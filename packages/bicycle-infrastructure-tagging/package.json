@@ -33,6 +33,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./validation": {
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js"
+    },
     "./profiles/radnetz-berlin": {
       "types": "./dist/profiles/radnetz-berlin.d.ts",
       "import": "./dist/profiles/radnetz-berlin.js"

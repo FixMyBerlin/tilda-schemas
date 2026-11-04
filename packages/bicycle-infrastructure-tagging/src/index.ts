@@ -143,6 +143,35 @@ export type {
   SignRecommend,
 } from './sidepath/merge-tags.ts'
 
-// Validation (pure rules; more follow)
-export { CYCLEWAY_ONEWAY_KEYS, cyclewayOnewayFindings } from './validations/cycleway-oneway.ts'
-export type { CyclewayOnewayFinding, CyclewayOnewayRuleId } from './validations/cycleway-oneway.ts'
+// Validation rules (also the subpath `@tilda-geo/bicycle-infrastructure-tagging/validation`)
+export {
+  CYCLEWAY_ONEWAY_KEYS,
+  MESSAGES,
+  RADNETZ_RULES,
+  RULES,
+  TILDA_GEO_RULES,
+  activeRules,
+  applyTagFix,
+  cyclewayOnewayFindings,
+  isMessageLanguage,
+  renderMessage,
+  ruleById,
+  validateTags,
+} from './validations/index.ts'
+export type {
+  CyclewayOnewayFinding,
+  CyclewayOnewayRuleId,
+  Finding,
+  MessageLanguage,
+  MessageParams,
+  MessageRef,
+  Rule,
+  RuleContext,
+  RuleHit,
+  RuleScope,
+  RuleSeverity,
+  RuleSource,
+  TagFix,
+  ValidationOptions,
+  ValidationProfile,
+} from './validations/index.ts'

@@ -26,6 +26,14 @@ export interface RequirementsProfile {
   skipCategories: readonly string[]
   /** Hints for things that have no tag to check: the mapper has to look for them */
   reminders: readonly ReminderRule[]
+  /** Attribute ids the dataset does not use; they are left out of the list (`ATTRIBUTE_IDS`) */
+  skipAttributes?: readonly string[]
+  /**
+   * Ask for the width of the cycleway part (`cycleway:width`) and the colour of the cycleway part
+   * on a segregated foot and cycle path, as the Radnetz dataset does. Default `true`. With `false`
+   * the whole way has one `width` and one `surface:colour`, which is what TILDA itself reads.
+   */
+  partWidths?: boolean
 }
 
 export interface ReminderRule {

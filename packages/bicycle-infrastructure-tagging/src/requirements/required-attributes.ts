@@ -226,7 +226,7 @@ const SOURCE_WIDTH: Rule = {
 
 /** The way carries both modes on one line, and the parts are separate (`segregated=yes`). */
 function isSegregatedWay(ctx: RuleContext) {
-  if (ctx.side !== 'self') return false
+  if (ctx.side !== 'self' || ctx.profile.partWidths === false) return false
   const role = pathRole(ctx.tags, { category: ctx.category })
   return role.style === 'oneLine' && role.segregated === true
 }
@@ -547,6 +547,7 @@ function summary(ctx: RuleContext, keys: string[]) {
 
 function evaluate(rules: Rule[], ctx: RuleContext): RequiredAttribute[] {
   return rules
+    .filter((rule) => !ctx.profile.skipAttributes?.includes(rule.id))
     .filter((rule) => (!rule.when || rule.when(ctx)) && !rule.unless?.(ctx))
     .map((rule) => {
       const ownKeys = [rule.key, ...(rule.alsoKeys ?? [])]

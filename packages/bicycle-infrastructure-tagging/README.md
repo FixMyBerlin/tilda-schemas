@@ -25,13 +25,13 @@ ESM only. `@tilda-geo/bicycle-infrastructure` is a dependency.
 | `planCategoryChange`                                                     | The tags to add, change or remove so that a way or road side gets a TILDA category.                                                              |
 | `MAPPING_TARGETS`, `planForMappingTarget`                                | What a mapper picks: a TILDA category plus fixed tags (signed / unsigned), grouped like tilda-geo's map legend.                                  |
 | `requiredAttributes`, `roadAttributes`, `tildaQaState`, `reminders`      | The attributes a dataset needs per category, their state (tagged, inherited, guessed, missing), how complete a way is.                           |
-| `profiles/radnetz-berlin`                                                | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders.                                   |
+| `profiles/radnetz-berlin`, `profiles/tilda-geo`                          | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders. `tilda-geo` is the minimal one.   |
 | `roadWidthFromTags`, `partWidthMode`, ...                                | Fallback widths, which width keys exist, whether part widths add up.                                                                             |
 | `extractOptions`, `planExtraction`, `mergeSelection`, `combinedPathTags` | Tags for extracting a road side into a way of its own and for merging cycleway and footway.                                                      |
 | `validateTags`, `RULES`, `MESSAGES` (`/validation`)                      | 26 validation rules (the todos of tilda-geo and the rules of the Radnetz Berlin editor): findings with severity, keys, a message code and fixes. |
 | `TILDA_LABELS`, `categoryLabel`, `groupCategories`                       | German category names and groups as data, no localizer.                                                                                          |
 
-Messages are codes with parameters (`geometry_lane_needs_road`, `cycleway_oneway_wrong`), never sentences: the app writes the text. The validation rules bring their texts (de, en) as data: see [validation-rules.md](../../docs/validation-rules.md).
+Messages are codes with parameters (`geometry_lane_needs_road`, `cycleway_oneway_wrong`). The texts (de, en) come as data too: the validation rules ([validation-rules.md](../../docs/validation-rules.md)), the planner (`PLAN_MESSAGES`), the required attributes, reminders and states (`ATTRIBUTE_LABELS`, `attributeNote`, ...). See [tagging-package.md](../../docs/tagging-package.md#texts).
 
 Riding direction follows tilda-geo-private#34 (not merged yet), as the core package does.
 
@@ -104,7 +104,7 @@ requiredAttributes(result, tags, { profile: radnetzBerlin })
 tildaQaState(tags, radnetzBerlin) // → { state: 'incomplete', bike: true }
 ```
 
-Each attribute has a `state` (`ok`, `inherited`, `guess`, `assumed`, `ignored`, `missing`), the values to offer, and the keys TILDA reads. Option lists come from the sanitizers of the core package. A profile (`RequirementsProfile`) is a plain object: write one for another dataset.
+Each attribute has a `state` (`ok`, `inherited`, `guess`, `assumed`, `ignored`, `missing`), the values to offer, and the keys TILDA reads. Option lists come from the sanitizers of the core package. A profile (`RequirementsProfile`) is a plain object: write one for another dataset. `profiles/tilda-geo` is the minimal one (the attributes TILDA itself reads, no dataset), see [tagging-package.md](../../docs/tagging-package.md#profiles).
 
 ### Widths
 

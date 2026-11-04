@@ -86,6 +86,42 @@ Differences to the groups of the iD fork (`CATEGORY_GROUPS`, kept for the fork):
 
 `test/mapping-targets.test.ts` runs every mapping target against a generated matrix of start cases (`test/round-trip-cases.ts`): ways of their own (`path`, `footway`, `cycleway`, `pedestrian`, `residential`) × `traffic_sign` (unset, `none`, `DE:240`, `DE:241`) × `segregated` (unset, `yes`, `no`) × `is_sidepath` (unset, `yes`, `no`), and the right side of a `secondary` × `cycleway:right` (unset, `track`, `lane`, `no`) × the same sign and `segregated` values on that side. For each: plan → apply → `processBikelanes`; the category must be the target, the fixed tags present and `traffic_sign=none` untouched unless the target fixes a sign. Combinations the planner cannot reach are listed in `EXPECTED_UNREACHABLE` with a reason (and must then report a conflict); a rule that applies to no case fails the test.
 
+## Profiles
+
+A profile (`RequirementsProfile`) says what belongs to one dataset. Two ship with the package:
+
+| Profile                           | For                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `profiles/radnetz-berlin`         | The infraVelo Radnetz dataset: feeds per tag, damage signs, width sources, reminders, part widths |
+| `profiles/tilda-geo` (`tildaGeo`) | TILDA itself: only the attributes the processing reads, no dataset                                |
+
+`tildaGeo` is the profile for "Pflichtangaben" without a dataset. It asks for what `extract_bikelanes.lua` exports (`width`, `source:width`, `width:effective`, `surface` with `sett:length`, `surface:colour`, `oneway` with `oneway:bicycle`, `traffic_sign`, `separation` / `traffic_mode` / `marking` / `buffer` per side) and for the tags that decide the category (`is_sidepath`, `segregated`, `lane`, `cycleway`, `traffic_mode:right=foot`). Compared to the Radnetz profile it leaves out, because TILDA does not read them:
+
+- the width, width source and colour of a part of a segregated foot and cycle path (`cycleway:width`, `source:cycleway:width`, `cycleway:surface:colour`): the whole way has one `width` and one `surface:colour` (`partWidths: false`),
+- `dual_carriageway` of the road (`skipAttributes`),
+- the reminders (damage signs, barriers), the damage signs as `traffic_sign` options, the `feeds` and the skipped `cyclewayLink`.
+
+The traffic signs offered are the ones the category specs settle a category with (`categorySignOptions`) and `none` where a category works without a sign. The profile fields `skipAttributes` and `partWidths` are new; a profile without them behaves as before.
+
+## Texts
+
+The package brings German and English texts as data, so an app (or an editor with its own localizer) does not write them. Every table is `{ de, en }`, `{placeholders}` are filled from the parameters, and a test checks that every code, id and state has both languages.
+
+| What                            | Export                                                                                      | Source                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Validation rules and fixes      | `MESSAGES`, `renderMessage`                                                                 | written for the package                                           |
+| Plan conflicts and plan reasons | `PLAN_MESSAGES`, `renderPlanConflict`, `renderPlanReason` (core: `reasonCode`)              | written for the package                                           |
+| Attribute labels, notes, hints  | `ATTRIBUTE_LABELS`, `ATTRIBUTE_NOTES`, `ATTRIBUTE_HINTS`, `attributeLabel`, `attributeNote` | iD fork `inspector.tilda.*`, copied                               |
+| Reminders                       | `REMINDER_TEXTS`, `reminderText`                                                            | iD fork, copied                                                   |
+| QA states, attribute states     | `QA_STATE_LABELS`, `ATTRIBUTE_STATE_LABELS`, `ATTRIBUTE_STATE_TEXTS`                        | QA: words of the fork's lens tooltip; short state labels: written |
+| Categories                      | `TILDA_LABELS.de`, `categoryLabel` (also the base categories, `footAndCyclewaySegregated`)  | tilda-geo (topic docs and the legend); German only                |
+
+Plan entries carry the core's English `reason` and a stable `reasonCode` (`required_for_category`, `bicycle_road_sign`, ...); the text is `category_requirement.<reasonCode>` in `PLAN_MESSAGES`. Pass `categoryLabels: TILDA_LABELS.de` to name categories by their label.
+
+## Gaps
+
+`analyzeCategoryGaps` (core) says which tags would make an incomplete category exact (`gap.key`, `gap.values`, `gap.unlocksCategory`). `gapWriteKey(gap, result)` and `gapTags(gap, result, value)` give the OSM key and the tag for a road side. The core's `writeKeyForSide` alone is right for all gaps but one: the gap `cycleway` (`track`, `lane`) on a road side is the value of `cycleway:right`, not of `cycleway:right:cycleway`.
+
 ## Open
 
 - `cyclewayOnHighwayBetweenLanes` has a mapping target but no plan: it needs the lane layout of the road.

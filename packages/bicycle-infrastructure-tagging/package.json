@@ -41,6 +41,10 @@
       "types": "./dist/profiles/radnetz-berlin.d.ts",
       "import": "./dist/profiles/radnetz-berlin.js"
     },
+    "./profiles/tilda-geo": {
+      "types": "./dist/profiles/tilda-geo.d.ts",
+      "import": "./dist/profiles/tilda-geo.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

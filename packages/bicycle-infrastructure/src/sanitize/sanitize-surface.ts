@@ -4,7 +4,7 @@ import { sanitizeForLogging } from '../helpers/sanitize-for-logging.ts'
 import type { OsmTags } from '../types.ts'
 import { DISALLOWED } from '../types.ts'
 
-const SURFACE_ALLOWED = [
+export const SURFACE_ALLOWED = [
   'asphalt',
   'paved',
   'unpaved',

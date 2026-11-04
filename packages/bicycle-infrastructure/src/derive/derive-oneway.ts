@@ -38,15 +38,23 @@ const isAgainstWay = (value: string | undefined) => value != null && AGAINST_WAY
  * - Parent `oneway=-1`: not documented; we mirror the `oneway=yes` rules.
  */
 function sideDefaultAgainstWay(tags: OsmTags): boolean {
-  const parent: OsmTags = tags._parent ?? {}
-  const contraflowAllowed = parent['oneway:bicycle'] === 'no'
-  if (isWithWay(parent.oneway)) {
-    return contraflowAllowed && tags._side === 'left'
+  return defaultSideRunsAgainstWay((tags._parent ?? {}) as OsmTags, tags._side as 'left' | 'right')
+}
+
+/**
+ * Whether bicycles ride against the drawing direction of the road on the `left`|`right` lane of
+ * `road` when the lane has no `cycleway:<side>:oneway` (the rules above, right-hand traffic).
+ * Exported so editors suggest the same direction the processing derives.
+ */
+export function defaultSideRunsAgainstWay(road: OsmTags, side: 'left' | 'right'): boolean {
+  const contraflowAllowed = road['oneway:bicycle'] === 'no'
+  if (isWithWay(road.oneway)) {
+    return contraflowAllowed && side === 'left'
   }
-  if (isAgainstWay(parent.oneway)) {
-    return !(contraflowAllowed && tags._side === 'right')
+  if (isAgainstWay(road.oneway)) {
+    return !(contraflowAllowed && side === 'right')
   }
-  return tags._side === 'left'
+  return side === 'left'
 }
 
 function onewayValue(tags: OsmTags, category: BikelaneCategory): Oneway {

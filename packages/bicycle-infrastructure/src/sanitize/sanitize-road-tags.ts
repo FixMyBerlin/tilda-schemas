@@ -3,7 +3,23 @@ import { sanitizeForLogging } from '../helpers/sanitize-for-logging.ts'
 /** Port of topics/roads_bikelanes/helper/sanitize_road_tags.lua */
 import type { OsmTags, Side } from '../types.ts'
 
-const SEPARATION_ALLOWED = [
+/**
+ * `separation` values that make a lane "protected" (`cyclewayOnHighwayProtected`), as in
+ * `bikelane_categories.lua`. Other allowed values (`kerb`, `greenery`, ...) do not.
+ */
+export const PROTECTIVE_SEPARATION = [
+  'bollard',
+  'flex_post',
+  'vertical_panel',
+  'studs',
+  'bump',
+  'planter',
+  'fence',
+  'jersey_barrier',
+  'guard_rail',
+] as const
+
+export const SEPARATION_ALLOWED = [
   'no',
   'bollard',
   'flex_post',
@@ -26,7 +42,7 @@ const SEPARATION_ALLOWED = [
   'yes',
 ] as const
 
-const MARKING_ALLOWED = [
+export const MARKING_ALLOWED = [
   'solid_line',
   'dashed_line',
   'double_solid_line',
@@ -35,9 +51,16 @@ const MARKING_ALLOWED = [
   'surface',
 ] as const
 
-const TRAFFIC_MODE_ALLOWED = ['no', 'motor_vehicle', 'parking', 'psv', 'bicycle', 'foot'] as const
+export const TRAFFIC_MODE_ALLOWED = [
+  'no',
+  'motor_vehicle',
+  'parking',
+  'psv',
+  'bicycle',
+  'foot',
+] as const
 
-const SURFACE_COLOR_ALLOWED = ['red', 'green', 'red;green', 'no'] as const
+export const SURFACE_COLOR_ALLOWED = ['red', 'green', 'red;green', 'no'] as const
 
 /** Read `<base>:<side>` → `<base>:both` → (left only) `<base>` (mirrors LUA exactly). */
 function sided(tags: OsmTags, base: string, side: Side): string | undefined {

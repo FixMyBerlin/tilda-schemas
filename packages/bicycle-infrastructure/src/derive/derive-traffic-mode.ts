@@ -8,7 +8,8 @@ export interface TrafficModeResult {
   traffic_mode_right?: string
 }
 
-const DIRECTIONAL_PARKING_INFERENCE_CATEGORIES = new Set([
+/** Categories where `traffic_mode` is inferred from the road's `parking:<side>`, besides bicycle roads. */
+export const DIRECTIONAL_PARKING_INFERENCE_CATEGORIES = new Set([
   'cyclewayOnHighway_advisory',
   'cyclewayOnHighway_advisoryOrExclusive',
   'cyclewayOnHighway_exclusive',
@@ -16,7 +17,7 @@ const DIRECTIONAL_PARKING_INFERENCE_CATEGORIES = new Set([
   'cyclewayOnHighwayProtected',
 ])
 
-const PARKING_ALLOWED = [
+export const PARKING_ALLOWED = [
   'no',
   'yes',
   'lane',

@@ -115,6 +115,21 @@ export type {
   TodoTagFix,
 } from './derive/bikelane-todos.ts'
 export { parseLength, parseWidth } from './helpers/parse-length.ts'
+// Value lists of the sanitizers, so tools offer exactly the values the processing accepts.
+export {
+  MARKING_ALLOWED,
+  PROTECTIVE_SEPARATION,
+  SEPARATION_ALLOWED,
+  SURFACE_COLOR_ALLOWED,
+  TRAFFIC_MODE_ALLOWED,
+} from './sanitize/sanitize-road-tags.ts'
+export { SURFACE_ALLOWED } from './sanitize/sanitize-surface.ts'
+export {
+  DIRECTIONAL_PARKING_INFERENCE_CATEGORIES,
+  PARKING_ALLOWED,
+} from './derive/derive-traffic-mode.ts'
+// follows tilda-geo-private#34 (not merged yet)
+export { defaultSideRunsAgainstWay } from './derive/derive-oneway.ts'
 export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-categories.ts'
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'
 export type { CategoryGap, CategoryGapResult } from './categories/analyze-category-gaps.ts'

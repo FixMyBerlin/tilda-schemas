@@ -1,6 +1,7 @@
 import { extractLastValueFromLanes } from '../helpers/extract-value-from-lanes.ts'
 import { sanitizeTrafficSign } from '../helpers/sanitize-traffic-sign.ts'
 import { containsSubstring, hasPrefix, hasSuffix, hasTagWithPrefix } from '../helpers/strings.ts'
+import { PROTECTIVE_SEPARATION } from '../sanitize/sanitize-road-tags.ts'
 /** Shared imperative predicates used by category macros (ported from bikelane_categories.lua). */
 import type { OsmTags } from '../types.ts'
 import { categoryIsSidepath } from './category-is-sidepath.ts'
@@ -149,17 +150,7 @@ export function cyclewayOnHighwayProtected(tags: OsmTags): boolean | undefined {
   if (tags.lane === 'advisory') return false
   if (tags.cycleway === 'share_busway' || tags.cycleway === 'opposite_share_busway') return false
 
-  const allowedSeparation = new Set([
-    'bollard',
-    'flex_post',
-    'vertical_panel',
-    'studs',
-    'bump',
-    'planter',
-    'fence',
-    'jersey_barrier',
-    'guard_rail',
-  ])
+  const allowedSeparation = new Set<string>(PROTECTIVE_SEPARATION)
 
   const trafficModeRight = tags.traffic_mode_right
   const separationLeft = tags.separation_left

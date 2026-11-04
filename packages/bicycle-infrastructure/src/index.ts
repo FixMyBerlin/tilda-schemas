@@ -4,7 +4,7 @@ import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
 import { deriveBikelaneSurface } from './derive/derive-surface.ts'
 import { deriveTrafficMode } from './derive/derive-traffic-mode.ts'
 import { deriveTrafficSigns } from './derive/derive-traffic-signs.ts'
-import { parseLength } from './helpers/parse-length.ts'
+import { parseWidth } from './helpers/parse-length.ts'
 import { separation, marking, buffer, surfaceColor } from './sanitize/sanitize-road-tags.ts'
 import { prepareTags } from './transform/prepare-tags.ts'
 import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
@@ -50,7 +50,7 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
 
     if (category.infrastructureExists) {
       result.oneway = deriveOneway(t, category)
-      result.width = parseLength(t.width) ?? null
+      result.width = parseWidth(t.width) ?? null
       result.surface_color = clean(surfaceColor(t))
       result.separation_left = clean(separation(t, 'left'))
       result.separation_right = clean(separation(t, 'right'))
@@ -84,6 +84,7 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
 }
 
 export type { BikelaneResult, OsmTags } from './types.ts'
+export { parseLength, parseWidth } from './helpers/parse-length.ts'
 export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-categories.ts'
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'
 export type { CategoryGap, CategoryGapResult } from './categories/analyze-category-gaps.ts'

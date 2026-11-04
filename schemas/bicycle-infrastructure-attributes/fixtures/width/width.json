@@ -1,0 +1,107 @@
+[
+  {
+    "name": "plain meters",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "2.5" },
+    "select": { "side": "self" },
+    "expect": { "width": 2.5 }
+  },
+  {
+    "name": "unit m, with and without space",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "2.5 m" },
+    "select": { "side": "self" },
+    "expect": { "width": 2.5 }
+  },
+  {
+    "name": "centimeters are converted to meters",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "250cm" },
+    "select": { "side": "self" },
+    "expect": { "width": 2.5 }
+  },
+  {
+    "name": "kilometers are converted to meters (tilda-geo parse_length)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "1.2 km" },
+    "select": { "side": "self" },
+    "expect": { "width": 1200 }
+  },
+  {
+    "name": "common decimal comma 2,5 is read (tilda-geo 106dbd049)",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "2,5" },
+    "select": { "side": "self" },
+    "expect": { "width": 2.5 }
+  },
+  {
+    "name": "common decimal comma 0,3 is read",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0,3" },
+    "select": { "side": "self" },
+    "expect": { "width": 0.3 }
+  },
+  {
+    "name": "decimal comma outside of the list stays unreadable",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "5,7" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "decimal comma with unit stays unreadable",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0,5m" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "width=0 is no width",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "0" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "negative width is no width",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "-1" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "unusually high width is kept as it is",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "250" },
+    "select": { "side": "self" },
+    "expect": { "width": 250 }
+  },
+  {
+    "name": "units tilda-geo does not convert (ft, mm, mi) are no width",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "3 ft" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "text next to the value is no width",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "120 cm Weg" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "range and list are no width",
+    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "width": "1-2" },
+    "select": { "side": "self" },
+    "expect": { "width": null }
+  },
+  {
+    "name": "lane width on the road is read with the same parser",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:width": "1,5"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "cyclewayOnHighway_exclusive", "width": 1.5 }
+  },
+  {
+    "name": "buffer=0 stays 0 (buffer uses parse_length, not parse_width)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "track",
+      "cycleway:right:buffer:left": "0"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "buffer_left": 0 }
+  }
+]

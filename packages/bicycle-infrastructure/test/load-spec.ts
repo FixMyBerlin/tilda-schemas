@@ -3,6 +3,7 @@ import separationFixtures from '../../../schemas/bicycle-infrastructure-attribut
 import smoothnessFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/smoothness/smoothness.json'
 import surfaceFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/surface/surface.json'
 import transformationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/transformation/transformation.json'
+import widthFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/width/width.json'
 /**
  * Load language-agnostic fixtures from schemas/ for conformance tests.
  * Not a package — schemas stay plain data folders.
@@ -40,6 +41,7 @@ export const SPEC: SpecGroup[] = [
   { key: 'separation', cases: separationFixtures as unknown as SpecCase[] },
   { key: 'smoothness', cases: smoothnessFixtures as unknown as SpecCase[] },
   { key: 'transformation', cases: transformationFixtures as unknown as SpecCase[] },
+  { key: 'width', cases: widthFixtures as unknown as SpecCase[] },
 ]
 
 export const ALL_CASES: Array<SpecCase & { group: string }> = SPEC.flatMap((g) =>

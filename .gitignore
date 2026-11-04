@@ -11,3 +11,8 @@ packages/bicycle-infrastructure-reconciliation/reference/*.json
 packages/bicycle-infrastructure-reconciliation/reference/*.ndjson
 packages/bicycle-infrastructure-reconciliation/reference/*.geojson
 packages/bicycle-infrastructure-reconciliation/out/
+
+# Viewer (apps/preview)
+.tanstack/
+test-results/
+playwright-report/

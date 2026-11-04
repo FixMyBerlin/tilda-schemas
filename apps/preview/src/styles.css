@@ -1,0 +1,7 @@
+@import 'tailwindcss' source('.');
+
+@layer base {
+  body {
+    @apply bg-zinc-50 text-zinc-950 antialiased;
+  }
+}

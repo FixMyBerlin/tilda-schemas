@@ -38,3 +38,6 @@ jobs:
 
       - name: Check exports (publint, attw)
         run: bun run check-exports
+
+      - name: Build preview
+        run: bun run build-preview

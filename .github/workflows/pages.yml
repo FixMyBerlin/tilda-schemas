@@ -1,0 +1,49 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The viewer reads the package source through a Vite alias; no package build needed.
+      - name: Build preview
+        run: bun run build-preview
+        env:
+          # Project Pages live at /<repo>/.
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      # GitHub Pages has no SPA fallback; serve the app for deep links too.
+      - name: Add 404 fallback
+        run: cp apps/preview/dist/index.html apps/preview/dist/404.html
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/preview/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v5

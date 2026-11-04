@@ -12,6 +12,8 @@ export { sideOnewayDefault } from './oneway.ts'
 
 // Planner: tags to reach a category
 export {
+  PLAN_CONFLICT_CODES,
+  PLAN_REASON_CODES,
   applyCategoryPlan,
   categoryForSide,
   categoryGeometryMismatch,
@@ -28,6 +30,8 @@ export type {
   PlannedAdd,
   PlannedChange,
 } from './planner/category-plan.ts'
+export { PLAN_MESSAGES, renderPlanConflict, renderPlanReason } from './planner/plan-messages.ts'
+export type { PlanMessageOptions } from './planner/plan-messages.ts'
 // The core planner and the list of targets stay in the core package; re-exported for convenience.
 export { listTargetCategories } from '@tilda-geo/bicycle-infrastructure'
 

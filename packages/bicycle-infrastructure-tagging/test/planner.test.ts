@@ -36,6 +36,7 @@ describe('planCategoryChange', () => {
     expect(plan.add.find((e) => e.key === 'cycleway:right:lane')).toMatchObject({
       code: 'category_requirement',
       reason: expect.any(String),
+      reasonCode: 'discriminator_for_category',
     })
   })
 

@@ -6,6 +6,7 @@ import {
   processBikelanes,
   type CategoryTagPlan,
   type TagPlanEntry,
+  type TagReasonCode,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
   mappingTargetById,
@@ -26,14 +27,21 @@ import type { OsmTags, ResultSide } from '../types.ts'
  * writes the text.
  */
 
-/** Why an entry is in the plan. `category_requirement` carries the core's English text in `reason`. */
-export type PlanReasonCode =
-  | 'category_requirement'
-  | 'split_both_sides'
-  | 'side_presence'
-  | 'macro_suggestion'
+/**
+ * Why an entry is in the plan. `category_requirement` carries the core's English text in `reason`
+ * and its stable code in `reasonCode` (with `params` from the core's `reasonParams`). The texts:
+ * `PLAN_MESSAGES` and `renderPlanMessage`.
+ */
+export const PLAN_REASON_CODES = [
+  'category_requirement',
+  'split_both_sides',
+  'side_presence',
+  'macro_suggestion',
   /** a tag the mapping target fixes (`traffic_sign=DE:240`) */
-  | 'mapping_target'
+  'mapping_target',
+] as const
+
+export type PlanReasonCode = (typeof PLAN_REASON_CODES)[number]
 
 export interface PlannedAdd {
   key: string
@@ -43,6 +51,8 @@ export interface PlannedAdd {
   params?: Record<string, string>
   /** The core's text (English), for `category_requirement` */
   reason?: string
+  /** The core's stable code for `reason`, for `category_requirement` */
+  reasonCode?: TagReasonCode
 }
 
 export interface PlannedChange {
@@ -52,30 +62,34 @@ export interface PlannedChange {
   code: PlanReasonCode
   params?: Record<string, string>
   reason?: string
+  reasonCode?: TagReasonCode
 }
 
-export type PlanConflictCode =
-  | 'geometry_bicycle_road_on_sidewalk'
-  | 'geometry_lane_needs_road'
-  | 'geometry_bus_lane_needs_road'
-  | 'geometry_crossing_on_sidewalk'
-  | 'geometry_pedestrian_area_needs_pedestrian'
+export const PLAN_CONFLICT_CODES = [
+  'geometry_bicycle_road_on_sidewalk',
+  'geometry_lane_needs_road',
+  'geometry_bus_lane_needs_road',
+  'geometry_crossing_on_sidewalk',
+  'geometry_pedestrian_area_needs_pedestrian',
   /** a path category on the centerline of a road: plan it for a road side instead */
-  | 'geometry_path_needs_road_side'
+  'geometry_path_needs_road_side',
   /** a lane category on the centerline of a road: plan it for a road side instead */
-  | 'geometry_lane_needs_road_side'
+  'geometry_lane_needs_road_side',
   /** a category of the road itself or of a way of its own (bicycle road, link, crossing) on a road side */
-  | 'geometry_not_a_road_side'
+  'geometry_not_a_road_side',
   /** `*_isolated` on a road side: a road side always runs along the road */
-  | 'geometry_isolated_not_a_road_side'
+  'geometry_isolated_not_a_road_side',
   /** a mapping target for a way of its own (two lines) planned for a road side */
-  | 'geometry_needs_separate_way'
+  'geometry_needs_separate_way',
   /** `planForMappingTarget` with an id that is not in `MAPPING_TARGETS` */
-  | 'unknown_mapping_target'
-  /** the planned tags still classify as another category; `params.result` */
-  | 'tags_not_enough'
-  /** no tags could be derived for the target */
-  | 'no_suggestion'
+  'unknown_mapping_target',
+  /** the planned tags still classify as another category; `params.target`, `params.result` */
+  'tags_not_enough',
+  /** no tags could be derived for the target; `params.target`, `params.result` */
+  'no_suggestion',
+] as const
+
+export type PlanConflictCode = (typeof PLAN_CONFLICT_CODES)[number]
 
 export interface PlanConflict {
   code: PlanConflictCode
@@ -308,6 +322,8 @@ const fromCoreAdd = (entry: TagPlanEntry): PlannedAdd => ({
   value: entry.value,
   code: 'category_requirement',
   reason: entry.reason,
+  reasonCode: entry.reasonCode,
+  ...(entry.reasonParams ? { params: entry.reasonParams } : {}),
 })
 
 const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange => ({
@@ -316,6 +332,8 @@ const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange
   to: entry.to,
   code: 'category_requirement',
   reason: entry.reason,
+  reasonCode: entry.reasonCode,
+  ...(entry.reasonParams ? { params: entry.reasonParams } : {}),
 })
 
 type VariantIds = { variantId: string; mappingTargetId?: string }
@@ -425,6 +443,8 @@ function planOne(
     if (!isFixed(entry.key)) return entry
     const next = { ...entry, code: 'mapping_target' as const }
     delete next.reason
+    delete next.reasonCode
+    delete next.params
     return next
   }
 
@@ -464,9 +484,14 @@ function planOne(
             code: 'tags_not_enough',
             key: 'category',
             value: result ?? 'none',
-            params: { result: result ?? 'none' },
+            params: { target, result: result ?? 'none' },
           }
-        : { code: 'no_suggestion', key: 'category', value: result ?? 'none' },
+        : {
+            code: 'no_suggestion',
+            key: 'category',
+            value: result ?? 'none',
+            params: { target, result: result ?? 'none' },
+          },
     ],
   }
 }

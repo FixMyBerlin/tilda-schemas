@@ -1,4 +1,4 @@
-import type { MessageRef } from './types.ts'
+import type { MessageParams, MessageRef } from './types.ts'
 
 export type MessageLanguage = 'de' | 'en'
 
@@ -120,12 +120,17 @@ export function isMessageLanguage(value: string): value is MessageLanguage {
   return value === 'de' || value === 'en'
 }
 
+/** Fills the `{name}` placeholders of a text; a placeholder without a parameter stays as it is. */
+export function fillTemplate(template: string, params: MessageParams | undefined): string {
+  return template.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
+    const value = params?.[name]
+    return value === undefined ? placeholder : String(value)
+  })
+}
+
 /** The text of a message in a language, with its parameters filled in. An unknown code returns the code. */
 export function renderMessage(message: MessageRef, language: MessageLanguage): string {
   const template = MESSAGES[language][message.code]
   if (template === undefined) return message.code
-  return template.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
-    const value = message.params[name]
-    return value === undefined ? placeholder : String(value)
-  })
+  return fillTemplate(template, message.params)
 }

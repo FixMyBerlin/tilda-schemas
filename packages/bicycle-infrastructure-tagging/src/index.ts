@@ -69,6 +69,7 @@ export type { CategoryGroup } from './labels/category-groups.ts'
 
 // Requirement engine
 export {
+  ATTRIBUTE_IDS,
   isRoad,
   lookupKeys,
   requiredAttributes,
@@ -77,6 +78,23 @@ export {
 export { tildaQaClasses, tildaQaState } from './requirements/qa-state.ts'
 export type { QaResult, QaState } from './requirements/qa-state.ts'
 export { reminders } from './requirements/reminders.ts'
+export {
+  ATTRIBUTE_HINTS,
+  ATTRIBUTE_LABELS,
+  ATTRIBUTE_NOTES,
+  ATTRIBUTE_STATE_LABELS,
+  ATTRIBUTE_STATE_TEXTS,
+  QA_STATE_LABELS,
+  REMINDER_TEXTS,
+  attributeFeedsText,
+  attributeHint,
+  attributeLabel,
+  attributeNote,
+  attributeStateLabel,
+  qaStateLabel,
+  reminderText,
+} from './requirements/texts.ts'
+export type { ReminderText } from './requirements/texts.ts'
 export type {
   AttributeState,
   ReminderRule,

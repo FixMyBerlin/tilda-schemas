@@ -753,6 +753,18 @@ const ROAD = define('road', [
 ])
 
 /**
+ * The ids of all attributes `requiredAttributes` and `roadAttributes` can return (sorted), for
+ * apps that label them.
+ */
+export const ATTRIBUTE_IDS: readonly string[] = [
+  ...new Set(
+    [COMMON, SEPARATE_WAY, LANE, NEXT_TO_PARKING, PROTECTION, BICYCLE_ROAD, ROAD].flatMap((rules) =>
+      rules.map((rule) => rule.id),
+    ),
+  ),
+].sort()
+
+/**
  * Attributes for the road itself (TILDA `roads` export, mixed traffic). Only for roads; bicycle
  * roads get their list from their bike infrastructure result.
  */

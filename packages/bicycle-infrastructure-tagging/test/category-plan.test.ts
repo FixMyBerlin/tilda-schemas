@@ -63,7 +63,7 @@ describe('tilda/category_plan', () => {
   it('reports plans that are not enough', () => {
     const plan = planCategory(
       { highway: 'residential', 'cycleway:right': 'lane' },
-      'cyclewayOnHighwayProtected',
+      'cyclewayOnHighwayBetweenLanes',
       'right',
     )
     expect(plan.aligned).toBe(false)

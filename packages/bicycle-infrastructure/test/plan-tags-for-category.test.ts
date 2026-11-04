@@ -230,3 +230,10 @@ describe('planTagVariantsForCategory', () => {
     expect(categorySignOptions('cyclewayOnHighway_exclusive').signs).toEqual([])
   })
 })
+
+test('protected lane: a protective separation from the spec', () => {
+  const tags = { highway: 'secondary', 'cycleway:right': 'track' }
+  const plan = planTagsForCategory(tags, 'cyclewayOnHighwayProtected', { side: 'right' })
+  expect(entries(plan)).toEqual(['cycleway:right:separation:left=bollard'])
+  expect(plan.aligned).toBe(true)
+})

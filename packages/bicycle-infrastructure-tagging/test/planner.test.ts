@@ -92,7 +92,7 @@ describe('planCategoryChange', () => {
   it('a plan that is not enough says which category the tags give', () => {
     const plan = planCategoryChange(
       { highway: 'residential', 'cycleway:right': 'lane' },
-      'cyclewayOnHighwayProtected',
+      'cyclewayOnHighwayBetweenLanes',
       'right',
     )
     expect(plan.aligned).toBe(false)

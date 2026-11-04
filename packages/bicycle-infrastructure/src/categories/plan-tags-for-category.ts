@@ -1,4 +1,5 @@
 import { containsSubstring, hasPrefix } from '../helpers/strings.ts'
+import { PROTECTIVE_SEPARATION } from '../sanitize/sanitize-road-tags.ts'
 import { prepareTags } from '../transform/prepare-tags.ts'
 import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
 /**
@@ -229,6 +230,17 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
       eqAtom('highway', 'cycleway', 'Cycle lane shared with buses'),
       eqAtom('lane', 'share_busway', 'Cycle lane shared with buses'),
     ],
+  ],
+  cycleway_on_highway_protected: [
+    [
+      {
+        key: 'separation:left',
+        accepts: (v) => v != null && (PROTECTIVE_SEPARATION as readonly string[]).includes(v),
+        value: PROTECTIVE_SEPARATION[0],
+        reason: 'Protected cycle lane: physical separation towards the road',
+      },
+    ],
+    [eqAtom('traffic_mode:left', 'parking', 'Protected cycle lane: parking towards the road')],
   ],
   crossing: [
     [

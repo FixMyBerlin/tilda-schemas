@@ -2,8 +2,8 @@
  * Groups of TILDA categories for a "Change to" select, in the order mappers need them. Categories
  * the library offers that are in no group end up in `other` (see `groupCategories`).
  *
- * Mapping targets and the groups of tilda-geo's map legend ("Führungsform einfach") follow in a
- * later version; today these are the groups of the iD Radnetz editor.
+ * These are the groups of the iD Radnetz editor, kept for it. Mapping targets use the groups of
+ * tilda-geo's map legend ("Führungsform einfach"): `MAPPING_TARGET_GROUPS`.
  */
 export interface CategoryGroup {
   id: string

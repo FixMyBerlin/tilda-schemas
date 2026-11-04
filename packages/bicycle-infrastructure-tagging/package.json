@@ -47,6 +47,7 @@
     "type-check": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test-run": "bun test",
     "update-labels": "bun scripts/update-labels.ts",
+    "mapping-targets-doc": "bun scripts/mapping-targets-doc.ts",
     "check-exports": "publint && attw --pack . --profile esm-only",
     "prepublishOnly": "bun run build"
   },

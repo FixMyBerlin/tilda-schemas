@@ -17,6 +17,7 @@ export {
   categoryGeometryMismatch,
   planCategoryChange,
   planCategoryVariants,
+  planForMappingTarget,
   splitBothSides,
 } from './planner/category-plan.ts'
 export type {
@@ -29,6 +30,26 @@ export type {
 } from './planner/category-plan.ts'
 // The core planner and the list of targets stay in the core package; re-exported for convenience.
 export { listTargetCategories } from '@tilda-geo/bicycle-infrastructure'
+
+// Mapping targets: what a mapper picks (category + fixed tags), grouped like tilda-geo's legend
+export {
+  MAPPING_TARGETS,
+  MAPPING_TARGET_GROUPS,
+  MAPPING_TARGET_GROUP_LABELS,
+  MAPPING_TARGET_LABELS,
+  categoryMappingGroup,
+  groupMappingTargets,
+  mappingTargetById,
+  mappingTargetLabel,
+  mappingTargetsForCategory,
+} from './mapping-targets/mapping-targets.ts'
+export type {
+  MappingTarget,
+  MappingTargetGroup,
+  MappingTargetGroupId,
+  MappingTargetLanguage,
+  MappingTargetVariant,
+} from './mapping-targets/mapping-targets.ts'
 
 // Labels and groups of categories (data, no localizer)
 export {

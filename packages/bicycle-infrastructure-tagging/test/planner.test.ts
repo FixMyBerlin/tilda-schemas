@@ -93,7 +93,7 @@ describe('planCategoryChange', () => {
     const plan = planCategoryChange(
       { highway: 'residential', 'cycleway:right': 'lane' },
       'cyclewayOnHighwayBetweenLanes',
-      'right',
+      'self',
     )
     expect(plan.aligned).toBe(false)
     expect(plan.conflicts[0]).toMatchObject({
@@ -125,5 +125,24 @@ describe('splitBothSides', () => {
       'cycleway',
     ])
     expect(splitBothSides({ highway: 'residential' }).remove).toEqual([])
+  })
+})
+
+describe('categoryGeometryMismatch with a side', () => {
+  it('road centerline, road side and ways of their own', () => {
+    const road = { highway: 'residential' }
+    expect(categoryGeometryMismatch(road, 'cycleway_adjoining', 'self')).toBe(
+      'geometry_path_needs_road_side',
+    )
+    expect(categoryGeometryMismatch(road, 'cyclewayOnHighway_exclusive', 'self')).toBe(
+      'geometry_lane_needs_road_side',
+    )
+    expect(categoryGeometryMismatch(road, 'bicycleRoad', 'right')).toBe('geometry_not_a_road_side')
+    expect(categoryGeometryMismatch(road, 'cycleway_isolated', 'right')).toBe(
+      'geometry_isolated_not_a_road_side',
+    )
+    expect(categoryGeometryMismatch(road, 'cycleway_adjoining', 'right')).toBe(undefined)
+    // without a side only the rules that hold for any side (as before)
+    expect(categoryGeometryMismatch(road, 'cycleway_adjoining')).toBe(undefined)
   })
 })

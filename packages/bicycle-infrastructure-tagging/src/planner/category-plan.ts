@@ -7,6 +7,11 @@ import {
   type CategoryTagPlan,
   type TagPlanEntry,
 } from '@tilda-geo/bicycle-infrastructure'
+import {
+  mappingTargetById,
+  mappingTargetsForCategory,
+  type MappingTarget,
+} from '../mapping-targets/mapping-targets.ts'
 import type { OsmTags, ResultSide } from '../types.ts'
 
 /**
@@ -27,6 +32,8 @@ export type PlanReasonCode =
   | 'split_both_sides'
   | 'side_presence'
   | 'macro_suggestion'
+  /** a tag the mapping target fixes (`traffic_sign=DE:240`) */
+  | 'mapping_target'
 
 export interface PlannedAdd {
   key: string
@@ -53,6 +60,18 @@ export type PlanConflictCode =
   | 'geometry_bus_lane_needs_road'
   | 'geometry_crossing_on_sidewalk'
   | 'geometry_pedestrian_area_needs_pedestrian'
+  /** a path category on the centerline of a road: plan it for a road side instead */
+  | 'geometry_path_needs_road_side'
+  /** a lane category on the centerline of a road: plan it for a road side instead */
+  | 'geometry_lane_needs_road_side'
+  /** a category of the road itself or of a way of its own (bicycle road, link, crossing) on a road side */
+  | 'geometry_not_a_road_side'
+  /** `*_isolated` on a road side: a road side always runs along the road */
+  | 'geometry_isolated_not_a_road_side'
+  /** a mapping target for a way of its own (two lines) planned for a road side */
+  | 'geometry_needs_separate_way'
+  /** `planForMappingTarget` with an id that is not in `MAPPING_TARGETS` */
+  | 'unknown_mapping_target'
   /** the planned tags still classify as another category; `params.result` */
   | 'tags_not_enough'
   /** no tags could be derived for the target */
@@ -66,12 +85,14 @@ export interface PlanConflict {
 }
 
 /**
- * One way to reach the target. The planner returns a list of these (`planCategoryVariants`), today
- * with one entry, so later variants (with / without a traffic sign) do not change the shape.
+ * One way to reach the target. `planCategoryVariants` returns a list of these: the plan the planner
+ * prefers, then one per mapping target of the category.
  */
 export interface CategoryChangePlan {
-  /** `default` for the first variant */
+  /** `default` for the first variant, else the id of the mapping target */
   variantId: string
+  /** The mapping target this plan reaches (`MAPPING_TARGETS`), if any */
+  mappingTargetId?: string
   targetCategoryId: string
   currentCategoryId: string | null
   /** `processBikelanes` gives the target for the planned tags */
@@ -93,9 +114,17 @@ const SIDE_PRESENCE: Record<string, string> = {
   cycleway_adjoining: 'track',
   cycleway_isolated: 'track',
   cycleway_adjoiningOrIsolated: 'track',
+  footAndCyclewayShared_adjoining: 'track',
+  footAndCyclewayShared_adjoiningOrIsolated: 'track',
+  footAndCyclewaySegregated_adjoining: 'track',
+  footAndCyclewaySegregated_adjoiningOrIsolated: 'track',
   sharedMotorVehicleLane: 'shared_lane',
   sharedBusLaneBusWithBike: 'share_busway',
+  sharedBusLaneBikeWithBus: 'lane',
 }
+
+/** Categories of a road side mapped with `sidewalk:<side>`: they need the sidewalk on that side */
+const SIDEWALK_CATEGORY = /^footwayBicycleYes_/
 
 /** Tags for categories matched only by core macros; without them the core plan is empty */
 const MACRO_CATEGORY_SUGGESTIONS: Record<string, { key: string; value: string }[]> = {
@@ -125,6 +154,15 @@ const CARRIAGEWAY_CLASSES = new Set<string>([
 ])
 CARRIAGEWAY_CLASSES.delete('pedestrian')
 
+/** Categories of paths: on a road they are a road side, on the centerline they need a way of their own */
+const PATH_CATEGORY = /^(cycleway|footAndCycleway(Shared|Segregated)|footwayBicycleYes)_/
+/** Categories of a road side: on the centerline of a road they need a side */
+const ROAD_SIDE_CATEGORY =
+  /^(cyclewayOnHighway_|cyclewayOnHighwayProtected$|sharedMotorVehicleLane$|sharedBusLane)/
+/** Categories of the road itself (`bicycleRoad`, between lanes) or of a way of its own */
+const NOT_A_ROAD_SIDE_CATEGORY =
+  /^(bicycleRoad|cyclewayOnHighwayBetweenLanes$|cyclewayLink$|crossing$|pedestrianAreaBicycleYes$)/
+
 const isCarriageway = (tags: OsmTags) => !!tags.highway && CARRIAGEWAY_CLASSES.has(tags.highway)
 
 function isSidewalkFootway(tags: OsmTags) {
@@ -141,11 +179,20 @@ function isSidewalkFootway(tags: OsmTags) {
 export function categoryGeometryMismatch(
   tags: OsmTags,
   target: string,
+  /**
+   * With a side, also the rules between road centerline, road sides and ways of their own (a path
+   * category on a road's centerline, a bicycle road on a road side, ...). Without, only the rules
+   * that hold for any side.
+   */
+  side?: ResultSide,
 ): PlanConflictCode | undefined {
   if (target.startsWith('bicycleRoad') && isSidewalkFootway(tags)) {
     return 'geometry_bicycle_road_on_sidewalk'
   }
-  if (target.startsWith('cyclewayOnHighway') && !isCarriageway(tags)) {
+  if (
+    (target.startsWith('cyclewayOnHighway') || target === 'sharedMotorVehicleLane') &&
+    !isCarriageway(tags)
+  ) {
     return 'geometry_lane_needs_road'
   }
   if (target.startsWith('sharedBusLane') && tags.highway !== 'cycleway' && !isCarriageway(tags)) {
@@ -157,6 +204,14 @@ export function categoryGeometryMismatch(
   if (target === 'pedestrianAreaBicycleYes' && tags.highway !== 'pedestrian') {
     return 'geometry_pedestrian_area_needs_pedestrian'
   }
+  if (side === undefined) return undefined
+
+  // With a side, also the rules between road centerline, road sides and ways of their own
+  const roadCenterline = side === 'self' && isCarriageway(tags) && tags.highway !== 'service'
+  if (roadCenterline && PATH_CATEGORY.test(target)) return 'geometry_path_needs_road_side'
+  if (roadCenterline && ROAD_SIDE_CATEGORY.test(target)) return 'geometry_lane_needs_road_side'
+  if (side !== 'self' && NOT_A_ROAD_SIDE_CATEGORY.test(target)) return 'geometry_not_a_road_side'
+  if (side !== 'self' && target.endsWith('_isolated')) return 'geometry_isolated_not_a_road_side'
   return undefined
 }
 
@@ -263,14 +318,20 @@ const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange
   reason: entry.reason,
 })
 
+type VariantIds = { variantId: string; mappingTargetId?: string }
+
+const variantIds = (variantId: string, mappingTargetId: string | undefined): VariantIds =>
+  mappingTargetId === undefined ? { variantId } : { variantId, mappingTargetId }
+
 function conflictPlan(
   tags: OsmTags,
   target: string,
   side: ResultSide,
   conflict: PlanConflict,
+  ids: VariantIds,
 ): CategoryChangePlan {
   return {
-    variantId: 'default',
+    ...ids,
     targetCategoryId: target,
     currentCategoryId: categoryForSide(tags, side) ?? null,
     aligned: false,
@@ -281,26 +342,25 @@ function conflictPlan(
   }
 }
 
-/**
- * The ways to reach `target` on `side` of the way, the preferred one first. Today there is one
- * variant (`default`); variants such as "with sign" / "without sign" are added as further entries.
- */
-export function planCategoryVariants(
+function geometryConflict(tags: OsmTags, code: PlanConflictCode): PlanConflict {
+  return {
+    code,
+    key: tags.highway ? 'highway' : 'category',
+    value: tags.highway ?? 'none',
+    params: tags.highway ? { highway: tags.highway } : undefined,
+  }
+}
+
+/** One plan to reach `target` on `side`, with the tags `fixed` must contain (bare keys). */
+function planOne(
   tags: OsmTags,
   target: string,
   side: ResultSide,
-): CategoryChangePlan[] {
-  const mismatch = categoryGeometryMismatch(tags, target)
-  if (mismatch) {
-    return [
-      conflictPlan(tags, target, side, {
-        code: mismatch,
-        key: tags.highway ? 'highway' : 'category',
-        value: tags.highway ?? 'none',
-        params: tags.highway ? { highway: tags.highway } : undefined,
-      }),
-    ]
-  }
+  fixed: Readonly<Record<string, string>>,
+  ids: VariantIds,
+): CategoryChangePlan {
+  const mismatch = categoryGeometryMismatch(tags, target, side)
+  if (mismatch) return conflictPlan(tags, target, side, geometryConflict(tags, mismatch), ids)
 
   // one side: split `:both` first and make sure the side has the right `cycleway:<side>` value
   const split =
@@ -330,7 +390,26 @@ export function planCategoryVariants(
     }
   }
 
-  const base = planTagsForCategory(working, target, side === 'self' ? undefined : { side })
+  if (side !== 'self' && SIDEWALK_CATEGORY.test(target)) {
+    const key = `sidewalk:${side}`
+    const present = [key, 'sidewalk:both', 'sidewalk'].some(
+      (k) => working[k] !== undefined && working[k] !== 'no' && working[k] !== 'separate',
+    )
+    if (!present) {
+      if (working[key] === undefined) {
+        add.push({ key, value: 'yes', code: 'side_presence', params: { key } })
+      } else {
+        change.push({ key, from: working[key]!, to: 'yes', code: 'side_presence', params: { key } })
+      }
+      working = { ...working, [key]: 'yes' }
+    }
+  }
+
+  const fixedKeys = Object.keys(fixed)
+  const base = planTagsForCategory(working, target, {
+    ...(side === 'self' ? {} : { side }),
+    ...(fixedKeys.length ? { fixed: { ...fixed } } : {}),
+  })
   // On a road side `highway` would retag the whole road, and the presence key (`cycleway`) is set
   // above as `cycleway:<side>`: both are for separate ways only.
   const suggestions = MACRO_CATEGORY_SUGGESTIONS[target]?.filter(
@@ -340,19 +419,30 @@ export function planCategoryVariants(
     ? withSuggestions(base, suggestions, working)
     : { add: base.add.map(fromCoreAdd), change: base.change.map(fromCoreChange) }
 
+  const isFixed = (key: string) =>
+    fixedKeys.some((fixedKey) => key === fixedKey || key.endsWith(`:${side}:${fixedKey}`))
+  const asFixed = <T extends PlannedAdd | PlannedChange>(entry: T): T => {
+    if (!isFixed(entry.key)) return entry
+    const next = { ...entry, code: 'mapping_target' as const }
+    delete next.reason
+    return next
+  }
+
   for (const entry of library.add) {
     const key = sideKey(entry.key, side)
     if (working[key] === undefined && !add.some((existing) => existing.key === key)) {
-      add.push({ ...entry, key })
+      add.push(asFixed({ ...entry, key }))
     }
   }
   for (const entry of library.change) {
     const key = sideKey(entry.key, side)
-    if (working[key] !== entry.to) change.push({ ...entry, key, from: working[key] ?? entry.from })
+    if (working[key] !== entry.to) {
+      change.push(asFixed({ ...entry, key, from: working[key] ?? entry.from }))
+    }
   }
 
   const plan: CategoryChangePlan = {
-    variantId: 'default',
+    ...ids,
     targetCategoryId: target,
     currentCategoryId: base.currentCategoryId,
     aligned: base.aligned,
@@ -362,25 +452,86 @@ export function planCategoryVariants(
     conflicts: [],
   }
   const result = categoryForSide(applyCategoryPlan(tags, plan), side)
-  if (result === target) return [{ ...plan, aligned: true }]
+  if (result === target) return { ...plan, aligned: true }
 
   const hasEdits = add.length > 0 || change.length > 0 || plan.remove.length > 0
-  return [
-    {
-      ...plan,
-      aligned: false,
-      conflicts: [
-        hasEdits
-          ? {
-              code: 'tags_not_enough',
-              key: 'category',
-              value: result ?? 'none',
-              params: { result: result ?? 'none' },
-            }
-          : { code: 'no_suggestion', key: 'category', value: result ?? 'none' },
-      ],
-    },
-  ]
+  return {
+    ...plan,
+    aligned: false,
+    conflicts: [
+      hasEdits
+        ? {
+            code: 'tags_not_enough',
+            key: 'category',
+            value: result ?? 'none',
+            params: { result: result ?? 'none' },
+          }
+        : { code: 'no_suggestion', key: 'category', value: result ?? 'none' },
+    ],
+  }
+}
+
+function planMappingTarget(
+  tags: OsmTags,
+  mappingTarget: MappingTarget,
+  side: ResultSide,
+  variantId: string,
+): CategoryChangePlan {
+  const ids = variantIds(variantId, mappingTarget.id)
+  if (mappingTarget.separateWayOnly && side !== 'self') {
+    return conflictPlan(
+      tags,
+      mappingTarget.categoryId,
+      side,
+      { code: 'geometry_needs_separate_way', key: 'side', value: side, params: { side } },
+      ids,
+    )
+  }
+  return planOne(tags, mappingTarget.categoryId, side, mappingTarget.fixed, ids)
+}
+
+/**
+ * The plan to reach a mapping target (`MAPPING_TARGETS`) on `side` of the way: the category of the
+ * target with its fixed tags (`traffic_sign=DE:240`, or `traffic_sign=none` + `segregated=no`).
+ */
+export function planForMappingTarget(
+  tags: OsmTags,
+  targetId: string,
+  side: ResultSide,
+): CategoryChangePlan {
+  const mappingTarget = mappingTargetById(targetId)
+  if (!mappingTarget) {
+    return conflictPlan(
+      tags,
+      targetId,
+      side,
+      { code: 'unknown_mapping_target', key: 'mappingTarget', value: targetId },
+      { variantId: targetId },
+    )
+  }
+  return planMappingTarget(tags, mappingTarget, side, mappingTarget.id)
+}
+
+/**
+ * The ways to reach `target` on `side` of the way. The first one (`default`) is the plan the
+ * planner prefers: fewest edits, no new traffic sign, `traffic_sign=none` kept. Then one plan per
+ * mapping target of the category (`variantId` = its id), also those that do not fit the way (they
+ * carry a conflict). A mapping target without fixed tags is the default plan itself and gets no
+ * entry of its own.
+ */
+export function planCategoryVariants(
+  tags: OsmTags,
+  target: string,
+  side: ResultSide,
+): CategoryChangePlan[] {
+  const targets = mappingTargetsForCategory(target)
+  const plain = targets.find((t) => Object.keys(t.fixed).length === 0)
+  const variants = [planOne(tags, target, side, {}, variantIds('default', plain?.id))]
+  for (const mappingTarget of targets) {
+    if (mappingTarget === plain) continue
+    variants.push(planMappingTarget(tags, mappingTarget, side, mappingTarget.id))
+  }
+  return variants
 }
 
 /**
@@ -392,5 +543,6 @@ export function planCategoryChange(
   target: string,
   side: ResultSide,
 ): CategoryChangePlan {
-  return planCategoryVariants(tags, target, side)[0]!
+  const plain = mappingTargetsForCategory(target).find((t) => Object.keys(t.fixed).length === 0)
+  return planOne(tags, target, side, {}, variantIds('default', plain?.id))
 }

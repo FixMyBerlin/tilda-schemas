@@ -1,0 +1,56 @@
+[
+  {
+    "name": "deprecated_cycleway_shared: cycleway=shared on a road",
+    "osm": "tilda-geo road_todo_categories.lua, collect_todos.test.lua",
+    "input": { "highway": "residential", "cycleway": "shared" },
+    "expect": { "todos_include": ["deprecated_cycleway_shared"] }
+  },
+  {
+    "name": "deprecated_cycleway_shared: other cycleway values are no todo",
+    "input": { "highway": "residential", "cycleway": "lane" },
+    "expect": { "todos_exclude": ["deprecated_cycleway_shared"] }
+  },
+  {
+    "name": "deprecated_cycleway_shared: a sided key is not looked at (as in LUA)",
+    "input": { "highway": "residential", "cycleway:right": "shared" },
+    "expect": { "todos_exclude": ["deprecated_cycleway_shared"] }
+  },
+  {
+    "name": "no match, no todo",
+    "input": { "highway": "residential" },
+    "expect": { "todos": [] }
+  },
+  {
+    "name": "unusual_width: width=-1 on a road",
+    "osm": "tilda-geo is_unusual_width.test.lua",
+    "input": { "highway": "residential", "width": "-1" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: width=250 on a road",
+    "input": { "highway": "residential", "width": "250" },
+    "expect": { "todos_include": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: a readable width is no todo",
+    "input": { "highway": "residential", "width": "6.5" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: a check date closes the todo",
+    "input": { "highway": "residential", "width": "250", "check_date:width": "2026-05" },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: left to bikelanes when the self row has it",
+    "input": { "highway": "cycleway", "width": "0" },
+    "result": { "selfBikelaneHasUnusualWidth": true },
+    "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "unusual_width: stays on the road when the self row does not have it",
+    "input": { "highway": "residential", "width": "0" },
+    "result": { "selfBikelaneHasUnusualWidth": false },
+    "expect": { "todos_include": ["unusual_width"] }
+  }
+]

@@ -114,6 +114,8 @@ export type {
   BikelaneTodos,
   TodoTagFix,
 } from './derive/bikelane-todos.ts'
+export { ROAD_TODOS, deriveRoadTodos } from './derive/road-todos.ts'
+export type { RoadTodoDefinition, RoadTodoResult } from './derive/road-todos.ts'
 export { parseLength, parseWidth } from './helpers/parse-length.ts'
 // Value lists of the sanitizers, so tools offer exactly the values the processing accepts.
 export {

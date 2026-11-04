@@ -36,6 +36,10 @@ Each file under `fixtures/` is a JSON array of cases:
 - `expect` compares result keys; `null` and a missing key are the same. Numbers compare with a tolerance.
 - Two keys are not result keys: `todos_include` / `todos_exclude` (todo ids that have to be / must not be in
   `todos`), and `todoTagFixes` (an object compared as a whole, `null` for none).
+- `road-todos/` is the exception: its cases are about the todos of a road (the way itself, `road_todo_categories.lua`),
+  not about a produced feature. `input` are the tags; the optional `result` holds what the road todos read besides
+  the tags (`selfBikelaneHasUnusualWidth`, `width`); `expect` has `todos` (the exact list) and/or
+  `todos_include` / `todos_exclude`.
 - Cases marked `follows tilda-geo-private#34 (not merged yet)` follow the tilda-geo branch
   `claude/tilda-oneway-processing-81b448` for `oneway`, `_lineReversed`, `offset` and
   `unexpected_oneway_direction`. Everything else follows tilda-geo `develop` of 2026-11-04.

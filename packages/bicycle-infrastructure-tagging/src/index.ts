@@ -22,6 +22,7 @@ export {
   planForMappingTarget,
   splitBothSides,
 } from './planner/category-plan.ts'
+export { gapTags, gapWriteKey } from './planner/gaps.ts'
 export type {
   CategoryChangePlan,
   PlanConflict,

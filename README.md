@@ -40,6 +40,12 @@ publishes; enable it when you add a CI release workflow later.
 
 Schema DOI / Zenodo releases are separate — see [`docs/publishing.md`](docs/publishing.md).
 
+## Docs
+
+- [`docs/reconciliation.md`](docs/reconciliation.md) — keeping the package, schemas and the TILDA LUA pipeline aligned; gotchas
+- [`docs/viewer-examples.md`](docs/viewer-examples.md) — tag cases and expected categories for the planned viewer app
+- [`docs/publishing.md`](docs/publishing.md) — npm and Zenodo releases
+
 ## Citation
 
 See [`CITATION.cff`](CITATION.cff). Publishing notes: [`docs/publishing.md`](docs/publishing.md).

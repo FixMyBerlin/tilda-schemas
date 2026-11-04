@@ -1,0 +1,66 @@
+{
+  "name": "@tilda-geo/bicycle-infrastructure-tagging",
+  "version": "0.0.0",
+  "description": "Tagging helpers for editors of bicycle infrastructure in OSM: plan tag changes to a TILDA category, required attributes, widths, extracting and merging foot and cycle paths. Pure functions on plain OSM tags, built on @tilda-geo/bicycle-infrastructure.",
+  "keywords": [
+    "bicycle",
+    "bicycle-infrastructure",
+    "cycling",
+    "editor",
+    "openstreetmap",
+    "osm",
+    "tagging",
+    "tilda"
+  ],
+  "homepage": "https://fixmyberlin.github.io/tilda-schemas/",
+  "bugs": {
+    "url": "https://github.com/FixMyBerlin/tilda-schemas/issues"
+  },
+  "license": "AGPL-3.0-or-later",
+  "author": "Tobias Jordans",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FixMyBerlin/tilda-schemas.git",
+    "directory": "packages/bicycle-infrastructure-tagging"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./profiles/radnetz-berlin": {
+      "types": "./dist/profiles/radnetz-berlin.d.ts",
+      "import": "./dist/profiles/radnetz-berlin.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "test-run": "bun test",
+    "update-labels": "bun scripts/update-labels.ts",
+    "check-exports": "publint && attw --pack . --profile esm-only",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@tilda-geo/bicycle-infrastructure": "workspace:*"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/bun": "latest",
+    "publint": "^0.3.24",
+    "tsup": "^8.5.1",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

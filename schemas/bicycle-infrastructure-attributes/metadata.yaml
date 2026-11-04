@@ -1,7 +1,7 @@
 name: bicycle-infrastructure-attributes
 title: TILDA Bicycle Infrastructure Attributes
 status: draft
-version: "0.0.0"
+version: '0.0.0'
 description: Draft vocabularies and fixtures for non-category bicycle-infrastructure output keys.
 schema: schema/output.schema.json
 fixtures: fixtures/

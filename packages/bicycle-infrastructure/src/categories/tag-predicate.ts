@@ -1,6 +1,6 @@
+import { containsSubstring, hasPrefix, hasSuffix, hasTagWithPrefix } from '../helpers/strings.ts'
 /** Small predicate AST for declarative category specs (OSMnexus-inspired). */
 import type { OsmTags } from '../types.ts'
-import { containsSubstring, hasPrefix, hasSuffix, hasTagWithPrefix } from '../helpers/strings.ts'
 
 export type TagPredicate =
   | { op: 'eq'; key: string; value: string }
@@ -44,7 +44,11 @@ function tagValue(tags: OsmTags, key: string): string | undefined {
   return tags[key]
 }
 
-export function evalPredicate(tags: OsmTags, predicate: TagPredicate, macros: MacroRegistry): boolean | undefined {
+export function evalPredicate(
+  tags: OsmTags,
+  predicate: TagPredicate,
+  macros: MacroRegistry,
+): boolean | undefined {
   switch (predicate.op) {
     case 'eq':
       return tagValue(tags, predicate.key) === predicate.value || undefined
@@ -109,7 +113,11 @@ export function evalPredicate(tags: OsmTags, predicate: TagPredicate, macros: Ma
 }
 
 /** AND semantics with explicit false propagation (for excludes). */
-export function evalPredicateStrict(tags: OsmTags, predicate: TagPredicate, macros: MacroRegistry): boolean {
+export function evalPredicateStrict(
+  tags: OsmTags,
+  predicate: TagPredicate,
+  macros: MacroRegistry,
+): boolean {
   const r = evalPredicate(tags, predicate, macros)
   return r === true
 }

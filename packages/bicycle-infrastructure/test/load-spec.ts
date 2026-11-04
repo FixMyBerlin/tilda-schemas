@@ -1,14 +1,14 @@
+import onewayFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/oneway/oneway.json'
+import separationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/separation/separation.json'
+import smoothnessFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/smoothness/smoothness.json'
+import surfaceFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/surface/surface.json'
+import transformationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/transformation/transformation.json'
 /**
  * Load language-agnostic fixtures from schemas/ for conformance tests.
  * Not a package — schemas stay plain data folders.
  */
 import categoryFixtures from '../../../schemas/bicycle-infrastructure-category/fixtures/categories.json'
 import absenceFixtures from '../../../schemas/bicycle-infrastructure-category/fixtures/explicit-absence.json'
-import onewayFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/oneway/oneway.json'
-import surfaceFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/surface/surface.json'
-import separationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/separation/separation.json'
-import smoothnessFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/smoothness/smoothness.json'
-import transformationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/transformation/transformation.json'
 
 /** Which produced feature a case asserts against. Defaults to the `self` feature. */
 export interface SpecSelect {

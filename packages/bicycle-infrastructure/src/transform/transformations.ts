@@ -1,6 +1,6 @@
+import { SIDEPATH_HIGHWAY_CLASSES } from '../helpers/highway-classes.ts'
 /** Port of topics/roads_bikelanes/bikelanes/transformations.lua */
 import type { OsmTags } from '../types.ts'
-import { SIDEPATH_HIGHWAY_CLASSES } from '../helpers/highway-classes.ts'
 
 export interface CenterLineTransformation {
   highway: string
@@ -44,7 +44,10 @@ function unnestPrefixedTags(
       // Sub-key: the part after the separator char following fullPrefix
       const extractedSuffix = key.slice(prefixLen + 1)
       const suffixKey = extractedSuffix.match(/^[^:]*/)![0]
-      if (infix !== '' || !(suffixKey === 'left' || suffixKey === 'right' || suffixKey === 'both')) {
+      if (
+        infix !== '' ||
+        !(suffixKey === 'left' || suffixKey === 'right' || suffixKey === 'both')
+      ) {
         const destinationKey = metaPrefix ? metaPrefixString + extractedSuffix : extractedSuffix
         dest[destinationKey] = val
         dest._infix = infix
@@ -57,7 +60,10 @@ function unnestPrefixedTags(
 const DIRECTED_PARENT_TAGS = ['cycleway:lanes', 'bicycle:lanes']
 const DIRECTED_SELF_TAGS = ['traffic_sign']
 const SIDE_TO_DIRECTION: Record<string, string> = {
-  '': '', both: '', left: ':backward', right: ':forward',
+  '': '',
+  both: '',
+  left: ':backward',
+  right: ':forward',
 }
 
 function convertDirectedTags(cycleway: OsmTags, directionReference: 'self' | 'parent'): OsmTags {
@@ -79,7 +85,10 @@ function convertDirectedTags(cycleway: OsmTags, directionReference: 'self' | 'pa
 }
 
 /** Returns transformed objects in order: [self, left, right, ...]. */
-export function getTransformedObjects(tags: OsmTags, transformations: CenterLineTransformation[]): OsmTags[] {
+export function getTransformedObjects(
+  tags: OsmTags,
+  transformations: CenterLineTransformation[],
+): OsmTags[] {
   const center: OsmTags = { ...tags, _side: 'self' }
 
   // Don't split path-like ways; only unnest `cycleway`-prefixed tags onto the self object.

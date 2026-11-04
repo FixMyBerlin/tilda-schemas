@@ -19,7 +19,12 @@
   },
   {
     "name": "surface=sett with small sett:length → small_sett",
-    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "surface": "sett", "sett:length": "0.10" },
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "surface": "sett",
+      "sett:length": "0.10"
+    },
     "select": { "side": "self" },
     "expect": { "surface": "small_sett" }
   },
@@ -37,13 +42,23 @@
   },
   {
     "name": "advisory lane copies surface from parent highway",
-    "input": { "highway": "secondary", "surface": "asphalt", "cycleway:right": "lane", "cycleway:right:lane": "advisory" },
+    "input": {
+      "highway": "secondary",
+      "surface": "asphalt",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "surface": "asphalt", "surface_source": "parent_highway_tag" }
   },
   {
     "name": "separated cycleway does NOT copy surface from parent (copySurfaceSmoothnessFromParent=false)",
-    "input": { "highway": "secondary", "surface": "asphalt", "cycleway:right": "track", "cycleway:right:traffic_sign": "DE:237" },
+    "input": {
+      "highway": "secondary",
+      "surface": "asphalt",
+      "cycleway:right": "track",
+      "cycleway:right:traffic_sign": "DE:237"
+    },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "surface": null }
   }

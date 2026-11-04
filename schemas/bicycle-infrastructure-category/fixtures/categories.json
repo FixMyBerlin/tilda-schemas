@@ -33,8 +33,12 @@
     "name": "shared foot+cycleway on service road → isolated",
     "osm": "shared via designated+segregated=no on highway=service",
     "input": {
-      "highway": "service", "service": "emergency_access", "bicycle": "designated",
-      "foot": "designated", "segregated": "no", "motor_vehicle": "no"
+      "highway": "service",
+      "service": "emergency_access",
+      "bicycle": "designated",
+      "foot": "designated",
+      "segregated": "no",
+      "motor_vehicle": "no"
     },
     "select": { "side": "self" },
     "expect": { "category": "footAndCyclewayShared_isolated" }
@@ -114,13 +118,21 @@
   },
   {
     "name": "advisory lane (Schutzstreifen) on the right",
-    "input": { "highway": "secondary", "cycleway:right": "lane", "cycleway:right:lane": "advisory" },
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "category": "cyclewayOnHighway_advisory", "oneway": "implicit_yes" }
   },
   {
     "name": "exclusive lane (Radfahrstreifen) on the right",
-    "input": { "highway": "secondary", "cycleway:right": "lane", "cycleway:right:lane": "exclusive" },
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive"
+    },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "category": "cyclewayOnHighway_exclusive" }
   },

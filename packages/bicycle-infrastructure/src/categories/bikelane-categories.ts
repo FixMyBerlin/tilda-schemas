@@ -1,7 +1,7 @@
 /** Port of topics/roads_bikelanes/bikelanes/bikelane_categories.lua — compiled from declarative specs. */
 import type { BikelaneCategory, OsmTags } from '../types.ts'
-import { decisionTagsView } from './decision-view.ts'
 import { COMPILED_CATEGORY_DEFINITIONS, runCondition } from './compile-category-specs.ts'
+import { decisionTagsView } from './decision-view.ts'
 
 export { runCondition }
 export { isCrossingPattern, hasBetweenLanesConditions } from './predicates.ts'

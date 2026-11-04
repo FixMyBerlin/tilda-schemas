@@ -1,12 +1,12 @@
 /** Compile declarative category specs into runtime `BikelaneCategory[]`. */
 import type { BikelaneCategory, OsmTags } from '../types.ts'
-import { decisionTagsView } from './decision-view.ts'
 import {
   CATEGORY_MACROS,
   CATEGORY_SPECS,
   type CategorySpec,
   type RefiningChild,
 } from './category-specs.ts'
+import { decisionTagsView } from './decision-view.ts'
 import { evalPredicate, evalPredicateStrict, type MacroRegistry } from './tag-predicate.ts'
 
 const MACROS: MacroRegistry = { ...CATEGORY_MACROS }
@@ -51,7 +51,10 @@ function resolveRefinedId(spec: CategorySpec, child: RefiningChild): string {
   return `${base}${child.idSuffix}`
 }
 
-function expandRefining(spec: CategorySpec, baseMatch: (tags: OsmTags) => boolean | undefined): BikelaneCategory[] {
+function expandRefining(
+  spec: CategorySpec,
+  baseMatch: (tags: OsmTags) => boolean | undefined,
+): BikelaneCategory[] {
   return spec.refining!.map((child) => {
     const refineMatch = compileRefiningMatch(child.match)
     const condition: BikelaneCategory['condition'] = (tags) =>
@@ -59,7 +62,9 @@ function expandRefining(spec: CategorySpec, baseMatch: (tags: OsmTags) => boolea
     const childSpec: CategorySpec = child.implicitOneWayConfidence
       ? { ...spec, implicitOneWayConfidence: child.implicitOneWayConfidence }
       : spec
-    const copyFromParent = ['_adjoining', '_isolated', '_adjoiningOrIsolated'].includes(child.idSuffix)
+    const copyFromParent = ['_adjoining', '_isolated', '_adjoiningOrIsolated'].includes(
+      child.idSuffix,
+    )
       ? false
       : undefined
     return mkCategory(childSpec, resolveRefinedId(spec, child), condition, copyFromParent)

@@ -14,7 +14,9 @@ const IN = 'reference/overpass-berlin-raw.json'
 const OUT = 'reference/overpass-berlin-tags.ndjson'
 
 console.log(`Reading ${IN} ...`)
-const data = (await Bun.file(IN).json()) as { elements: Array<{ type: string; id: number; tags?: Record<string, string> }> }
+const data = (await Bun.file(IN).json()) as {
+  elements: Array<{ type: string; id: number; tags?: Record<string, string> }>
+}
 
 const lines: string[] = []
 let withTags = 0
@@ -25,4 +27,6 @@ for (const el of data.elements) {
 }
 
 await Bun.write(OUT, lines.join('\n') + '\n')
-console.log(`Wrote ${OUT} (${statSync(OUT).size} bytes, ${lines.length} ways, ${withTags} with tags).`)
+console.log(
+  `Wrote ${OUT} (${statSync(OUT).size} bytes, ${lines.length} ways, ${withTags} with tags).`,
+)

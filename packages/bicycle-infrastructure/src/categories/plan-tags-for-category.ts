@@ -1,11 +1,11 @@
+import { prepareTags } from '../transform/prepare-tags.ts'
+import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
 /**
  * Plan OSM tag adds/changes to reach a target bikelane category.
  * Works in transformed tag space internally; returns nested OSM keys for left/right
  * cycleway (and sidewalk) sides, bare keys for self.
  */
 import type { BikelaneResult, OsmTags } from '../types.ts'
-import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
-import { prepareTags } from '../transform/prepare-tags.ts'
 import { categorizeBikelane } from './bikelane-categories.ts'
 import { CATEGORY_DEFINITIONS } from './bikelane-categories.ts'
 import {
@@ -64,16 +64,17 @@ function isPreciseTargetCategoryId(id: string): boolean {
   return def != null && def.infrastructureExists && !isIncompleteCategoryId(id)
 }
 
-function resolveUnlockCategory(baseId: string, unlocksCategory: string | undefined): string | undefined {
+function resolveUnlockCategory(
+  baseId: string,
+  unlocksCategory: string | undefined,
+): string | undefined {
   if (unlocksCategory == null) return undefined
   if (unlocksCategory.startsWith('_')) return `${baseId}${unlocksCategory}`
   return unlocksCategory
 }
 
 function baseIdFromIncomplete(categoryId: string): string {
-  return categoryId
-    .replace(/_adjoiningOrIsolated$/, '')
-    .replace(/_advisoryOrExclusive$/, '')
+  return categoryId.replace(/_adjoiningOrIsolated$/, '').replace(/_advisoryOrExclusive$/, '')
 }
 
 function resolveRefinedIdFromSpec(spec: CategorySpec, idSuffix: string): string {
@@ -240,10 +241,12 @@ function discriminatorBaseId(targetCategoryId: string): string {
     .replace(/_exclusive$/, '')
 }
 
-function findParentSpecAndRefining(targetCategoryId: string): {
-  parent: CategorySpec
-  refining?: RefiningChild
-} | undefined {
+function findParentSpecAndRefining(targetCategoryId: string):
+  | {
+      parent: CategorySpec
+      refining?: RefiningChild
+    }
+  | undefined {
   for (const parent of CATEGORY_SPECS) {
     if (parent.id === targetCategoryId) return { parent }
     const refining = parent.refining?.find(
@@ -254,7 +257,10 @@ function findParentSpecAndRefining(targetCategoryId: string): {
   return undefined
 }
 
-function discriminatorsForTarget(parent: CategorySpec, targetCategoryId: string): GapDiscriminator[] {
+function discriminatorsForTarget(
+  parent: CategorySpec,
+  targetCategoryId: string,
+): GapDiscriminator[] {
   if (!parent.gapDiscriminators?.length) return []
   const baseId = discriminatorBaseId(targetCategoryId)
   return parent.gapDiscriminators.filter((d) => {
@@ -275,7 +281,12 @@ function requirementsFromSpec(targetCategoryId: string, tags: OsmTags): TagRequi
   }
 
   if (refining) {
-    collectFromPredicate(refining.match, tags, `Discriminator for ${targetCategoryId}`, requirements)
+    collectFromPredicate(
+      refining.match,
+      tags,
+      `Discriminator for ${targetCategoryId}`,
+      requirements,
+    )
   }
 
   for (const disc of discriminatorsForTarget(parent, targetCategoryId)) {
@@ -350,9 +361,7 @@ function pickPreferredValue(req: TagRequirement, tags: OsmTags): string {
 }
 
 export function listTargetCategories(options?: ListTargetCategoriesOptions): string[] {
-  const all = CATEGORY_DEFINITIONS
-    .map((c) => c.id)
-    .filter(isPreciseTargetCategoryId)
+  const all = CATEGORY_DEFINITIONS.map((c) => c.id).filter(isPreciseTargetCategoryId)
 
   const fromCategory = options?.fromCategory
   if (!fromCategory) return all
@@ -442,7 +451,10 @@ export function planTagsForCategory(
       const preferred = pickPreferredValue(req, tags)
       if (wayValue == null && transformedValue == null) {
         add.push({ key: writeKey, value: preferred, reason: req.reason })
-      } else if (transformedValue != null && !req.values.some((v) => transformedValue.includes(v))) {
+      } else if (
+        transformedValue != null &&
+        !req.values.some((v) => transformedValue.includes(v))
+      ) {
         change.push({
           key: writeKey,
           from: wayValue ?? transformedValue,

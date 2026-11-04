@@ -3,12 +3,12 @@
 Language-agnostic **schemas** and TypeScript tooling for [TILDA](https://tilda-geo.de)
 bicycle-infrastructure data (roads, parking, and CQI to follow).
 
-| Path | Role |
-| --- | --- |
-| [`schemas/bicycle-infrastructure-category`](schemas/bicycle-infrastructure-category/) | Published category vocabulary + fixtures |
-| [`schemas/bicycle-infrastructure-attributes`](schemas/bicycle-infrastructure-attributes/) | Draft attributes (not yet published) |
-| [`packages/bicycle-infrastructure`](packages/bicycle-infrastructure/) | [`@tilda-geo/bicycle-infrastructure`](https://www.npmjs.com/package/@tilda-geo/bicycle-infrastructure) — TS processor (ESM-only) |
-| [`packages/bicycle-infrastructure-reconciliation`](packages/bicycle-infrastructure-reconciliation/) | LUA ↔ TS / schema cross-check (**private**, not on npm) |
+| Path                                                                                                | Role                                                                                                                             |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| [`schemas/bicycle-infrastructure-category`](schemas/bicycle-infrastructure-category/)               | Published category vocabulary + fixtures                                                                                         |
+| [`schemas/bicycle-infrastructure-attributes`](schemas/bicycle-infrastructure-attributes/)           | Draft attributes (not yet published)                                                                                             |
+| [`packages/bicycle-infrastructure`](packages/bicycle-infrastructure/)                               | [`@tilda-geo/bicycle-infrastructure`](https://www.npmjs.com/package/@tilda-geo/bicycle-infrastructure) — TS processor (ESM-only) |
+| [`packages/bicycle-infrastructure-reconciliation`](packages/bicycle-infrastructure-reconciliation/) | LUA ↔ TS / schema cross-check (**private**, not on npm)                                                                          |
 
 ## Quick start
 

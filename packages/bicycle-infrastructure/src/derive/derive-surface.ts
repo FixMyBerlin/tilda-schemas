@@ -1,7 +1,7 @@
+import { sanitizeSurface } from '../sanitize/sanitize-surface.ts'
 /** Port of topics/helper/derive_surface.lua + bikelanes/helper/derive_bikelane_surface.lua */
 import type { BikelaneCategory, OsmTags } from '../types.ts'
 import { DISALLOWED } from '../types.ts'
-import { sanitizeSurface } from '../sanitize/sanitize-surface.ts'
 
 export interface SurfaceResult {
   surface?: string
@@ -27,7 +27,11 @@ export function deriveBikelaneSurface(tags: OsmTags, category: BikelaneCategory)
   if (category.copySurfaceSmoothnessFromParent && parent != null) {
     const parentSurface = deriveSurface(parent)
     if (parentSurface.surface != null) {
-      return { surface: parentSurface.surface, surface_source: 'parent_highway_tag', surface_confidence: 'high' }
+      return {
+        surface: parentSurface.surface,
+        surface_source: 'parent_highway_tag',
+        surface_confidence: 'high',
+      }
     }
   }
   return {}

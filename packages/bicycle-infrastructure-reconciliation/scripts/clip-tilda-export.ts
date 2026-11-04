@@ -12,8 +12,8 @@
  */
 import { createReadStream, createWriteStream } from 'node:fs'
 import { createInterface } from 'node:readline'
-import { BERLIN_BBOX_3857 as BB } from './berlin-bbox.ts'
 import { parseFeatureLine } from '../src/geojson-feature-line.ts'
+import { BERLIN_BBOX_3857 as BB } from './berlin-bbox.ts'
 
 const [inputPath, outputPath] = process.argv.slice(2)
 if (!inputPath || !outputPath) {
@@ -22,7 +22,10 @@ if (!inputPath || !outputPath) {
 }
 
 /** Recursively find the min/max X/Y of any nested coordinate array. */
-function geomBBox(coords: any, acc = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }) {
+function geomBBox(
+  coords: any,
+  acc = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
+) {
   if (typeof coords[0] === 'number') {
     const [x, y] = coords as [number, number]
     if (x < acc.minX) acc.minX = x

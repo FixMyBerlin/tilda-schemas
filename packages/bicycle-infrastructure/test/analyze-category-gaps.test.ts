@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test'
+import { specByCategoryId } from '../src/categories/category-specs.ts'
 import {
   processBikelanes,
   analyzeCategoryGaps,
   CATEGORY_SPECS,
   specsWithGapDiscriminators,
 } from '../src/index.ts'
-import { specByCategoryId } from '../src/categories/category-specs.ts'
 
 test('adjoiningOrIsolated reports missing is_sidepath from spec gapDiscriminators', () => {
   const tags = { highway: 'cycleway', traffic_sign: 'DE:237' }
@@ -159,7 +159,9 @@ test('every spec with gapDiscriminators is reachable as an incomplete category',
     if (spec.id === 'needsClarification') continue
     const hasRefining = spec.refining != null && spec.refining.length > 0
     if (hasRefining) {
-      const ambiguous = spec.refining!.find((c) => c.idSuffix.endsWith('OrIsolated') || c.idSuffix.endsWith('OrExclusive'))
+      const ambiguous = spec.refining!.find(
+        (c) => c.idSuffix.endsWith('OrIsolated') || c.idSuffix.endsWith('OrExclusive'),
+      )
       expect(ambiguous).toBeDefined()
     }
   }

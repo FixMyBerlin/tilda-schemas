@@ -10,11 +10,11 @@ Defined once in [`../scripts/berlin-bbox.ts`](../scripts/berlin-bbox.ts) and reu
 
 ## Files
 
-| File | What | CRS | Source |
-| --- | --- | --- | --- |
+| File                             | What                                                               | CRS       | Source                                      |
+| -------------------------------- | ------------------------------------------------------------------ | --------- | ------------------------------------------- |
 | `tilda-bikelanes-berlin.geojson` | **LUA pipeline output** (the `bikelanes` layer), clipped to Berlin | EPSG:3857 | clipped from `bikelanes_2026-06-12.geojson` |
-| `overpass-berlin-raw.json` | **Raw OSM input** (ways + tags + geometry) | WGS84 | Overpass, one-time download |
-| `overpass-berlin.overpassql` | The exact Overpass query used | — | generated |
+| `overpass-berlin-raw.json`       | **Raw OSM input** (ways + tags + geometry)                         | WGS84     | Overpass, one-time download                 |
+| `overpass-berlin.overpassql`     | The exact Overpass query used                                      | —         | generated                                   |
 
 > The two large data files are heavy (Tilda ~57 MB, Overpass ~311 MB). Decide on
 > git-lfs vs. `.gitignore`+regenerate before committing — see "Regenerating" below.

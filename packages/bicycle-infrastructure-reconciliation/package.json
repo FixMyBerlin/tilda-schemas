@@ -2,8 +2,8 @@
   "name": "@tilda-geo/bicycle-infrastructure-reconciliation",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "Cross-check the Tilda LUA bicycle-infrastructure pipeline against the shared schemas and the TypeScript library, using a static Berlin reference.",
+  "type": "module",
   "scripts": {
     "overpass:query": "bun scripts/build-overpass-query.ts",
     "overpass:download": "bun scripts/download-overpass.ts",
@@ -18,7 +18,7 @@
     "@tilda-geo/bicycle-infrastructure": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
   }
 }

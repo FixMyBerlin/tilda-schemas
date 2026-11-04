@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-title: "TILDA Schemas"
-message: "If you use TILDA schemas in your work, please cite them using the metadata from this file (and the Zenodo DOI once published)."
+title: 'TILDA Schemas'
+message: 'If you use TILDA schemas in your work, please cite them using the metadata from this file (and the Zenodo DOI once published).'
 type: software
 authors:
   - family-names: Ordans
@@ -10,8 +10,8 @@ authors:
   - name: FixMyCity GmbH
     city: Berlin
     country: DE
-repository-code: "https://github.com/FixMyBerlin/tilda-schemas"
-url: "https://fixmyberlin.github.io/tilda-schemas/"
+repository-code: 'https://github.com/FixMyBerlin/tilda-schemas'
+url: 'https://fixmyberlin.github.io/tilda-schemas/'
 abstract: >-
   Language-agnostic schemas and TypeScript tooling for TILDA bicycle-infrastructure
   (and future roads, parking, CQI) data: controlled vocabularies, fixtures, and a
@@ -23,5 +23,5 @@ keywords:
   - schema
   - FixMyCity
 license: AGPL-3.0-or-later
-version: "0.1.0"
-date-released: "2026-07-27"
+version: '0.1.0'
+date-released: '2026-07-27'

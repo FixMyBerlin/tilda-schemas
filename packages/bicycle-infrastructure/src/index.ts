@@ -1,3 +1,13 @@
+import { categorizeBikelane } from './categories/bikelane-categories.ts'
+import { deriveOneway } from './derive/derive-oneway.ts'
+import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
+import { deriveBikelaneSurface } from './derive/derive-surface.ts'
+import { deriveTrafficMode } from './derive/derive-traffic-mode.ts'
+import { deriveTrafficSigns } from './derive/derive-traffic-signs.ts'
+import { parseLength } from './helpers/parse-length.ts'
+import { separation, marking, buffer, surfaceColor } from './sanitize/sanitize-road-tags.ts'
+import { prepareTags } from './transform/prepare-tags.ts'
+import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
 /**
  * TypeScript port of Tilda's LUA bicycle-infrastructure processing.
  *
@@ -12,16 +22,6 @@
  */
 import type { BikelaneResult, OsmTags } from './types.ts'
 import { DISALLOWED } from './types.ts'
-import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
-import { prepareTags } from './transform/prepare-tags.ts'
-import { categorizeBikelane } from './categories/bikelane-categories.ts'
-import { deriveOneway } from './derive/derive-oneway.ts'
-import { deriveBikelaneSurface } from './derive/derive-surface.ts'
-import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
-import { deriveTrafficMode } from './derive/derive-traffic-mode.ts'
-import { deriveTrafficSigns } from './derive/derive-traffic-signs.ts'
-import { separation, marking, buffer, surfaceColor } from './sanitize/sanitize-road-tags.ts'
-import { parseLength } from './helpers/parse-length.ts'
 
 /** Sanitizer output → exported value: DISALLOWED and undefined both become null. */
 function clean<T>(value: T | undefined | typeof DISALLOWED): T | null {
@@ -87,7 +87,12 @@ export type { BikelaneResult, OsmTags } from './types.ts'
 export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-categories.ts'
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'
 export type { CategoryGap, CategoryGapResult } from './categories/analyze-category-gaps.ts'
-export { listTargetCategories, planTagsForCategory, writeKeyForSide, UnknownTargetCategoryError } from './categories/plan-tags-for-category.ts'
+export {
+  listTargetCategories,
+  planTagsForCategory,
+  writeKeyForSide,
+  UnknownTargetCategoryError,
+} from './categories/plan-tags-for-category.ts'
 export type {
   CategoryTagPlan,
   ListTargetCategoriesOptions,
@@ -96,13 +101,21 @@ export type {
   TagConflictEntry,
   TagPlanEntry,
 } from './categories/plan-tags-for-category.ts'
-export { CATEGORY_SPECS, isIncompleteCategoryId, specsWithGapDiscriminators } from './categories/category-specs.ts'
+export {
+  CATEGORY_SPECS,
+  isIncompleteCategoryId,
+  specsWithGapDiscriminators,
+} from './categories/category-specs.ts'
 export type { CategorySpec, GapDiscriminator } from './categories/category-specs.ts'
 export { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
 export { prepareTags } from './transform/prepare-tags.ts'
 // The highway taxonomy is part of the public domain model (ported from highway_classes.lua).
 // Re-exported so downstream tools (e.g. the Overpass query builder) use one source of truth.
 export {
-  TRUNK_MOTORWAY_CLASSES, MAJOR_ROAD_CLASSES, MINOR_ROAD_CLASSES, PATH_CLASSES,
-  SIDEPATH_HIGHWAY_CLASSES, ALLOWED_HIGHWAYS,
+  TRUNK_MOTORWAY_CLASSES,
+  MAJOR_ROAD_CLASSES,
+  MINOR_ROAD_CLASSES,
+  PATH_CLASSES,
+  SIDEPATH_HIGHWAY_CLASSES,
+  ALLOWED_HIGHWAYS,
 } from './helpers/highway-classes.ts'

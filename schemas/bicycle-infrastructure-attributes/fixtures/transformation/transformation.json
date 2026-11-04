@@ -3,15 +3,23 @@
     "name": "cycleway:both=track creates a left AND right separated cycleway",
     "input": { "highway": "residential", "cycleway:both": "track" },
     "expectFeatures": [
-      { "select": { "side": "left", "prefix": "cycleway" }, "expect": { "category": "cycleway_adjoining" } },
-      { "select": { "side": "right", "prefix": "cycleway" }, "expect": { "category": "cycleway_adjoining" } }
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "category": "cycleway_adjoining" }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "category": "cycleway_adjoining" }
+      }
     ]
   },
   {
     "name": "cycleway:right sub-tags unnest onto the right side (surface)",
     "input": {
-      "highway": "secondary", "cycleway:right": "track",
-      "cycleway:right:traffic_sign": "DE:237", "cycleway:right:surface": "asphalt"
+      "highway": "secondary",
+      "cycleway:right": "track",
+      "cycleway:right:traffic_sign": "DE:237",
+      "cycleway:right:surface": "asphalt"
     },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "category": "cycleway_adjoining", "surface": "asphalt" }
@@ -26,7 +34,10 @@
     "name": "cycleway=opposite_track on a oneway road → left track, right none",
     "input": { "highway": "residential", "oneway": "yes", "cycleway": "opposite_track" },
     "expectFeatures": [
-      { "select": { "side": "left", "prefix": "cycleway" }, "expect": { "category": "cycleway_adjoining" } }
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "category": "cycleway_adjoining" }
+      }
     ]
   }
 ]

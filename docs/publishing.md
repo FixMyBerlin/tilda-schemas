@@ -2,10 +2,10 @@
 
 Two independent release tracks:
 
-| Track | What | How |
-| --- | --- | --- |
-| **npm** | `@tilda-geo/bicycle-infrastructure` | Changesets, **manual** local publish (see root README **Release**) |
-| **Zenodo / DOI** | Whole-repo archive of schemas + source | GitHub Release → Zenodo (this doc) |
+| Track            | What                                   | How                                                                |
+| ---------------- | -------------------------------------- | ------------------------------------------------------------------ |
+| **npm**          | `@tilda-geo/bicycle-infrastructure`    | Changesets, **manual** local publish (see root README **Release**) |
+| **Zenodo / DOI** | Whole-repo archive of schemas + source | GitHub Release → Zenodo (this doc)                                 |
 
 You can publish the TS package without cutting a Zenodo release, and vice versa.
 

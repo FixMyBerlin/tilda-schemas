@@ -1,17 +1,11 @@
+import { deriveTrafficSigns } from '../derive/derive-traffic-signs.ts'
+import { extractValueFromLanes } from '../helpers/extract-value-from-lanes.ts'
+import { containsSubstring } from '../helpers/strings.ts'
 /**
  * Declarative category specs — single source of truth for match rules and gap analysis.
  * OSMnexus-inspired: base `match` + nested `refining` for subcategories.
  */
 import type { ImplicitOneWayConfidence, OsmTags } from '../types.ts'
-import type { TagPredicate } from './tag-predicate.ts'
-import { pred } from './tag-predicate.ts'
-import { extractValueFromLanes } from '../helpers/extract-value-from-lanes.ts'
-import { deriveTrafficSigns } from '../derive/derive-traffic-signs.ts'
-import { containsSubstring } from '../helpers/strings.ts'
-import {
-  ADJOINING_OR_ISOLATED_REFINING,
-  advisoryOrExclusiveRefining,
-} from './refine-predicates.ts'
 import {
   bicycleRoadBase,
   bicycleRoadVehicleDestination,
@@ -26,6 +20,9 @@ import {
   sharedBusLaneBikeWithBus,
   sharedBusLaneBusWithBike,
 } from './predicates.ts'
+import { ADJOINING_OR_ISOLATED_REFINING, advisoryOrExclusiveRefining } from './refine-predicates.ts'
+import type { TagPredicate } from './tag-predicate.ts'
+import { pred } from './tag-predicate.ts'
 
 export interface GapDiscriminator {
   key: string
@@ -56,19 +53,27 @@ export interface CategorySpec {
 function footAndCyclewaySharedProcess(tags: OsmTags): void {
   if (tags.highway === 'service') {
     tags.description = [tags.description, 'TILDA-Hinweis: Radinfrastruktur auf einem Zufahrtsweg.']
-      .filter(Boolean).join('; ')
+      .filter(Boolean)
+      .join('; ')
   }
   if (
     tags.highway === 'track' ||
-    containsSubstring(tags.traffic_sign, '1026-36') || containsSubstring(tags.traffic_sign, '1026-37') ||
+    containsSubstring(tags.traffic_sign, '1026-36') ||
+    containsSubstring(tags.traffic_sign, '1026-37') ||
     containsSubstring(tags.traffic_sign, '1026-38') ||
-    containsSubstring(tags.access, 'agricultural') || containsSubstring(tags.motor_vehicle, 'agricultural') ||
+    containsSubstring(tags.access, 'agricultural') ||
+    containsSubstring(tags.motor_vehicle, 'agricultural') ||
     containsSubstring(tags.vehicle, 'agricultural') ||
-    containsSubstring(tags.access, 'forestry') || containsSubstring(tags.motor_vehicle, 'forestry') ||
+    containsSubstring(tags.access, 'forestry') ||
+    containsSubstring(tags.motor_vehicle, 'forestry') ||
     containsSubstring(tags.vehicle, 'forestry')
   ) {
-    tags.description = [tags.description, 'TILDA-Hinweis: Radinfrastruktur geteilt mit land- und/oder forstwirtschaftlichem Verkehr.']
-      .filter(Boolean).join('; ')
+    tags.description = [
+      tags.description,
+      'TILDA-Hinweis: Radinfrastruktur geteilt mit land- und/oder forstwirtschaftlichem Verkehr.',
+    ]
+      .filter(Boolean)
+      .join('; ')
   }
 }
 
@@ -112,19 +117,60 @@ const LANE_GAP: GapDiscriminator[] = [
     key: 'lane',
     values: ['advisory', 'exclusive'],
     unlocksCategory: '_advisory',
-    reason: 'advisory → Schutzstreifen; exclusive → Radfahrstreifen (transformed from cycleway:{side}:lane)',
+    reason:
+      'advisory → Schutzstreifen; exclusive → Radfahrstreifen (transformed from cycleway:{side}:lane)',
   },
 ]
 
 const NEEDS_CLARIFICATION_GAP_DISCRIMINATORS: GapDiscriminator[] = [
-  { key: 'segregated', values: ['yes'], unlocksCategory: 'footAndCyclewaySegregated', reason: 'Segregated foot/cycle path' },
-  { key: 'traffic_sign', values: ['DE:241'], unlocksCategory: 'footAndCyclewaySegregated', reason: 'German segregated foot/cycle sign' },
-  { key: 'segregated', values: ['no'], unlocksCategory: 'footAndCyclewayShared', reason: 'Shared foot/cycle path' },
-  { key: 'traffic_sign', values: ['DE:240'], unlocksCategory: 'footAndCyclewayShared', reason: 'German shared foot/cycle sign' },
-  { key: 'traffic_sign', values: ['DE:237'], unlocksCategory: 'cycleway', reason: 'German cycleway sign' },
-  { key: 'cycleway', values: ['track', 'opposite_track'], unlocksCategory: 'cycleway', reason: 'Separated cycle track tagging' },
-  { key: 'cycleway', values: ['lane', 'opposite_lane'], unlocksCategory: 'cyclewayOnHighway_advisoryOrExclusive', reason: 'On-highway cycle lane' },
-  { key: 'bicycle', values: ['yes'], unlocksCategory: 'footwayBicycleYes', reason: 'Bicycle allowed on footway' },
+  {
+    key: 'segregated',
+    values: ['yes'],
+    unlocksCategory: 'footAndCyclewaySegregated',
+    reason: 'Segregated foot/cycle path',
+  },
+  {
+    key: 'traffic_sign',
+    values: ['DE:241'],
+    unlocksCategory: 'footAndCyclewaySegregated',
+    reason: 'German segregated foot/cycle sign',
+  },
+  {
+    key: 'segregated',
+    values: ['no'],
+    unlocksCategory: 'footAndCyclewayShared',
+    reason: 'Shared foot/cycle path',
+  },
+  {
+    key: 'traffic_sign',
+    values: ['DE:240'],
+    unlocksCategory: 'footAndCyclewayShared',
+    reason: 'German shared foot/cycle sign',
+  },
+  {
+    key: 'traffic_sign',
+    values: ['DE:237'],
+    unlocksCategory: 'cycleway',
+    reason: 'German cycleway sign',
+  },
+  {
+    key: 'cycleway',
+    values: ['track', 'opposite_track'],
+    unlocksCategory: 'cycleway',
+    reason: 'Separated cycle track tagging',
+  },
+  {
+    key: 'cycleway',
+    values: ['lane', 'opposite_lane'],
+    unlocksCategory: 'cyclewayOnHighway_advisoryOrExclusive',
+    reason: 'On-highway cycle lane',
+  },
+  {
+    key: 'bicycle',
+    values: ['yes'],
+    unlocksCategory: 'footwayBicycleYes',
+    reason: 'Bicycle allowed on footway',
+  },
 ]
 
 const FOOT_AND_CYCLEWAY_HIGHWAYS = ['cycleway', 'path', 'footway', 'service', 'track'] as const
@@ -139,7 +185,11 @@ const FOOT_AND_CYCLEWAY_SHARED_MATCH: TagPredicate = pred.or(
   pred.and(
     pred.in('highway', [...FOOT_AND_CYCLEWAY_HIGHWAYS]),
     pred.or(
-      pred.and(pred.eq('segregated', 'no'), pred.eq('bicycle', 'designated'), pred.eq('foot', 'designated')),
+      pred.and(
+        pred.eq('segregated', 'no'),
+        pred.eq('bicycle', 'designated'),
+        pred.eq('foot', 'designated'),
+      ),
       pred.and(pred.eq('segregated', 'no'), pred.eq('bicycle', 'yes'), pred.eq('foot', 'yes')),
       pred.includes('traffic_sign', '240'),
     ),
@@ -156,7 +206,11 @@ const FOOT_AND_CYCLEWAY_SEGREGATED_MATCH: TagPredicate = pred.or(
   pred.and(
     pred.in('highway', ['cycleway', 'path', 'footway']),
     pred.or(
-      pred.and(pred.eq('segregated', 'yes'), pred.eq('bicycle', 'designated'), pred.eq('foot', 'designated')),
+      pred.and(
+        pred.eq('segregated', 'yes'),
+        pred.eq('bicycle', 'designated'),
+        pred.eq('foot', 'designated'),
+      ),
       pred.and(pred.eq('segregated', 'yes'), pred.eq('bicycle', 'yes'), pred.eq('foot', 'yes')),
       pred.and(pred.includes('traffic_sign', '241'), pred.neq('highway', 'footway')),
     ),
@@ -176,7 +230,14 @@ const CYCLEWAY_SEPARATED_BASE_MATCH: TagPredicate = pred.or(
   ),
   pred.and(
     pred.in('highway', [
-      'living_street', 'pedestrian', 'service', 'track', 'bridleway', 'path', 'footway', 'cycleway',
+      'living_street',
+      'pedestrian',
+      'service',
+      'track',
+      'bridleway',
+      'path',
+      'footway',
+      'cycleway',
     ]),
     pred.includes('traffic_sign', '237'),
   ),
@@ -278,10 +339,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: false,
-    match: pred.and(
-      pred.eq('highway', 'pedestrian'),
-      pred.in('bicycle', ['yes', 'designated']),
-    ),
+    match: pred.and(pred.eq('highway', 'pedestrian'), pred.in('bicycle', ['yes', 'designated'])),
   },
   {
     id: 'sharedMotorVehicleLane',

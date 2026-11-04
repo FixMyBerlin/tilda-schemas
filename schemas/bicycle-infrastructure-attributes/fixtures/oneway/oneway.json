@@ -19,7 +19,12 @@
   },
   {
     "name": "oneway:bicycle=no on a car-oneway → car_not_bike",
-    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "oneway": "yes", "oneway:bicycle": "no" },
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "oneway": "yes",
+      "oneway:bicycle": "no"
+    },
     "select": { "side": "self" },
     "expect": { "oneway": "car_not_bike" }
   },
@@ -37,7 +42,11 @@
   },
   {
     "name": "advisory lane without oneway → implicit_yes",
-    "input": { "highway": "secondary", "cycleway:right": "lane", "cycleway:right:lane": "advisory" },
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "oneway": "implicit_yes" }
   }

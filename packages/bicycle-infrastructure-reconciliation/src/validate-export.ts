@@ -7,8 +7,8 @@
  *   bun run validate-export
  */
 import { createReadStream } from 'node:fs'
-import { createInterface } from 'node:readline'
 import { mkdir } from 'node:fs/promises'
+import { createInterface } from 'node:readline'
 import schema from '../../../schemas/bicycle-infrastructure-attributes/schema/output.schema.json'
 import { parseFeatureLine } from './geojson-feature-line.ts'
 
@@ -70,8 +70,12 @@ if (offending.length === 0) {
 } else {
   console.log(`⚠️  ${offending.length} properties have out-of-vocabulary values:`)
   for (const [name, v] of offending) {
-    const top = Object.entries(v.values).sort((a, b) => b[1] - a[1]).slice(0, 5)
-    console.log(`  ${name.padEnd(20)} ${v.count}  e.g. ${top.map(([val, n]) => `${val}(${n})`).join(', ')}`)
+    const top = Object.entries(v.values)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+    console.log(
+      `  ${name.padEnd(20)} ${v.count}  e.g. ${top.map(([val, n]) => `${val}(${n})`).join(', ')}`,
+    )
   }
 }
 console.log(`\nArtifact: ${OUT_DIR}/validate-export.json`)

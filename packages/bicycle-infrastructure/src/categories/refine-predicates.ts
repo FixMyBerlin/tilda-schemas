@@ -38,8 +38,16 @@ export const SIDEPATH_UNKNOWN_PRED: TagPredicate = pred.and(
 
 export function advisoryOrExclusiveRefining(laneKey = 'lane') {
   return [
-    { idSuffix: '_advisory', match: pred.eq(laneKey, 'advisory'), implicitOneWayConfidence: 'high' as const },
-    { idSuffix: '_exclusive', match: pred.eq(laneKey, 'exclusive'), implicitOneWayConfidence: 'high' as const },
+    {
+      idSuffix: '_advisory',
+      match: pred.eq(laneKey, 'advisory'),
+      implicitOneWayConfidence: 'high' as const,
+    },
+    {
+      idSuffix: '_exclusive',
+      match: pred.eq(laneKey, 'exclusive'),
+      implicitOneWayConfidence: 'high' as const,
+    },
     {
       idSuffix: '_advisoryOrExclusive',
       match: pred.or(pred.notExists(laneKey), pred.notIn(laneKey, ['advisory', 'exclusive'])),

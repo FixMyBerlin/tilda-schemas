@@ -9,14 +9,19 @@
  *   bun run compare
  */
 import { createReadStream } from 'node:fs'
-import { createInterface } from 'node:readline'
 import { mkdir } from 'node:fs/promises'
+import { createInterface } from 'node:readline'
 import { processBikelanes, type BikelaneResult } from '@tilda-geo/bicycle-infrastructure'
 
 const JOINED = 'out/joined.ndjson'
 const OUT_DIR = 'out'
 
-type TildaOutput = { key: string; prefix: string | null; side: string; properties: Record<string, unknown> }
+type TildaOutput = {
+  key: string
+  prefix: string | null
+  side: string
+  properties: Record<string, unknown>
+}
 type JoinedRow = { baseRef: string; inputTags: Record<string, string>; outputs: TildaOutput[] }
 
 const keyOf = (prefix: string | null | undefined, side: string) => `${prefix ?? 'self'}:${side}`
@@ -24,11 +29,24 @@ const keyOf = (prefix: string | null | undefined, side: string) => `${prefix ?? 
 // Every comparable output field the library produces (not just a subset), so the
 // agreement numbers reflect the full output, not a flattering slice.
 const FIELDS = [
-  'oneway', 'surface', 'surface_source', 'surface_confidence',
-  'smoothness', 'smoothness_source', 'smoothness_confidence',
-  'separation_left', 'separation_right', 'buffer_left', 'buffer_right',
-  'marking_left', 'marking_right', 'traffic_mode_left', 'traffic_mode_right',
-  'surface_color', 'traffic_sign', 'width',
+  'oneway',
+  'surface',
+  'surface_source',
+  'surface_confidence',
+  'smoothness',
+  'smoothness_source',
+  'smoothness_confidence',
+  'separation_left',
+  'separation_right',
+  'buffer_left',
+  'buffer_right',
+  'marking_left',
+  'marking_right',
+  'traffic_mode_left',
+  'traffic_mode_right',
+  'surface_color',
+  'traffic_sign',
+  'width',
 ] as const satisfies readonly (keyof BikelaneResult)[]
 
 /**
@@ -72,7 +90,8 @@ for await (const line of rl) {
     const ts = tsByKey.get(k)
     if (!ts) {
       tsMissing++
-      if (tsMissingSamples.length < 40) tsMissingSamples.push({ id: o.key, tildaCategory: o.properties.category })
+      if (tsMissingSamples.length < 40)
+        tsMissingSamples.push({ id: o.key, tildaCategory: o.properties.category })
       continue
     }
     seen.add(k)
@@ -99,7 +118,8 @@ for await (const line of rl) {
   for (const [k, f] of tsByKey) {
     if (!seen.has(k)) {
       tsExtra++
-      if (tsExtraSamples.length < 40) tsExtraSamples.push({ baseRef, key: k, tsCategory: f.category })
+      if (tsExtraSamples.length < 40)
+        tsExtraSamples.push({ baseRef, key: k, tsCategory: f.category })
     }
   }
 }
@@ -120,26 +140,44 @@ const summary = {
   tsMissingFeatures: tsMissing, // Tilda emitted a feature the TS library did not
   tsExtraFeatures: tsExtra, // TS library emitted a feature Tilda did not
   fieldAgreement: Object.fromEntries(
-    FIELDS.map((f) => [f, { rate: pct(fieldStats[f].match, fieldStats[f].compared), ...fieldStats[f] }]),
+    FIELDS.map((f) => [
+      f,
+      { rate: pct(fieldStats[f].match, fieldStats[f].compared), ...fieldStats[f] },
+    ]),
   ),
-  topCategoryConfusion: Object.fromEntries(Object.entries(catConfusion).sort((a, b) => b[1] - a[1]).slice(0, 25)),
+  topCategoryConfusion: Object.fromEntries(
+    Object.entries(catConfusion)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 25),
+  ),
 }
 
 await mkdir(OUT_DIR, { recursive: true })
 await Bun.write(`${OUT_DIR}/compare-summary.json`, JSON.stringify(summary, null, 2))
-await Bun.write(`${OUT_DIR}/compare-category-mismatches.json`, JSON.stringify(catMismatchSamples, null, 2))
+await Bun.write(
+  `${OUT_DIR}/compare-category-mismatches.json`,
+  JSON.stringify(catMismatchSamples, null, 2),
+)
 await Bun.write(`${OUT_DIR}/compare-ts-missing.json`, JSON.stringify(tsMissingSamples, null, 2))
 await Bun.write(`${OUT_DIR}/compare-ts-extra.json`, JSON.stringify(tsExtraSamples, null, 2))
 
 console.log('\n── TS library vs Tilda export ───────────────────────────')
 console.log(`Tilda features          ${totalTilda}`)
 console.log(`matched by side/prefix  ${matchedKey}  (${pct(matchedKey, totalTilda)})`)
-console.log(`category agreement      ${categoryMatch}/${matchedKey}  (${pct(categoryMatch, matchedKey)} of matched)`)
+console.log(
+  `category agreement      ${categoryMatch}/${matchedKey}  (${pct(categoryMatch, matchedKey)} of matched)`,
+)
 console.log(`TS missing (Tilda-only) ${tsMissing}`)
 console.log(`TS extra  (TS-only)     ${tsExtra}`)
-console.log(`overall agreement       ${categoryMatch}/${unionFeatures}  (${pct(categoryMatch, unionFeatures)} of union, incl. missing+extra)`)
+console.log(
+  `overall agreement       ${categoryMatch}/${unionFeatures}  (${pct(categoryMatch, unionFeatures)} of union, incl. missing+extra)`,
+)
 console.log('\nfield agreement (on matched features):')
-for (const f of FIELDS) console.log(`  ${f.padEnd(20)} ${pct(fieldStats[f].match, fieldStats[f].compared)}`)
+for (const f of FIELDS)
+  console.log(`  ${f.padEnd(20)} ${pct(fieldStats[f].match, fieldStats[f].compared)}`)
 console.log('\ntop category confusion (tilda => ts):')
-for (const [pair, n] of Object.entries(summary.topCategoryConfusion)) console.log(`  ${String(n).padStart(5)}  ${pair}`)
-console.log(`\nArtifacts in ${OUT_DIR}/ (compare-summary.json, compare-category-mismatches.json, compare-ts-missing.json, compare-ts-extra.json)`)
+for (const [pair, n] of Object.entries(summary.topCategoryConfusion))
+  console.log(`  ${String(n).padStart(5)}  ${pair}`)
+console.log(
+  `\nArtifacts in ${OUT_DIR}/ (compare-summary.json, compare-category-mismatches.json, compare-ts-missing.json, compare-ts-extra.json)`,
+)

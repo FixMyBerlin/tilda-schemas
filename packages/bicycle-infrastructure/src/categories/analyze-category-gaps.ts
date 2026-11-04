@@ -1,10 +1,11 @@
+import { prepareTags } from '../transform/prepare-tags.ts'
+import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
 /**
  * Analyze which discriminating tags are missing for incomplete bikelane categories.
  * Derived from the same declarative specs used for classification.
  */
 import type { BikelaneResult, OsmTags } from '../types.ts'
-import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/transformations.ts'
-import { prepareTags } from '../transform/prepare-tags.ts'
+import { categoryIsSidepath } from './category-is-sidepath.ts'
 import {
   isIncompleteCategoryId,
   specByCategoryId,
@@ -12,7 +13,6 @@ import {
   type GapDiscriminator,
 } from './category-specs.ts'
 import { laneDiscriminatorKnown, sidepathDiscriminatorKnown } from './compile-category-specs.ts'
-import { categoryIsSidepath } from './category-is-sidepath.ts'
 
 export interface CategoryGap {
   key: string
@@ -29,9 +29,7 @@ export interface CategoryGapResult {
 }
 
 function baseIdFromIncomplete(categoryId: string): string {
-  return categoryId
-    .replace(/_adjoiningOrIsolated$/, '')
-    .replace(/_advisoryOrExclusive$/, '')
+  return categoryId.replace(/_adjoiningOrIsolated$/, '').replace(/_advisoryOrExclusive$/, '')
 }
 
 function discriminatorSatisfied(disc: GapDiscriminator, tags: OsmTags): boolean {
@@ -52,7 +50,10 @@ function gapDiscriminatorsResolved(spec: CategorySpec, tags: OsmTags): boolean {
   return false
 }
 
-function resolveUnlockCategory(baseId: string, unlocksCategory: string | undefined): string | undefined {
+function resolveUnlockCategory(
+  baseId: string,
+  unlocksCategory: string | undefined,
+): string | undefined {
   if (unlocksCategory == null) return undefined
   if (unlocksCategory.startsWith('_')) return `${baseId}${unlocksCategory}`
   return unlocksCategory
@@ -83,13 +84,15 @@ function findTransformedTags(wayTags: OsmTags, result: BikelaneResult): OsmTags 
   const tags: OsmTags = { ...wayTags }
   prepareTags(tags)
   const transformed = getTransformedObjects(tags, BIKELANE_TRANSFORMATIONS)
-  return transformed.find((t) =>
-    (t._side ?? 'self') === result._side &&
-    (t._prefix ?? null) === result._prefix,
+  return transformed.find(
+    (t) => (t._side ?? 'self') === result._side && (t._prefix ?? null) === result._prefix,
   )
 }
 
-export function analyzeCategoryGaps(wayTags: OsmTags, results: BikelaneResult[]): CategoryGapResult[] {
+export function analyzeCategoryGaps(
+  wayTags: OsmTags,
+  results: BikelaneResult[],
+): CategoryGapResult[] {
   return results.map((result) => {
     const incomplete = isIncompleteCategoryId(result.category)
     const transformed = findTransformedTags(wayTags, result) ?? wayTags

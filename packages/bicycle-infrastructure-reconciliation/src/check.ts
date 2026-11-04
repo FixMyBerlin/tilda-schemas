@@ -20,8 +20,8 @@
  *   bun src/check.ts [tildaGeojson] [overpassNdjson]
  */
 import { createReadStream } from 'node:fs'
-import { createInterface } from 'node:readline'
 import { mkdir } from 'node:fs/promises'
+import { createInterface } from 'node:readline'
 import { parseTildaId } from './parse-id.ts'
 
 const tildaPath = process.argv[2] ?? 'reference/tilda-bikelanes-berlin.geojson'
@@ -31,7 +31,11 @@ const OUT_DIR = 'out'
 /** Tilda `lifecycle` values that explain a missing raw input under the current query. */
 const LIFECYCLE_GAP = new Set(['construction', 'construction_no_access', 'blocked'])
 
-type TildaProps = Record<string, unknown> & { id: string; category?: string; lifecycle?: string | null }
+type TildaProps = Record<string, unknown> & {
+  id: string
+  category?: string
+  lifecycle?: string | null
+}
 interface OutputFeature {
   key: string
   prefix: string | null
@@ -74,10 +78,16 @@ for await (const line of rl) {
     if (noOutputSample.length < 10) noOutputSample.push(id)
   }
 }
-console.log(`  ${inputTotal} raw ways (${inputWithNoOutput} produced no Tilda output / were filtered)`)
+console.log(
+  `  ${inputTotal} raw ways (${inputWithNoOutput} produced no Tilda output / were filtered)`,
+)
 
 // --- 3. Join + bucket ---------------------------------------------------------
-const matched: Array<{ baseRef: string; inputTags: Record<string, string>; outputs: OutputFeature[] }> = []
+const matched: Array<{
+  baseRef: string
+  inputTags: Record<string, string>
+  outputs: OutputFeature[]
+}> = []
 const constructionGap: OutputFeature[] = []
 const unexpectedMissing: OutputFeature[] = []
 
@@ -96,10 +106,11 @@ for (const [baseId, outputs] of outputsByBase) {
 // --- 4. Tally ----------------------------------------------------------------
 const matchedFeatureCount = matched.reduce((n, m) => n + m.outputs.length, 0)
 const byCategory: Record<string, number> = {}
-for (const m of matched) for (const o of m.outputs) {
-  const c = String(o.properties.category ?? '(none)')
-  byCategory[c] = (byCategory[c] ?? 0) + 1
-}
+for (const m of matched)
+  for (const o of m.outputs) {
+    const c = String(o.properties.category ?? '(none)')
+    byCategory[c] = (byCategory[c] ?? 0) + 1
+  }
 const gapByLifecycle: Record<string, number> = {}
 for (const o of constructionGap) {
   const l = String(o.properties.lifecycle ?? '(none)')
@@ -124,21 +135,47 @@ await mkdir(OUT_DIR, { recursive: true })
 await Bun.write(`${OUT_DIR}/summary.json`, JSON.stringify(summary, null, 2))
 await Bun.write(
   `${OUT_DIR}/construction-diff.json`,
-  JSON.stringify(constructionGap.map((o) => ({ id: o.key, category: o.properties.category, lifecycle: o.properties.lifecycle })), null, 2),
+  JSON.stringify(
+    constructionGap.map((o) => ({
+      id: o.key,
+      category: o.properties.category,
+      lifecycle: o.properties.lifecycle,
+    })),
+    null,
+    2,
+  ),
 )
 await Bun.write(
   `${OUT_DIR}/anomalies.json`,
-  JSON.stringify(unexpectedMissing.map((o) => ({ id: o.key, category: o.properties.category, lifecycle: o.properties.lifecycle })), null, 2),
+  JSON.stringify(
+    unexpectedMissing.map((o) => ({
+      id: o.key,
+      category: o.properties.category,
+      lifecycle: o.properties.lifecycle,
+    })),
+    null,
+    2,
+  ),
 )
 await Bun.write(`${OUT_DIR}/joined.ndjson`, matched.map((m) => JSON.stringify(m)).join('\n') + '\n')
 
 // --- 6. Report ---------------------------------------------------------------
 const pct = (n: number, d: number) => `${((100 * n) / d).toFixed(2)}%`
 console.log('\n── lua-check reconciliation ─────────────────────────────')
-console.log(`matched base ways      ${matched.length} / ${neededBaseIds.size}  (${pct(matched.length, neededBaseIds.size)})`)
-console.log(`matched features       ${matchedFeatureCount} / ${tilda.features.length}  (${pct(matchedFeatureCount, tilda.features.length)})`)
-console.log(`construction gap       ${constructionGap.length}  (flagged, handle later) ${JSON.stringify(gapByLifecycle)}`)
-console.log(`unexpected missing     ${unexpectedMissing.length}  ${unexpectedMissing.length ? '⚠️  investigate out/anomalies.json' : '✅'}`)
-console.log(`\nArtifacts written to ${OUT_DIR}/ (summary.json, joined.ndjson, construction-diff.json, anomalies.json)`)
+console.log(
+  `matched base ways      ${matched.length} / ${neededBaseIds.size}  (${pct(matched.length, neededBaseIds.size)})`,
+)
+console.log(
+  `matched features       ${matchedFeatureCount} / ${tilda.features.length}  (${pct(matchedFeatureCount, tilda.features.length)})`,
+)
+console.log(
+  `construction gap       ${constructionGap.length}  (flagged, handle later) ${JSON.stringify(gapByLifecycle)}`,
+)
+console.log(
+  `unexpected missing     ${unexpectedMissing.length}  ${unexpectedMissing.length ? '⚠️  investigate out/anomalies.json' : '✅'}`,
+)
+console.log(
+  `\nArtifacts written to ${OUT_DIR}/ (summary.json, joined.ndjson, construction-diff.json, anomalies.json)`,
+)
 
 if (unexpectedMissing.length > 0) process.exitCode = 1

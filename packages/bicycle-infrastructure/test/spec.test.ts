@@ -3,10 +3,13 @@
  * schemas/ fixtures. This is the primary correctness gate.
  */
 import { expect, test, describe } from 'bun:test'
-import { ALL_CASES, type SpecSelect, type SpecExpect } from './load-spec.ts'
 import { processBikelanes, type BikelaneResult } from '../src/index.ts'
+import { ALL_CASES, type SpecSelect, type SpecExpect } from './load-spec.ts'
 
-function selectFeature(features: BikelaneResult[], select: SpecSelect = {}): BikelaneResult | undefined {
+function selectFeature(
+  features: BikelaneResult[],
+  select: SpecSelect = {},
+): BikelaneResult | undefined {
   const side = select.side ?? 'self'
   return features.find((f) => {
     if (f._side !== side) return false
@@ -19,7 +22,8 @@ function selectFeature(features: BikelaneResult[], select: SpecSelect = {}): Bik
 function eq(a: unknown, b: unknown): boolean {
   const na = a === undefined ? null : a
   const nb = b === undefined ? null : b
-  if (typeof na === 'number' || typeof nb === 'number') return Math.abs(Number(na) - Number(nb)) < 1e-6
+  if (typeof na === 'number' || typeof nb === 'number')
+    return Math.abs(Number(na) - Number(nb)) < 1e-6
   return na === nb
 }
 
@@ -27,7 +31,10 @@ function assertFeature(feature: BikelaneResult | undefined, expect_: SpecExpect,
   expect(feature, `${label}: no feature matched the selector`).toBeDefined()
   for (const [key, want] of Object.entries(expect_)) {
     const got = (feature as unknown as Record<string, unknown>)[key]
-    expect(eq(got, want), `${label}: ${key} expected ${JSON.stringify(want)} but got ${JSON.stringify(got)}`).toBe(true)
+    expect(
+      eq(got, want),
+      `${label}: ${key} expected ${JSON.stringify(want)} but got ${JSON.stringify(got)}`,
+    ).toBe(true)
   }
 }
 

@@ -1,3 +1,4 @@
+import { SIDED_SANITIZERS } from '../sanitize/sanitize-road-tags.ts'
 /**
  * Port of the `decision_tags_view` from bikelane_categories.lua.
  *
@@ -10,7 +11,6 @@
  */
 import type { OsmTags } from '../types.ts'
 import { DISALLOWED } from '../types.ts'
-import { SIDED_SANITIZERS } from '../sanitize/sanitize-road-tags.ts'
 
 const IS_DECISION_VIEW = Symbol('isDecisionView')
 

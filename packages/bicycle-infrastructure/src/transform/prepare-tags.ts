@@ -1,11 +1,11 @@
+import { ALLOWED_HIGHWAYS } from '../helpers/highway-classes.ts'
+import { containsSubstring } from '../helpers/strings.ts'
 /**
  * Pre-categorization tag transforms, ported from tilda-geo
  * (processing/topics/roads_bikelanes/helper/transform_tags/*). These mutate the raw way
  * tags in-place BEFORE `getTransformedObjects`, exactly as `roads_bikelanes.lua` does.
  */
 import type { OsmTags } from '../types.ts'
-import { containsSubstring } from '../helpers/strings.ts'
-import { ALLOWED_HIGHWAYS } from '../helpers/highway-classes.ts'
 
 function toSemicolonList(parts: Array<string | undefined>): string {
   return parts.filter((p) => p != null && p !== '').join('; ')
@@ -33,22 +33,37 @@ export function transformLifecycleTags(tags: OsmTags): void {
   // Construction-related access restrictions (access:reason/description/note mention construction).
   const constructionRestricted = restrictedAccessTags(tags)
   if (constructionRestricted.length > 0) {
-    const text = `${tags['access:reason'] ?? ''} ${tags.description ?? ''} ${tags.note ?? ''}`.toLowerCase()
+    const text =
+      `${tags['access:reason'] ?? ''} ${tags.description ?? ''} ${tags.note ?? ''}`.toLowerCase()
     if (containsSubstring(text, 'construction') || containsSubstring(text, 'baustelle')) {
       tags.lifecycle = 'construction_no_access'
-      tags.description = toSemicolonList([tags.description, 'TILDA-Hinweis: Weg gesperrt aufgrund einer Baustelle.'])
+      tags.description = toSemicolonList([
+        tags.description,
+        'TILDA-Hinweis: Weg gesperrt aufgrund einer Baustelle.',
+      ])
       for (const t of constructionRestricted) tags[t] = undefined
     }
   }
 
   // Blocked / closure restrictions (description/note mention a closure term).
-  const blockedTerms = ['sperrung', 'gesperrt', 'blockiert', 'blocked', 'closure', 'closed', 'blocked off']
+  const blockedTerms = [
+    'sperrung',
+    'gesperrt',
+    'blockiert',
+    'blocked',
+    'closure',
+    'closed',
+    'blocked off',
+  ]
   const blockedRestricted = restrictedAccessTags(tags)
   if (blockedRestricted.length > 0) {
     const text = `${tags.description ?? ''} ${tags.note ?? ''}`.toLowerCase()
     if (blockedTerms.some((term) => containsSubstring(text, term))) {
       tags.lifecycle = 'blocked'
-      tags.description = toSemicolonList([tags.description, 'TILDA-Hinweis: Weg gesperrt (Sperrung).'])
+      tags.description = toSemicolonList([
+        tags.description,
+        'TILDA-Hinweis: Weg gesperrt (Sperrung).',
+      ])
       for (const t of blockedRestricted) tags[t] = undefined
     }
   }

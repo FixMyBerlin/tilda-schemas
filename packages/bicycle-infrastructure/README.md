@@ -39,11 +39,11 @@ const features = processBikelanes({
 
 ## How it relates to the rest of the monorepo
 
-| Piece | Relationship |
-| --- | --- |
-| [`schemas/bicycle-infrastructure-category`](../../schemas/bicycle-infrastructure-category/) | Source of truth for allowed `category` values + fixtures |
-| [`schemas/bicycle-infrastructure-attributes`](../../schemas/bicycle-infrastructure-attributes/) | Draft vocabularies for non-category fields (fixtures used in tests) |
-| [`bicycle-infrastructure-reconciliation`](../bicycle-infrastructure-reconciliation/) | **Internal** tooling that proves this library ≡ TILDA LUA on a Berlin corpus |
+| Piece                                                                                           | Relationship                                                                 |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`schemas/bicycle-infrastructure-category`](../../schemas/bicycle-infrastructure-category/)     | Source of truth for allowed `category` values + fixtures                     |
+| [`schemas/bicycle-infrastructure-attributes`](../../schemas/bicycle-infrastructure-attributes/) | Draft vocabularies for non-category fields (fixtures used in tests)          |
+| [`bicycle-infrastructure-reconciliation`](../bicycle-infrastructure-reconciliation/)            | **Internal** tooling that proves this library ≡ TILDA LUA on a Berlin corpus |
 
 ---
 
@@ -51,13 +51,13 @@ const features = processBikelanes({
 
 Ported module-for-module from `tilda-geo` → `processing/topics/roads_bikelanes`:
 
-| This package | LUA |
-| --- | --- |
-| `transform/prepare-tags.ts` | `helper/transform_tags/*` |
-| `transform/transformations.ts` | `bikelanes/transformations.lua` |
-| `categories/*` | `bikelanes/bikelane_categories.lua` (+ decision view, sidepath) |
-| `sanitize/*`, `derive/*` | `helper/sanitize_*`, `derive_*` |
-| `index.ts` → `processBikelanes` | `bikelanes/bikelanes.lua` |
+| This package                    | LUA                                                             |
+| ------------------------------- | --------------------------------------------------------------- |
+| `transform/prepare-tags.ts`     | `helper/transform_tags/*`                                       |
+| `transform/transformations.ts`  | `bikelanes/transformations.lua`                                 |
+| `categories/*`                  | `bikelanes/bikelane_categories.lua` (+ decision view, sidepath) |
+| `sanitize/*`, `derive/*`        | `helper/sanitize_*`, `derive_*`                                 |
+| `index.ts` → `processBikelanes` | `bikelanes/bikelanes.lua`                                       |
 
 ---
 

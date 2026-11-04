@@ -42,45 +42,21 @@
     },
     "_side": {
       "type": "string",
-      "enum": [
-        "self",
-        "left",
-        "right"
-      ]
+      "enum": ["self", "left", "right"]
     },
     "_prefix": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "cycleway",
-        "sidewalk",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["cycleway", "sidewalk", null]
     },
     "_infrastructureExists": {
       "type": "boolean"
     },
     "oneway": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "yes",
-        "no",
-        "car_not_bike",
-        "assumed_no",
-        "implicit_yes",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["yes", "no", "car_not_bike", "assumed_no", "implicit_yes", null]
     },
     "surface": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "asphalt",
         "paved",
@@ -114,46 +90,20 @@
       ]
     },
     "surface_source": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "tag",
-        "parent_highway_tag",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["tag", "parent_highway_tag", null]
     },
     "surface_confidence": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "high",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["high", null]
     },
     "smoothness": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "excellent",
-        "good",
-        "intermediate",
-        "bad",
-        "very_bad",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["excellent", "good", "intermediate", "bad", "very_bad", null]
     },
     "smoothness_source": {
       "description": "May be prefixed with `parent_highway_` when copied from the parent highway.",
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "tag",
         "tag_normalized",
@@ -169,15 +119,8 @@
       ]
     },
     "smoothness_confidence": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "high",
-        "medium",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["high", "medium", null]
     },
     "separation_left": {
       "$ref": "#/$defs/separation"
@@ -186,16 +129,10 @@
       "$ref": "#/$defs/separation"
     },
     "buffer_left": {
-      "type": [
-        "number",
-        "null"
-      ]
+      "type": ["number", "null"]
     },
     "buffer_right": {
-      "type": [
-        "number",
-        "null"
-      ]
+      "type": ["number", "null"]
     },
     "marking_left": {
       "$ref": "#/$defs/marking"
@@ -210,42 +147,20 @@
       "$ref": "#/$defs/trafficMode"
     },
     "surface_color": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "red",
-        "green",
-        "red;green",
-        "no",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["red", "green", "red;green", "no", null]
     },
     "traffic_sign": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     },
     "width": {
-      "type": [
-        "number",
-        "null"
-      ]
+      "type": ["number", "null"]
     }
   },
-  "required": [
-    "category",
-    "_side",
-    "_infrastructureExists"
-  ],
+  "required": ["category", "_side", "_infrastructureExists"],
   "$defs": {
     "separation": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "no",
         "bollard",
@@ -271,10 +186,7 @@
       ]
     },
     "marking": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "solid_line",
         "dashed_line",
@@ -286,19 +198,8 @@
       ]
     },
     "trafficMode": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "no",
-        "motor_vehicle",
-        "parking",
-        "psv",
-        "bicycle",
-        "foot",
-        null
-      ]
+      "type": ["string", "null"],
+      "enum": ["no", "motor_vehicle", "parking", "psv", "bicycle", "foot", null]
     }
   }
 }

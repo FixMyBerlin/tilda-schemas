@@ -14,42 +14,42 @@ way it has one entry with `_side=self`.
 
 ## Separate way (`_side=self`)
 
-| Case | Tags | Category |
-| --- | --- | --- |
-| Bare cycleway, the classic trap | `highway=cycleway` | `needsClarification` |
-| Cycleway with both modes designated, nothing else | `highway=cycleway;bicycle=designated;foot=designated` | `needsClarification` |
-| Cycleway, no sign (**target**) | `highway=cycleway;traffic_sign=none` | `cycleway_adjoiningOrIsolated` (tilda-geo `98e649800`); package still says `needsClarification` |
-| Cycleway along a road | `highway=cycleway;is_sidepath=yes` | `cycleway_adjoining` |
-| Cycleway, away from a road | `highway=cycleway;is_sidepath=no` | `cycleway_isolated` |
-| Segregated foot and cycle path, one line | `highway=cycleway;bicycle=designated;foot=designated;segregated=yes` | `footAndCyclewaySegregated_adjoiningOrIsolated` |
-| Same, with sign DE:241 | `highway=path;bicycle=designated;foot=designated;segregated=yes;traffic_sign=DE:241` | `footAndCyclewaySegregated_adjoiningOrIsolated` |
-| Same along a road | `highway=path;bicycle=designated;foot=designated;segregated=yes;is_sidepath=yes` | `footAndCyclewaySegregated_adjoining` |
-| Shared foot and cycle path, sign DE:240 | `highway=path;bicycle=designated;foot=designated;segregated=no;traffic_sign=DE:240` | `footAndCyclewayShared_adjoiningOrIsolated` |
-| Shared foot and cycle path, no sign | `highway=path;bicycle=designated;foot=designated;segregated=no` | `footAndCyclewayShared_adjoiningOrIsolated` |
-| Two lines: cycleway line carries the foot traffic of the adjacent footway | `highway=cycleway;is_sidepath=yes;bicycle=designated;traffic_mode:right=foot` | `footAndCyclewaySegregated_adjoining` |
-| Footway with bicycles allowed | `highway=footway;footway=sidewalk;bicycle=yes` | `footwayBicycleYes_adjoining` |
-| Footway with both designated, nothing else | `highway=footway;footway=sidewalk;bicycle=designated;foot=designated` | `needsClarification` |
-| Protected bike lane as separate sidepath | `highway=cycleway;is_sidepath=yes;separation:left=bollard` | `cyclewayOnHighwayProtected` |
-| Same, parking as protection | `highway=cycleway;is_sidepath=yes;traffic_mode:left=parking` | `cyclewayOnHighwayProtected` |
-| Protection does not count with `segregated=yes` | `highway=cycleway;is_sidepath=yes;separation:left=bollard;segregated=yes` | `cycleway_adjoining` |
+| Case                                                                      | Tags                                                                                 | Category                                                                                        |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Bare cycleway, the classic trap                                           | `highway=cycleway`                                                                   | `needsClarification`                                                                            |
+| Cycleway with both modes designated, nothing else                         | `highway=cycleway;bicycle=designated;foot=designated`                                | `needsClarification`                                                                            |
+| Cycleway, no sign (**target**)                                            | `highway=cycleway;traffic_sign=none`                                                 | `cycleway_adjoiningOrIsolated` (tilda-geo `98e649800`); package still says `needsClarification` |
+| Cycleway along a road                                                     | `highway=cycleway;is_sidepath=yes`                                                   | `cycleway_adjoining`                                                                            |
+| Cycleway, away from a road                                                | `highway=cycleway;is_sidepath=no`                                                    | `cycleway_isolated`                                                                             |
+| Segregated foot and cycle path, one line                                  | `highway=cycleway;bicycle=designated;foot=designated;segregated=yes`                 | `footAndCyclewaySegregated_adjoiningOrIsolated`                                                 |
+| Same, with sign DE:241                                                    | `highway=path;bicycle=designated;foot=designated;segregated=yes;traffic_sign=DE:241` | `footAndCyclewaySegregated_adjoiningOrIsolated`                                                 |
+| Same along a road                                                         | `highway=path;bicycle=designated;foot=designated;segregated=yes;is_sidepath=yes`     | `footAndCyclewaySegregated_adjoining`                                                           |
+| Shared foot and cycle path, sign DE:240                                   | `highway=path;bicycle=designated;foot=designated;segregated=no;traffic_sign=DE:240`  | `footAndCyclewayShared_adjoiningOrIsolated`                                                     |
+| Shared foot and cycle path, no sign                                       | `highway=path;bicycle=designated;foot=designated;segregated=no`                      | `footAndCyclewayShared_adjoiningOrIsolated`                                                     |
+| Two lines: cycleway line carries the foot traffic of the adjacent footway | `highway=cycleway;is_sidepath=yes;bicycle=designated;traffic_mode:right=foot`        | `footAndCyclewaySegregated_adjoining`                                                           |
+| Footway with bicycles allowed                                             | `highway=footway;footway=sidewalk;bicycle=yes`                                       | `footwayBicycleYes_adjoining`                                                                   |
+| Footway with both designated, nothing else                                | `highway=footway;footway=sidewalk;bicycle=designated;foot=designated`                | `needsClarification`                                                                            |
+| Protected bike lane as separate sidepath                                  | `highway=cycleway;is_sidepath=yes;separation:left=bollard`                           | `cyclewayOnHighwayProtected`                                                                    |
+| Same, parking as protection                                               | `highway=cycleway;is_sidepath=yes;traffic_mode:left=parking`                         | `cyclewayOnHighwayProtected`                                                                    |
+| Protection does not count with `segregated=yes`                           | `highway=cycleway;is_sidepath=yes;separation:left=bollard;segregated=yes`            | `cycleway_adjoining`                                                                            |
 
 ## Tags on the road (one result per side)
 
-| Case | Tags | Result |
-| --- | --- | --- |
-| Advisory lane | `highway=residential;cycleway:right=lane;cycleway:right:lane=advisory` | right: `cyclewayOnHighway_advisory` |
-| Exclusive lane | `highway=residential;cycleway:right=lane;cycleway:right:lane=exclusive` | right: `cyclewayOnHighway_exclusive` |
-| Lane on both sides | `highway=residential;cycleway:both=lane;cycleway:both:lane=advisory` | left and right: `cyclewayOnHighway_advisory` |
-| Protected lane (flex posts) | `highway=residential;cycleway:right=lane;cycleway:right:lane=exclusive;cycleway:right:separation:left=flex_post` | right: `cyclewayOnHighwayProtected` |
-| Protected track (bollards) | `highway=residential;cycleway:right=track;cycleway:right:separation:left=bollard` | right: `cyclewayOnHighwayProtected` |
-| Track with a kerb is not "protected" | `highway=residential;cycleway:right=track;cycleway:right:separation:left=kerb` | right: `cycleway_adjoining` |
-| Track, no separation tag | `highway=residential;cycleway:right=track` | right: `cycleway_adjoining` |
-| Track with `segregated=yes` (centerline style) | `highway=residential;cycleway:right=track;cycleway:right:segregated=yes` | right: `footAndCyclewaySegregated_adjoining` |
-| Sidewalk with bicycles allowed | `highway=residential;sidewalk:right=yes;sidewalk:right:bicycle=yes` | right: `footwayBicycleYes_adjoining` |
-| Shared bus lane | `highway=residential;cycleway:right=share_busway` | right: `sharedBusLaneBusWithBike` |
-| No cycleway on either side | `highway=residential;cycleway:both=no` | left and right: `data_no` |
-| Bicycle road | `highway=residential;bicycle_road=yes` | self: `bicycleRoad` |
-| Bicycle road, motor vehicles to destination | `highway=residential;bicycle_road=yes;vehicle=destination` | self: `bicycleRoad_vehicleDestination` |
+| Case                                           | Tags                                                                                                             | Result                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Advisory lane                                  | `highway=residential;cycleway:right=lane;cycleway:right:lane=advisory`                                           | right: `cyclewayOnHighway_advisory`          |
+| Exclusive lane                                 | `highway=residential;cycleway:right=lane;cycleway:right:lane=exclusive`                                          | right: `cyclewayOnHighway_exclusive`         |
+| Lane on both sides                             | `highway=residential;cycleway:both=lane;cycleway:both:lane=advisory`                                             | left and right: `cyclewayOnHighway_advisory` |
+| Protected lane (flex posts)                    | `highway=residential;cycleway:right=lane;cycleway:right:lane=exclusive;cycleway:right:separation:left=flex_post` | right: `cyclewayOnHighwayProtected`          |
+| Protected track (bollards)                     | `highway=residential;cycleway:right=track;cycleway:right:separation:left=bollard`                                | right: `cyclewayOnHighwayProtected`          |
+| Track with a kerb is not "protected"           | `highway=residential;cycleway:right=track;cycleway:right:separation:left=kerb`                                   | right: `cycleway_adjoining`                  |
+| Track, no separation tag                       | `highway=residential;cycleway:right=track`                                                                       | right: `cycleway_adjoining`                  |
+| Track with `segregated=yes` (centerline style) | `highway=residential;cycleway:right=track;cycleway:right:segregated=yes`                                         | right: `footAndCyclewaySegregated_adjoining` |
+| Sidewalk with bicycles allowed                 | `highway=residential;sidewalk:right=yes;sidewalk:right:bicycle=yes`                                              | right: `footwayBicycleYes_adjoining`         |
+| Shared bus lane                                | `highway=residential;cycleway:right=share_busway`                                                                | right: `sharedBusLaneBusWithBike`            |
+| No cycleway on either side                     | `highway=residential;cycleway:both=no`                                                                           | left and right: `data_no`                    |
+| Bicycle road                                   | `highway=residential;bicycle_road=yes`                                                                           | self: `bicycleRoad`                          |
+| Bicycle road, motor vehicles to destination    | `highway=residential;bicycle_road=yes;vehicle=destination`                                                       | self: `bicycleRoad_vehicleDestination`       |
 
 ## What the viewer should do with them
 

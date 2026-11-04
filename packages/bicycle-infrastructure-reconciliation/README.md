@@ -42,11 +42,11 @@ bun run overpass:derive-tags
 bun run clip <full-export.geojson> reference/tilda-bikelanes-berlin.geojson
 ```
 
-| Script | Leg of the cross-check |
-| --- | --- |
-| `check` | Input↔output reconciliation; flags `constructionGap` vs real anomalies |
-| `compare` | TS ≡ LUA on the Berlin corpus |
-| `validate-export` | LUA values ⊆ draft `output.schema.json` vocabulary |
+| Script            | Leg of the cross-check                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| `check`           | Input↔output reconciliation; flags `constructionGap` vs real anomalies |
+| `compare`         | TS ≡ LUA on the Berlin corpus                                          |
+| `validate-export` | LUA values ⊆ draft `output.schema.json` vocabulary                     |
 
 ---
 

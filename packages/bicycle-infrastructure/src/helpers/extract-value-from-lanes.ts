@@ -33,7 +33,9 @@ export function extractValueFromLanes(lanesTag: string, tags: OsmTags): string |
   return undefined
 }
 
-export function extractLastValueFromLanes(lanesValue: string | undefined | null): string | undefined {
+export function extractLastValueFromLanes(
+  lanesValue: string | undefined | null,
+): string | undefined {
   if (lanesValue == null) return undefined
   const lanes = parseLanesValue(lanesValue)
   if (lanes.length > 0) return lanes[lanes.length - 1]

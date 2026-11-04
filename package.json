@@ -1,11 +1,11 @@
 {
   "name": "tilda-schemas",
   "private": true,
-  "type": "module",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
+  "type": "module",
   "scripts": {
     "build": "bun run --filter '@tilda-geo/bicycle-infrastructure' build",
     "test-run": "bun run --filter '@tilda-geo/bicycle-infrastructure' test-run",

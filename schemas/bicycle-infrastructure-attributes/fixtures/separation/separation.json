@@ -19,13 +19,21 @@
   },
   {
     "name": "separation:left=separation_kerb normalized to bump",
-    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:left": "separation_kerb" },
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "separation:left": "separation_kerb"
+    },
     "select": { "side": "self" },
     "expect": { "separation_left": "bump" }
   },
   {
     "name": "unknown separation value → null (disallowed)",
-    "input": { "highway": "cycleway", "traffic_sign": "DE:237", "separation:left": "totally_unknown" },
+    "input": {
+      "highway": "cycleway",
+      "traffic_sign": "DE:237",
+      "separation:left": "totally_unknown"
+    },
     "select": { "side": "self" },
     "expect": { "separation_left": null }
   },

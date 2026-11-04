@@ -1,7 +1,7 @@
+import { removeDisallowedValue, sanitizeForLogging } from '../helpers/sanitize-for-logging.ts'
+import { trafficMode } from '../sanitize/sanitize-road-tags.ts'
 /** Port of topics/roads_bikelanes/bikelanes/helper/derive_traffic_mode.lua */
 import type { OsmTags } from '../types.ts'
-import { trafficMode } from '../sanitize/sanitize-road-tags.ts'
-import { removeDisallowedValue, sanitizeForLogging } from '../helpers/sanitize-for-logging.ts'
 
 export interface TrafficModeResult {
   traffic_mode_left?: string
@@ -16,7 +16,16 @@ const DIRECTIONAL_PARKING_INFERENCE_CATEGORIES = new Set([
   'cyclewayOnHighwayProtected',
 ])
 
-const PARKING_ALLOWED = ['no', 'yes', 'lane', 'street_side', 'on_kerb', 'half_on_kerb', 'shoulder', 'separate'] as const
+const PARKING_ALLOWED = [
+  'no',
+  'yes',
+  'lane',
+  'street_side',
+  'on_kerb',
+  'half_on_kerb',
+  'shoulder',
+  'separate',
+] as const
 
 function sanitizeParking(value: string | undefined): string | undefined {
   if (value == null) return undefined
@@ -52,7 +61,10 @@ export function deriveTrafficMode(
   }
 
   if (DIRECTIONAL_PARKING_INFERENCE_CATEGORIES.has(categoryId)) {
-    return { traffic_mode_left: undefined, traffic_mode_right: inferTrafficModeFromParking(centerlineTags, side) }
+    return {
+      traffic_mode_left: undefined,
+      traffic_mode_right: inferTrafficModeFromParking(centerlineTags, side),
+    }
   }
 
   return { traffic_mode_left: left, traffic_mode_right: right }

@@ -9,11 +9,11 @@ Cite the repository (see root `CITATION.cff` / Zenodo DOI) until per-schema DOIs
 
 ## Contents
 
-| Path | Role |
-| --- | --- |
+| Path                                                         | Role                                    |
+| ------------------------------------------------------------ | --------------------------------------- |
 | [`schema/category.schema.json`](schema/category.schema.json) | JSON Schema — allowed `category` values |
-| [`fixtures/`](fixtures/) | Spec cases for conformance tests |
-| [`CHANGELOG.md`](CHANGELOG.md) | Schema-local history |
+| [`fixtures/`](fixtures/)                                     | Spec cases for conformance tests        |
+| [`CHANGELOG.md`](CHANGELOG.md)                               | Schema-local history                    |
 
 ## Consumers
 

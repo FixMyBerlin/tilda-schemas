@@ -10,7 +10,7 @@
     "tilda",
     "cycling"
   ],
-  "homepage": "https://github.com/FixMyBerlin/tilda-schemas/tree/main/packages/bicycle-infrastructure#readme",
+  "homepage": "https://fixmyberlin.github.io/tilda-schemas/",
   "bugs": {
     "url": "https://github.com/FixMyBerlin/tilda-schemas/issues"
   },
@@ -38,14 +38,15 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "bun test",
-    "typecheck": "tsc --noEmit",
-    "check-exports": "attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16",
+    "type-check": "tsc --noEmit",
+    "test-run": "bun test",
+    "check-exports": "publint && attw --pack . --profile esm-only",
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@types/bun": "latest",
+    "publint": "^0.3.24",
     "tsup": "^8.5.1",
     "typescript": "^5.6.0"
   },

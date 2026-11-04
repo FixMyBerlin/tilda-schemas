@@ -7,7 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@tilda-geo/bicycle-infrastructure-reconciliation"
-  ]
+  "ignore": ["preview", "@tilda-geo/bicycle-infrastructure-reconciliation"]
 }

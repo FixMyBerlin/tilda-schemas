@@ -6,7 +6,7 @@ function splitUnit(str: string | undefined | null): [number, string] | null {
   if (!m) return null
   const val = Number(m[1])
   if (Number.isNaN(val)) return null
-  const unit = m[2] === '' ? 'm' : m[2]
+  const unit = m[2] || 'm'
   return [val, unit]
 }
 

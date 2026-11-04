@@ -25,7 +25,7 @@ export function parseTildaId(id: string): ParsedTildaId {
   const baseId = Number(parts[1])
   const baseRef = `${parts[0]}/${parts[1]}`
   if (parts.length >= 4) {
-    return { key: id, baseId, baseRef, prefix: parts[2], side: parts[3] as TildaSide }
+    return { key: id, baseId, baseRef, prefix: parts[2] ?? null, side: parts[3] as TildaSide }
   }
   return { key: id, baseId, baseRef, prefix: null, side: 'self' }
 }

@@ -10,6 +10,7 @@
     "overpass:derive-tags": "bun --smol scripts/derive-overpass-tags.ts",
     "clip": "bun scripts/clip-tilda-export.ts",
     "check": "bun src/check.ts",
+    "type-check": "tsc --noEmit",
     "compare": "bun src/compare.ts",
     "validate-export": "bun src/validate-export.ts"
   },

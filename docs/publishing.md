@@ -18,10 +18,12 @@ ESM-only package under `packages/bicycle-infrastructure`. Packaging and release 
 (manual changesets; no auto-publish CI like `maplibre-editor-layer-index`).
 
 Prerequisites: npm org [`tilda-geo`](https://www.npmjs.com/org/tilda-geo) exists; you are
-logged in with publish rights (`npm whoami`).
+logged in with publish rights (`npm whoami`). npm asks for 2FA, so the release runs in a terminal.
 
-See root README **Release** for the step-by-step. First publish uses the current
-`package.json` version after `bun run release` / `changeset publish`.
+Release from a terminal on a clean, pushed `main`: `bun run release` (see root README
+**Release** and [`.changeset/README.md`](../.changeset/README.md)). It runs `changeset version`,
+`bun run check`, publishes each package from a packed tarball and tags `name@version`.
+`bun run release --dry-run` shows what would happen and changes nothing.
 
 Do **not** set `publishConfig.provenance` for local publishes — npm only supports
 automatic provenance from CI OIDC (GitHub Actions, etc.).

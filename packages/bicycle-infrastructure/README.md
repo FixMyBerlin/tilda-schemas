@@ -68,7 +68,7 @@ From the monorepo root:
 ```bash
 bun install
 bun run build
-bun run --filter '@tilda-geo/bicycle-infrastructure' test
+bun run test-run
 bun run check-exports
 ```
 
@@ -77,7 +77,7 @@ bun run check-exports
 
 Berlin corpus check (category agreement ~100%): see the **internal** [reconciliation](../bicycle-infrastructure-reconciliation/) package.
 
-Releases use [changesets](https://github.com/changesets/changesets) — see the root README **Release** section (manual publish, same as the smoothness packages).
+Releases use [changesets](https://github.com/changesets/changesets), see [`.changeset/README.md`](../../.changeset/README.md) and the root README **Release** section.
 
 ---
 

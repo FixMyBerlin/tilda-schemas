@@ -7,7 +7,7 @@ The LUA code is the reference: where the package differs, LUA wins.
 Three things are kept aligned:
 
 1. the [schemas](../schemas/) (controlled vocabulary + fixtures, plain JSON, no TypeScript-isms),
-2. the TypeScript package, tested against the fixtures (`bun run test`),
+2. the TypeScript package, tested against the fixtures (`bun run test-run`),
 3. the LUA output, checked with [`packages/bicycle-infrastructure-reconciliation`](../packages/bicycle-infrastructure-reconciliation/)
    against a static Berlin snapshot.
 
@@ -43,7 +43,7 @@ the fixtures in `schemas/`.
 
 1. Read the tilda-geo commit (changes under `processing/topics/roads_bikelanes` and `processing/topics/helper`).
 2. Add or adjust a **fixture** in `schemas/` first (input tags, expected category or attribute).
-3. Change the package until `bun run test` passes. Keep the order of the category list identical to LUA:
+3. Change the package until `bun run test-run` passes. Keep the order of the category list identical to LUA:
    first match wins, and the decision view must behave the same.
 4. Optionally run the Berlin cross-check (below). It only catches differences that occur in Berlin data.
 

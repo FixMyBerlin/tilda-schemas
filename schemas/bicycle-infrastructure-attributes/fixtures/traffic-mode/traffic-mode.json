@@ -1,0 +1,105 @@
+[
+  {
+    "name": "parking:right=no gives no traffic mode (tilda-geo derive_traffic_mode)",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "parking:right": "no"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": {
+      "category": "cyclewayOnHighway_exclusive",
+      "traffic_mode_left": null,
+      "traffic_mode_right": null
+    }
+  },
+  {
+    "name": "parking:both=no gives no traffic mode",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "parking:both": "no"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "traffic_mode_right": null }
+  },
+  {
+    "name": "parking:right=lane on an exclusive lane → traffic_mode_right=parking",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "parking:right": "lane"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "traffic_mode_left": null, "traffic_mode_right": "parking" }
+  },
+  {
+    "name": "parking:both=street_side → parking for the side of the lane",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "parking:both": "street_side"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "traffic_mode_right": "parking" }
+  },
+  {
+    "name": "parking:right=unknown_value is no parking",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "parking:right": "foo"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "traffic_mode_right": null }
+  },
+  {
+    "name": "left lane takes parking:left into traffic_mode_right",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "exclusive",
+      "parking:left": "lane"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "traffic_mode_left": null, "traffic_mode_right": "parking" }
+  },
+  {
+    "name": "bicycle road infers both sides from parking",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "parking:left": "lane",
+      "parking:right": "no"
+    },
+    "select": { "side": "self" },
+    "expect": {
+      "category": "bicycleRoad",
+      "traffic_mode_left": "parking",
+      "traffic_mode_right": null
+    }
+  },
+  {
+    "name": "an explicit traffic_mode wins over parking",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "exclusive",
+      "cycleway:right:traffic_mode:left": "psv",
+      "parking:right": "lane"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "traffic_mode_left": "psv", "traffic_mode_right": null }
+  },
+  {
+    "name": "traffic_mode=none is read as no",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "traffic_mode:right": "none" },
+    "select": { "side": "self" },
+    "expect": { "traffic_mode_right": "no" }
+  }
+]

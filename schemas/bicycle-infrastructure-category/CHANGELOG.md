@@ -10,6 +10,10 @@ Synced with tilda-geo `develop` of 2026-11-04. No category value is added or rem
   cycle paths still win.
 - `not_expected` on `oneway=-1` roads is the right side (mirrored from `oneway=yes`, where it is the left side),
   unless `oneway:bicycle=no`. Follows tilda-geo-private#34 (not merged yet).
+- New fixtures that pin the protective `separation` set of `cyclewayOnHighwayProtected` (`bollard`, `flex_post`,
+  `vertical_panel`, `studs`, `bump`, `planter`, `fence`, `jersey_barrier`, `guard_rail`, plus `separation_kerb` and
+  `lane_separator` read as `bump`) and the values that do not protect (`kerb`, `yes`, `greenery`, ...). The set
+  was already implemented; it is now fixed in the spec.
 - Fixture change: a `cycleway:right=shared_lane` on a road is `oneway=implicit_yes` (side default), no longer
   `assumed_no`. Also from tilda-geo-private#34.
 

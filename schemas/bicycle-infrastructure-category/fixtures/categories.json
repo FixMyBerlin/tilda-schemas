@@ -232,5 +232,225 @@
     "input": { "highway": "footway", "traffic_sign": "none", "bicycle": "designated" },
     "select": { "side": "self" },
     "expect": { "category": "needsClarification" }
+  },
+  {
+    "name": "protected: separation:left=bollard on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "bollard" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=flex_post on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "flex_post" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=vertical_panel on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "vertical_panel" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=studs on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "studs" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=bump on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "bump" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=planter on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "planter" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=fence on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "fence" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=jersey_barrier on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "jersey_barrier" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=guard_rail on a sidepath is cyclewayOnHighwayProtected",
+    "osm": "protective separation set of bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "guard_rail" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=separation_kerb is read as bump",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "separation_kerb" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: separation:left=lane_separator is read as bump",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "lane_separator" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "not protected: separation:left=no is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "no" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=kerb is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "kerb" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=yes is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "yes" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=structure is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "structure" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=ditch is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "ditch" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=greenery is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "greenery" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=hedge is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "hedge" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=tree_row is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "tree_row" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=cone is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "cone" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=kerb;parking_lane is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "separation:left": "kerb;parking_lane"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=kerb;bollard is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "kerb;bollard" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=solid_line is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "solid_line" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "not protected: separation:left=totally_unknown is no protective separation",
+    "osm": "only the protective set counts, see bikelane_categories.lua",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "separation:left": "totally_unknown" },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "protected: parked cars left of the lane count as separation",
+    "input": { "highway": "cycleway", "is_sidepath": "yes", "traffic_mode:left": "parking" },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: not with segregated (cycleway beside the road, not on it)",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "separation:left": "bollard",
+      "segregated": "yes"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "protected: not when motor traffic is on the right of the lane",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "separation:left": "bollard",
+      "traffic_mode:right": "motor_vehicle"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "protected: counter-flow lane with motor traffic and a barrier on the right",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "traffic_mode:right": "motor_vehicle",
+      "separation:right": "bollard"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayProtected" }
+  },
+  {
+    "name": "protected: not for advisory lanes",
+    "input": {
+      "highway": "secondary",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory",
+      "cycleway:right:separation:left": "bollard"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "cyclewayOnHighway_advisory" }
   }
 ]

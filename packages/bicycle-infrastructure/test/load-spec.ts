@@ -3,6 +3,7 @@ import separationFixtures from '../../../schemas/bicycle-infrastructure-attribut
 import smoothnessFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/smoothness/smoothness.json'
 import surfaceFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/surface/surface.json'
 import todosFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/todos/todos.json'
+import trafficModeFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/traffic-mode/traffic-mode.json'
 import transformationFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/transformation/transformation.json'
 import widthFixtures from '../../../schemas/bicycle-infrastructure-attributes/fixtures/width/width.json'
 /**
@@ -43,6 +44,7 @@ export const SPEC: SpecGroup[] = [
   { key: 'separation', cases: separationFixtures as unknown as SpecCase[] },
   { key: 'smoothness', cases: smoothnessFixtures as unknown as SpecCase[] },
   { key: 'transformation', cases: transformationFixtures as unknown as SpecCase[] },
+  { key: 'traffic-mode', cases: trafficModeFixtures as unknown as SpecCase[] },
   { key: 'todos', cases: todosFixtures as unknown as SpecCase[] },
   { key: 'width', cases: widthFixtures as unknown as SpecCase[] },
 ]

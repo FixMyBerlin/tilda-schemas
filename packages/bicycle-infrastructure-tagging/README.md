@@ -23,6 +23,7 @@ ESM only. `@tilda-geo/bicycle-infrastructure` is a dependency.
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `pathRole`                                                               | One definition of "path for foot and bicycle": mapped on the centerline, as one line or as two lines.                  |
 | `planCategoryChange`                                                     | The tags to add, change or remove so that a way or road side gets a TILDA category.                                    |
+| `MAPPING_TARGETS`, `planForMappingTarget`                                | What a mapper picks: a TILDA category plus fixed tags (signed / unsigned), grouped like tilda-geo's map legend.        |
 | `requiredAttributes`, `roadAttributes`, `tildaQaState`, `reminders`      | The attributes a dataset needs per category, their state (tagged, inherited, guessed, missing), how complete a way is. |
 | `profiles/radnetz-berlin`                                                | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders.         |
 | `roadWidthFromTags`, `partWidthMode`, ...                                | Fallback widths, which width keys exist, whether part widths add up.                                                   |
@@ -63,7 +64,30 @@ const plan = planCategoryChange(tags, 'cyclewayOnHighway_advisory', 'right')
 applyCategoryPlan(tags, plan) // the tags after the plan
 ```
 
-`planCategoryVariants` returns the list of ways to reach the target, the preferred one first. Today the list has one entry (`variantId: 'default'`); variants such as "with sign" and "without sign" will be added to it. A target that does not fit the way (a lane on a footway) is a conflict with a code. `planTagsForCategory` itself stays in `@tilda-geo/bicycle-infrastructure` (it needs the category specs, and the core cannot depend on this package).
+`planCategoryVariants` returns the ways to reach the target: the plan the planner prefers first (`variantId: 'default'`: fewest edits, no new traffic sign, `traffic_sign=none` kept), then one plan per mapping target of the category. A target that does not fit the way (a lane on a footway) is a conflict with a code. `planTagsForCategory` itself stays in `@tilda-geo/bicycle-infrastructure` (it needs the category specs, and the core cannot depend on this package).
+
+### Mapping targets
+
+```ts
+import {
+  MAPPING_TARGET_LABELS,
+  applyCategoryPlan,
+  groupMappingTargets,
+  planForMappingTarget,
+} from '@tilda-geo/bicycle-infrastructure-tagging'
+
+for (const group of groupMappingTargets()) {
+  // group.id: 'separated' | 'lane' | 'foot' | 'sidewalk' | 'mixed'
+  for (const target of group.targets) console.log(MAPPING_TARGET_LABELS.de[target.labelCode])
+}
+
+const tags = { highway: 'path', traffic_sign: 'none' }
+const plan = planForMappingTarget(tags, 'footAndCyclewayShared_isolated:unsigned', 'self')
+// plan.add: segregated=no (mapping_target), bicycle=designated, foot=designated, is_sidepath=no
+applyCategoryPlan(tags, plan)
+```
+
+A mapping target is a TILDA category (the id of tilda-geo, unchanged) plus the tags the plan must contain: `footAndCyclewayShared_adjoining:signed` (`traffic_sign=DE:240`) and `:unsigned` (`traffic_sign=none`, `segregated=no`), the same for segregated paths (`DE:241` / `segregated=yes`), cycleways and footways with bicycles allowed, and the two-line cycleway (`traffic_mode:right=foot`, a segregated path for TILDA). The list is derived from the category specs; the full table is in [docs/mapping-targets.md](../../docs/mapping-targets.md). Groups follow the legend "Führungsform einfach" of tilda-geo.
 
 ### Required attributes
 

@@ -58,6 +58,8 @@ export interface CategoryTagPlan {
   aligned: boolean
   add: TagPlanEntry[]
   change: TagChangeEntry[]
+  /** Keys to delete: `cycleway:both` (or `cycleway`) when a road side is split from the other */
+  remove: string[]
   conflicts: TagConflictEntry[]
 }
 
@@ -101,6 +103,10 @@ export const TAG_REASON_CODES = [
   'protected_lane_separation',
   'protected_lane_parking',
   'cycleway_crossing',
+  /** `{from}`: `cycleway:both` (or `cycleway`) split into `cycleway:left` and `cycleway:right` */
+  'split_both_sides',
+  /** `{key}`: the `cycleway:<side>` (or `sidewalk:<side>`) value the category needs on that side */
+  'side_presence',
   /** conflict, `{target}` `{result}`: the suggested edits do not reach the target */
   'plan_not_enough',
   /** conflict, `{target}` `{result}`: nothing could be derived */
@@ -149,15 +155,35 @@ function resolveRefinedIdFromSpec(spec: CategorySpec, idSuffix: string): string 
   return `${base}${idSuffix}`
 }
 
-function findTransformedTags(wayTags: OsmTags, side: BikelaneResult['_side']): OsmTags | undefined {
+/**
+ * The object of `side` the planner works on. A road side can have two (`cycleway:right` and
+ * `sidewalk:right`): the one under `prefix` wins, else the first.
+ */
+function findTransformedTags(
+  wayTags: OsmTags,
+  side: BikelaneResult['_side'],
+  prefix?: string,
+): OsmTags | undefined {
   const tags: OsmTags = { ...wayTags }
   prepareTags(tags)
-  const transformed = getTransformedObjects(tags, BIKELANE_TRANSFORMATIONS)
-  return transformed.find((t) => (t._side ?? 'self') === side)
+  const ofSide = getTransformedObjects(tags, BIKELANE_TRANSFORMATIONS).filter(
+    (t) => (t._side ?? 'self') === side,
+  )
+  return ofSide.find((t) => t._prefix === prefix) ?? ofSide[0]
 }
 
-function categorizeSide(wayTags: OsmTags, side: BikelaneResult['_side']): string | null {
-  const transformed = findTransformedTags(wayTags, side)
+/** The prefix of the side object a category lives on: `sidewalk` for a footway category */
+function sidePrefixFor(targetCategoryId: string, side: BikelaneResult['_side']) {
+  if (side === 'self') return undefined
+  return SIDEWALK_CATEGORY.test(targetCategoryId) ? 'sidewalk' : 'cycleway'
+}
+
+function categorizeSide(
+  wayTags: OsmTags,
+  side: BikelaneResult['_side'],
+  prefix?: string,
+): string | null {
+  const transformed = findTransformedTags(wayTags, side, prefix)
   if (!transformed) return null
   const category = categorizeBikelane(transformed)
   return category?.id ?? null
@@ -173,13 +199,107 @@ export function writeKeyForSide(
   side: BikelaneResult['_side'],
   prefix: string | null,
 ): string {
-  if (side === 'self' || prefix == null) return transformedKey
+  if (side === 'self') return transformedKey
+  // A road side without any tags yet: its tags go under `cycleway:<side>`, never on the road
+  prefix ??= 'cycleway'
   if (prefix === 'cycleway' || prefix === 'sidewalk') {
     // The key that names the road side itself (`cycleway=track`) is the value of `cycleway:right`.
     if (transformedKey === prefix) return `${prefix}:${side}`
     return `${prefix}:${side}:${transformedKey}`
   }
   return transformedKey
+}
+
+/** Value of `cycleway:<side>` that the categories on a road side need */
+const SIDE_PRESENCE: Readonly<Record<string, string>> = {
+  cyclewayOnHighway_advisory: 'lane',
+  cyclewayOnHighway_exclusive: 'lane',
+  cyclewayOnHighway_advisoryOrExclusive: 'lane',
+  cyclewayOnHighwayBetweenLanes: 'lane',
+  cyclewayOnHighwayProtected: 'track',
+  cycleway_adjoining: 'track',
+  cycleway_isolated: 'track',
+  cycleway_adjoiningOrIsolated: 'track',
+  footAndCyclewayShared_adjoining: 'track',
+  footAndCyclewayShared_adjoiningOrIsolated: 'track',
+  footAndCyclewaySegregated_adjoining: 'track',
+  footAndCyclewaySegregated_adjoiningOrIsolated: 'track',
+  sharedMotorVehicleLane: 'shared_lane',
+  sharedBusLaneBusWithBike: 'share_busway',
+  sharedBusLaneBikeWithBus: 'lane',
+}
+
+/** Categories of a road side mapped with `sidewalk:<side>`: they need the sidewalk on that side */
+const SIDEWALK_CATEGORY = /^footwayBicycleYes_/
+
+interface SideSetup {
+  tags: OsmTags
+  add: TagPlanEntry[]
+  change: TagChangeEntry[]
+  remove: string[]
+}
+
+/**
+ * Prepares one side of a road for `targetCategoryId`:
+ * - `cycleway:both` (or `cycleway`) is split into `cycleway:left` and `cycleway:right`, so this
+ *   side can change without the other;
+ * - `cycleway:<side>` gets the value the category needs (`lane`, `track`, `shared_lane`, …), and
+ *   `sidewalk:<side>` is set for a footway category.
+ * After this, the side is an object of its own and every planned key goes under its prefix.
+ */
+function setUpRoadSide(
+  wayTags: OsmTags,
+  side: 'left' | 'right',
+  targetCategoryId: string,
+): SideSetup {
+  const tags: OsmTags = { ...wayTags }
+  const add: TagPlanEntry[] = []
+  const change: TagChangeEntry[] = []
+  const remove: string[] = []
+
+  const bothKey = ['cycleway:both', 'cycleway'].find((key) => tags[key] !== undefined)
+  if (bothKey) {
+    const value = tags[bothKey]!
+    delete tags[bothKey]
+    remove.push(bothKey)
+    for (const each of ['left', 'right']) {
+      const key = `cycleway:${each}`
+      if (tags[key] !== undefined) continue
+      tags[key] = value
+      add.push({
+        key,
+        value,
+        reason: `Split ${bothKey} into the two sides`,
+        reasonCode: 'split_both_sides',
+        reasonParams: { from: bothKey },
+      })
+    }
+  }
+
+  const setSide = (key: string, value: string, why: string) => {
+    const reason: TagReason = { reason: why, reasonCode: 'side_presence', reasonParams: { key } }
+    const planned = add.find((entry) => entry.key === key)
+    if (planned) Object.assign(planned, { value }, reason)
+    else if (tags[key] === undefined) add.push({ key, value, ...reason })
+    else change.push({ key, from: tags[key]!, to: value, ...reason })
+    tags[key] = value
+  }
+
+  const presence = SIDE_PRESENCE[targetCategoryId]
+  const presenceKey = `cycleway:${side}`
+  if (presence && tags[presenceKey] !== presence) {
+    setSide(presenceKey, presence, `The category needs ${presenceKey}=${presence}`)
+  }
+
+  if (SIDEWALK_CATEGORY.test(targetCategoryId)) {
+    const key = `sidewalk:${side}`
+    const present = [key, 'sidewalk:both', 'sidewalk'].some(
+      (k) => tags[k] !== undefined && tags[k] !== 'no' && tags[k] !== 'separate',
+    )
+    if (!present) setSide(key, 'yes', `The category needs a sidewalk (${key}=yes)`)
+  }
+
+  return { tags, add, change, remove }
 }
 
 /** `traffic_sign=none` (or `no`) is an observed fact: no sign. The planner never overwrites it. */
@@ -522,6 +642,8 @@ function candidateFor(
     if (planned !== undefined) return undefined // two conditions on one key contradict
     if (atom.value === undefined) return undefined
     if (atom.key.startsWith('_')) return undefined // derived by the processing, not a tag
+    // On a road side `highway` is the road's: the side's own `highway` is derived from its prefix
+    if (atom.key === 'highway' && side !== 'self') return undefined
     if (fixedKeys.has(atom.key)) return undefined
     if (atom.key === 'traffic_sign' && isNoSign(base.traffic_sign)) return undefined
     edits.set(atom.key, {
@@ -545,8 +667,10 @@ function applyPlanToWayTags(
   wayTags: OsmTags,
   add: TagPlanEntry[],
   change: TagChangeEntry[],
+  remove: readonly string[] = [],
 ): OsmTags {
   const next: OsmTags = { ...wayTags }
+  for (const key of remove) delete next[key]
   for (const entry of change) {
     next[entry.key] = entry.to
   }
@@ -631,19 +755,40 @@ export function planTagsForCategory(
 
   const side = options?.side ?? 'self'
   const fixed = options?.fixed ?? {}
-  const transformed = findTransformedTags(wayTags, side)
-  const prefix = transformed?._prefix ?? null
-  const currentCategoryId = categorizeSide(wayTags, side)
-  const tags = transformed ?? wayTags
+  const sidePrefix = sidePrefixFor(targetCategoryId, side)
+  const currentCategoryId = categorizeSide(wayTags, side, sidePrefix)
+  const noSetup: SideSetup = { tags: wayTags, add: [], change: [], remove: [] }
+  const setup = side === 'self' ? noSetup : setUpRoadSide(wayTags, side, targetCategoryId)
+  const working = setup.tags
+  const transformed = findTransformedTags(working, side, sidePrefix)
+  const prefix = transformed?._prefix ?? sidePrefix ?? null
+  const tags = transformed ?? working
+
+  // Adds `key=value` (written for the side) unless it holds; a planned entry of the side setup is
+  // replaced.
+  const plan = (
+    add: TagPlanEntry[],
+    change: TagChangeEntry[],
+    key: string,
+    value: string,
+    why: TagReason,
+  ) => {
+    const writeKey = writeKeyForSide(key, side, prefix)
+    const planned = add.findIndex((entry) => entry.key === writeKey)
+    if (planned >= 0) {
+      add[planned] = { key: writeKey, value, ...why }
+      return
+    }
+    const current = working[writeKey] ?? tags[key]
+    if (current === value) return
+    if (current == null) add.push({ key: writeKey, value, ...why })
+    else change.push({ key: writeKey, from: current, to: value, ...why })
+  }
 
   const fixedAdd: TagPlanEntry[] = []
   const fixedChange: TagChangeEntry[] = []
   for (const [key, value] of Object.entries(fixed)) {
-    const writeKey = writeKeyForSide(key, side, prefix)
-    const current = wayTags[writeKey] ?? tags[key]
-    if (current === value) continue
-    if (current == null) fixedAdd.push({ key: writeKey, value, ...FIXED_REASON })
-    else fixedChange.push({ key: writeKey, from: current, to: value, ...FIXED_REASON })
+    plan(fixedAdd, fixedChange, key, value, FIXED_REASON)
   }
 
   if (currentCategoryId === targetCategoryId && !fixedAdd.length && !fixedChange.length) {
@@ -653,6 +798,7 @@ export function planTagsForCategory(
       aligned: true,
       add: [],
       change: [],
+      remove: [],
       conflicts: [],
     }
   }
@@ -668,6 +814,7 @@ export function planTagsForCategory(
   }
   candidates.sort((a, b) => a.cost - b.cost) // stable: spec order breaks ties
 
+  const { remove } = setup
   const seen = new Set<string>()
   let fallback: { add: TagPlanEntry[]; change: TagChangeEntry[]; result: string | null } | undefined
 
@@ -679,18 +826,27 @@ export function planTagsForCategory(
     if (seen.has(signature)) continue
     seen.add(signature)
 
-    const add: TagPlanEntry[] = [...fixedAdd]
-    const change: TagChangeEntry[] = [...fixedChange]
+    const add: TagPlanEntry[] = [...setup.add, ...fixedAdd]
+    const change: TagChangeEntry[] = [...setup.change, ...fixedChange]
     for (const [key, edit] of candidate.edits) {
-      const writeKey = writeKeyForSide(key, side, prefix)
-      const current = wayTags[writeKey] ?? tags[key]
-      if (current == null) add.push({ key: writeKey, value: edit.value, ...reasonOf(edit) })
-      else change.push({ key: writeKey, from: current, to: edit.value, ...reasonOf(edit) })
+      plan(add, change, key, edit.value, reasonOf(edit))
     }
 
-    const result = categorizeSide(applyPlanToWayTags(wayTags, add, change), side)
+    const result = categorizeSide(
+      applyPlanToWayTags(wayTags, add, change, remove),
+      side,
+      sidePrefix,
+    )
     if (result === targetCategoryId) {
-      return { targetCategoryId, currentCategoryId, aligned: true, add, change, conflicts: [] }
+      return {
+        targetCategoryId,
+        currentCategoryId,
+        aligned: true,
+        add,
+        change,
+        remove,
+        conflicts: [],
+      }
     }
     // The first candidate with edits explains best why the target is out of reach.
     if (!fallback || (!fallback.add.length && !fallback.change.length)) {
@@ -711,6 +867,7 @@ export function planTagsForCategory(
     aligned: false,
     add,
     change,
+    remove,
     conflicts: [
       {
         key: '_category',
@@ -727,6 +884,7 @@ function planSignature(plan: CategoryTagPlan): string {
   return [
     ...plan.add.map((e) => `+${e.key}=${e.value}`),
     ...plan.change.map((e) => `~${e.key}=${e.to}`),
+    ...plan.remove.map((key) => `-${key}`),
   ]
     .sort()
     .join(';')
@@ -763,7 +921,11 @@ export function planTagVariantsForCategory(
   }
 
   const side = options?.side ?? 'self'
-  const currentSign = findTransformedTags(wayTags, side)?.traffic_sign
+  const currentSign = findTransformedTags(
+    wayTags,
+    side,
+    sidePrefixFor(targetCategoryId, side),
+  )?.traffic_sign
   const signHolds = signs.some(
     (sign) => currentSign != null && containsSubstring(currentSign, sign),
   )

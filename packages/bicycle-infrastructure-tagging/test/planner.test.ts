@@ -6,7 +6,6 @@ import {
   listTargetCategories,
   planCategoryChange,
   planCategoryVariants,
-  splitBothSides,
 } from '../src/index.ts'
 
 describe('planCategoryChange', () => {
@@ -113,19 +112,6 @@ describe('planCategoryChange', () => {
         expect(plan.conflicts.length).toBeGreaterThan(0)
       }
     }
-  })
-})
-
-describe('splitBothSides', () => {
-  it('splits cycleway:both and cycleway into the sides', () => {
-    expect(splitBothSides({ highway: 'residential', 'cycleway:both': 'lane' })).toMatchObject({
-      remove: ['cycleway:both'],
-      tags: { 'cycleway:left': 'lane', 'cycleway:right': 'lane' },
-    })
-    expect(splitBothSides({ highway: 'residential', cycleway: 'track' }).remove).toEqual([
-      'cycleway',
-    ])
-    expect(splitBothSides({ highway: 'residential' }).remove).toEqual([])
   })
 })
 

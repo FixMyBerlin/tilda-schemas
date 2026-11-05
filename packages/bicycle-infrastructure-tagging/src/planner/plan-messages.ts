@@ -46,6 +46,10 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'category_requirement.protected_lane_parking':
       'Geschützter Radfahrstreifen: parkende Fahrzeuge zur Fahrbahn hin.',
     'category_requirement.cycleway_crossing': 'Die Querung eines Radwegs.',
+    'category_requirement.split_both_sides':
+      '{from} gilt für beide Seiten und wird auf die Seiten aufgeteilt.',
+    'category_requirement.side_presence':
+      '{key} sagt, dass auf dieser Seite Radinfrastruktur liegt.',
     'category_requirement.plan_not_enough':
       'Die vorgeschlagenen Tags reichen nicht für „{target}“.',
     'category_requirement.plan_no_edits': 'Für „{target}“ lassen sich keine Tags ableiten.',
@@ -105,6 +109,9 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'category_requirement.protected_lane_parking':
       'Protected cycle lane: parked vehicles towards the road.',
     'category_requirement.cycleway_crossing': 'The crossing of a cycleway.',
+    'category_requirement.split_both_sides':
+      '{from} covers both sides and is split into the sides.',
+    'category_requirement.side_presence': '{key} says there is bike infrastructure on this side.',
     'category_requirement.plan_not_enough': 'The suggested tags are not enough for “{target}”.',
     'category_requirement.plan_no_edits': 'No tags can be derived for “{target}”.',
     'conflict.geometry_bicycle_road_on_sidewalk':

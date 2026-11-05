@@ -63,6 +63,23 @@ export function startCases(): StartCase[] {
       }
     }
   }
+  // the side shares its tags with the other side, or is on the left, or the road has a sidewalk
+  const roads: { tags: OsmTags; side: ResultSide }[] = [
+    { tags: { highway: 'secondary', 'cycleway:both': 'lane' }, side: 'right' },
+    { tags: { highway: 'secondary', 'cycleway:both': 'track' }, side: 'right' },
+    { tags: { highway: 'secondary', cycleway: 'lane' }, side: 'left' },
+    { tags: { highway: 'secondary', 'cycleway:left': 'track' }, side: 'left' },
+    { tags: { highway: 'secondary', 'sidewalk:both': 'yes' }, side: 'right' },
+    { tags: { highway: 'secondary', 'sidewalk:right': 'separate' }, side: 'right' },
+  ]
+  for (const { tags, side } of roads) {
+    cases.push({
+      name: `${describe(tags)} (${side})`,
+      tags,
+      side,
+      signKey: `cycleway:${side}:traffic_sign`,
+    })
+  }
   return cases
 }
 

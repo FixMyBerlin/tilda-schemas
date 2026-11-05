@@ -133,9 +133,16 @@ describe('planCategoryVariants', () => {
   })
 })
 
-function fixedValue(next: Record<string, string | undefined>, c: StartCase, key: string) {
+/** The value of a fixed key on the object the target lives on (`sidewalk:<side>` for a footway) */
+function fixedValue(
+  next: Record<string, string | undefined>,
+  c: StartCase,
+  key: string,
+  categoryId: string,
+) {
   if (c.side === 'self') return next[key]
-  return next[`cycleway:${c.side}:${key}`] ?? next[`sidewalk:${c.side}:${key}`]
+  const prefix = categoryId.startsWith('footwayBicycleYes_') ? 'sidewalk' : 'cycleway'
+  return next[`${prefix}:${c.side}:${key}`]
 }
 
 describe('round trip: plan → apply → processBikelanes', () => {
@@ -157,13 +164,14 @@ describe('round trip: plan → apply → processBikelanes', () => {
             problems.push(`${c.name}: ${plan.conflicts[0]!.code}, expected ${rule.code}`)
           continue
         }
-        const category = categoryForSide(next, c.side)
+        const category = categoryForSide(next, c.side, target.categoryId)
         if (!plan.aligned || category !== target.categoryId) {
           problems.push(`${c.name}: ${category} (${plan.conflicts[0]?.code ?? 'aligned'})`)
           continue
         }
         for (const [key, value] of Object.entries(target.fixed)) {
-          if (fixedValue(next, c, key) !== value) problems.push(`${c.name}: ${key}≠${value}`)
+          if (fixedValue(next, c, key, target.categoryId) !== value)
+            problems.push(`${c.name}: ${key}≠${value}`)
         }
         if (
           c.tags[c.signKey] === 'none' &&

@@ -311,7 +311,9 @@ describe('writeKeyForSide', () => {
     expect(writeKeyForSide('lane', 'right', 'cycleway')).toBe('cycleway:right:lane')
     expect(writeKeyForSide('is_sidepath', 'left', 'cycleway')).toBe('cycleway:left:is_sidepath')
     expect(writeKeyForSide('cycleway', 'self', null)).toBe('cycleway')
-    expect(writeKeyForSide('cycleway', 'right', null)).toBe('cycleway')
+    // a road side without tags yet: under `cycleway:<side>`, never a bare key on the road
+    expect(writeKeyForSide('cycleway', 'right', null)).toBe('cycleway:right')
+    expect(writeKeyForSide('lane', 'right', null)).toBe('cycleway:right:lane')
   })
 
   test('a plan with the bare macro key `cycleway` writes cycleway:right, never cycleway:right:cycleway', () => {
@@ -325,5 +327,66 @@ describe('writeKeyForSide', () => {
       const keys = [...plan.add, ...plan.change].map((e) => e.key)
       expect(keys.some((k) => k.endsWith(':cycleway'))).toBe(false)
     }
+  })
+})
+
+describe('planTagsForCategory on a road side', () => {
+  const keys = (plan: { add: { key: string; value: string }[] }) =>
+    plan.add.map((entry) => `${entry.key}=${entry.value}`)
+
+  test('a side without tags: the side is set up, nothing goes on the road', () => {
+    const road = { highway: 'secondary', name: 'X' }
+    const plan = planTagsForCategory(road, 'cyclewayOnHighway_exclusive', { side: 'right' })
+    expect(plan.aligned).toBe(true)
+    expect(keys(plan)).toEqual(['cycleway:right=lane', 'cycleway:right:lane=exclusive'])
+    expect(plan.change).toEqual([])
+    expect(plan.remove).toEqual([])
+    expect(plan.add[0]).toMatchObject({
+      reasonCode: 'side_presence',
+      reasonParams: { key: 'cycleway:right' },
+    })
+  })
+
+  test('never changes highway on a road side', () => {
+    const road = { highway: 'residential' }
+    for (const target of [
+      'cyclewayOnHighway_advisory',
+      'cycleway_adjoining',
+      'footAndCyclewayShared_adjoining',
+      'footAndCyclewaySegregated_adjoining',
+      'footwayBicycleYes_adjoining',
+      'sharedMotorVehicleLane',
+    ]) {
+      const plan = planTagsForCategory(road, target, { side: 'left' })
+      const written = [...plan.add.map((e) => e.key), ...plan.change.map((e) => e.key)]
+      expect({
+        target,
+        written: written.filter((key) => !/^(cycleway|sidewalk):left/.test(key)),
+      }).toEqual({ target, written: [] })
+      expect({ target, aligned: plan.aligned }).toEqual({ target, aligned: true })
+    }
+  })
+
+  test('cycleway:both is split so one side can change', () => {
+    const road = { highway: 'secondary', 'cycleway:both': 'lane' }
+    const plan = planTagsForCategory(road, 'cycleway_adjoining', { side: 'right' })
+    expect(plan.aligned).toBe(true)
+    expect(plan.remove).toEqual(['cycleway:both'])
+    expect(keys(plan)).toContain('cycleway:left=lane')
+    expect(keys(plan)).toContain('cycleway:right=track')
+    expect(plan.add.find((e) => e.key === 'cycleway:left')).toMatchObject({
+      reasonCode: 'split_both_sides',
+      reasonParams: { from: 'cycleway:both' },
+    })
+  })
+
+  test('a side that already fits needs no split', () => {
+    const road = {
+      highway: 'secondary',
+      'cycleway:both': 'lane',
+      'cycleway:both:lane': 'exclusive',
+    }
+    const plan = planTagsForCategory(road, 'cyclewayOnHighway_exclusive', { side: 'right' })
+    expect(plan).toMatchObject({ aligned: true, add: [], change: [], remove: [] })
   })
 })

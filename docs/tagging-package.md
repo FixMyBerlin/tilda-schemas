@@ -37,6 +37,7 @@ Stays in the fork: `checks.ts` (key-value DB), `width_indicator.ts`, `offset_lin
 - Target `*_adjoining` changes `is_sidepath=no` to `yes`.
 - Macros the classifier evaluates in code get preferred tags (`MACRO_PLAN_ALTERNATIVES`): bicycle road, unsigned cycleway, footway with bicycles allowed, cycle lane, protected lane, bus lanes, crossings. Between lanes stays without a plan: it needs the lane layout of the road.
 - Option `fixed`: tags the plan must contain (bare keys, written for the side); a fixed `traffic_sign` may replace `none`.
+- A road side (`side: 'left' | 'right'`) is planned completely, also when it has no tags yet: `cycleway:both` (or `cycleway`) is split into the two sides (`remove` lists it), `cycleway:<side>` gets the value the category needs (`lane`, `track`, `shared_lane`, …), a footway category sets `sidewalk:<side>`. Every key goes under `cycleway:<side>:` (or `sidewalk:<side>:`); `highway` and other keys of the road are never touched. A side can have two objects (`cycleway:right` and `sidewalk:right`); the planner works on the one the category lives on.
 
 `planTagVariantsForCategory` (core) returns the plan of `planTagsForCategory` first (`default`), then `with_sign` and `without_sign` where a sign can settle the category. `categorySignOptions` says which signs settle a category.
 

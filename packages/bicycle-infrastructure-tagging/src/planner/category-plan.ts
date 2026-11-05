@@ -7,6 +7,7 @@ import {
   type CategoryTagPlan,
   type TagPlanEntry,
   type TagReasonCode,
+  writeKeyForSide,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
   mappingTargetById,
@@ -20,11 +21,11 @@ import type { OsmTags, ResultSide } from '../types.ts'
  * `@tilda-geo/bicycle-infrastructure` (which stays in the core package: it needs the category
  * specs, and the core re-exports it during 0.x).
  *
- * The wrapper adds what the core planner leaves out: it splits `cycleway:both` so one side can
- * change, sets the `cycleway:<side>` value a category needs, suggests tags for the categories the
- * core matches with macros (shared bus lanes, crossings), explains targets that do not fit the
- * geometry of the way, and lists the keys to remove. Messages are codes with parameters; the app
- * writes the text.
+ * The core plans a road side completely (it splits `cycleway:both` and sets the `cycleway:<side>`
+ * value a category needs). The wrapper adds what the core leaves out: it suggests tags for the
+ * categories the core matches with macros (shared bus lanes, crossings), explains targets that do
+ * not fit the geometry of the way, and offers the mapping targets as variants. Messages are codes
+ * with parameters; the app writes the text.
  */
 
 /**
@@ -118,28 +119,6 @@ export interface CategoryChangePlan {
   conflicts: PlanConflict[]
 }
 
-/** Value of `cycleway:<side>` that on-road categories need on that side */
-const SIDE_PRESENCE: Record<string, string> = {
-  cyclewayOnHighway_advisory: 'lane',
-  cyclewayOnHighway_exclusive: 'lane',
-  cyclewayOnHighway_advisoryOrExclusive: 'lane',
-  cyclewayOnHighwayBetweenLanes: 'lane',
-  cyclewayOnHighwayProtected: 'track',
-  cycleway_adjoining: 'track',
-  cycleway_isolated: 'track',
-  cycleway_adjoiningOrIsolated: 'track',
-  footAndCyclewayShared_adjoining: 'track',
-  footAndCyclewayShared_adjoiningOrIsolated: 'track',
-  footAndCyclewaySegregated_adjoining: 'track',
-  footAndCyclewaySegregated_adjoiningOrIsolated: 'track',
-  sharedMotorVehicleLane: 'shared_lane',
-  sharedBusLaneBusWithBike: 'share_busway',
-  sharedBusLaneBikeWithBus: 'lane',
-}
-
-/** Categories of a road side mapped with `sidewalk:<side>`: they need the sidewalk on that side */
-const SIDEWALK_CATEGORY = /^footwayBicycleYes_/
-
 /** Tags for categories matched only by core macros; without them the core plan is empty */
 const MACRO_CATEGORY_SUGGESTIONS: Record<string, { key: string; value: string }[]> = {
   bicycleRoad: [{ key: 'bicycle_road', value: 'yes' }],
@@ -232,7 +211,11 @@ export function categoryGeometryMismatch(
 /** The tags after applying `plan` */
 export function applyCategoryPlan(
   tags: OsmTags,
-  plan: Pick<CategoryChangePlan, 'add' | 'change'> & { remove?: string[] },
+  plan: {
+    add: readonly { key: string; value: string }[]
+    change: readonly { key: string; to: string }[]
+    remove?: readonly string[]
+  },
 ): OsmTags {
   const next = { ...tags }
   for (const key of plan.remove ?? []) delete next[key]
@@ -242,98 +225,79 @@ export function applyCategoryPlan(
 }
 
 /**
- * Splits `cycleway:both` / `cycleway` into `cycleway:left` and `cycleway:right`, so one side can
- * change without the other. Returns the tags, the removed key and the added tags.
+ * The category TILDA reads for one side of the way. A road side can have two results (the
+ * `cycleway:<side>` and the `sidewalk:<side>` object); with `target` the one that category lives on
+ * (`sidewalk` for `footwayBicycleYes_*`), else the first.
  */
-export function splitBothSides(tags: OsmTags): {
-  tags: OsmTags
-  remove: string[]
-  add: PlannedAdd[]
-} {
-  const bothKey =
-    tags['cycleway:both'] !== undefined
-      ? 'cycleway:both'
-      : tags.cycleway !== undefined
-        ? 'cycleway'
-        : undefined
-  if (!bothKey) return { tags, remove: [], add: [] }
-
-  const value = tags[bothKey]!
-  const next = { ...tags }
-  delete next[bothKey]
-  const add: PlannedAdd[] = []
-  for (const side of ['left', 'right']) {
-    const key = `cycleway:${side}`
-    if (next[key] === undefined) {
-      next[key] = value
-      add.push({ key, value, code: 'split_both_sides', params: { from: bothKey } })
-    }
-  }
-  return { tags: next, remove: [bothKey], add }
-}
-
-/**
- * Workaround for `planTagsForCategory` on left/right sides: it writes the presence key as
- * `cycleway:<side>:cycleway`, and without a `cycleway:<side>` tag it plans bare keys (`lane`)
- * instead of `cycleway:<side>:lane`.
- */
-function sideKey(key: string, side: ResultSide) {
-  if (side === 'self') return key
-  const prefix = `cycleway:${side}`
-  if (key === `${prefix}:cycleway`) return prefix
-  if (key.startsWith('cycleway:') || key === 'highway' || key.startsWith('sidewalk')) return key
-  return `${prefix}:${key}`
-}
-
-/** The category TILDA reads for one side of the way */
-export function categoryForSide(tags: OsmTags, side: ResultSide): string | undefined {
-  return processBikelanes(tags).find((result) => result._side === side)?.category
+export function categoryForSide(
+  tags: OsmTags,
+  side: ResultSide,
+  target?: string,
+): string | undefined {
+  const ofSide = processBikelanes(tags).filter((result) => result._side === side)
+  const prefix = target?.startsWith('footwayBicycleYes_') ? 'sidewalk' : 'cycleway'
+  const preferred = side === 'self' ? undefined : ofSide.find((r) => r._prefix === prefix)
+  return (preferred ?? ofSide[0])?.category
 }
 
 function withSuggestions(
   plan: CategoryTagPlan,
   suggestions: { key: string; value: string }[],
   tags: OsmTags,
+  side: ResultSide,
 ): { add: PlannedAdd[]; change: PlannedChange[] } {
   const planned = new Set([...plan.add.map((e) => e.key), ...plan.change.map((e) => e.key)])
   const add: PlannedAdd[] = plan.add.map(fromCoreAdd)
   const change: PlannedChange[] = plan.change.map(fromCoreChange)
 
   for (const suggestion of suggestions) {
-    if (planned.has(suggestion.key)) continue
-    const current = tags[suggestion.key]
+    const key = writeKeyForSide(suggestion.key, side, 'cycleway')
+    if (planned.has(key)) continue
+    const current = tags[key]
     if (current === undefined) {
-      add.push({ ...suggestion, code: 'macro_suggestion' })
+      add.push({ key, value: suggestion.value, code: 'macro_suggestion' })
     } else if (current !== suggestion.value) {
-      change.push({
-        key: suggestion.key,
-        from: current,
-        to: suggestion.value,
-        code: 'macro_suggestion',
-      })
+      change.push({ key, from: current, to: suggestion.value, code: 'macro_suggestion' })
     }
-    planned.add(suggestion.key)
+    planned.add(key)
   }
   return { add, change }
+}
+
+/**
+ * The wrapper's code for a core entry: the side setup and the fixed tags of a mapping target keep
+ * their own code (with the core's parameters), the rest is `category_requirement` with the core's
+ * text and code.
+ */
+function whyOf(entry: TagPlanEntry | CategoryTagPlan['change'][number]) {
+  const params = entry.reasonParams ? { params: entry.reasonParams } : {}
+  switch (entry.reasonCode) {
+    case 'split_both_sides':
+    case 'side_presence':
+      return { code: entry.reasonCode, ...params }
+    case 'fixed_by_mapping_target':
+      return { code: 'mapping_target' as const }
+    default:
+      return {
+        code: 'category_requirement' as const,
+        reason: entry.reason,
+        reasonCode: entry.reasonCode,
+        ...params,
+      }
+  }
 }
 
 const fromCoreAdd = (entry: TagPlanEntry): PlannedAdd => ({
   key: entry.key,
   value: entry.value,
-  code: 'category_requirement',
-  reason: entry.reason,
-  reasonCode: entry.reasonCode,
-  ...(entry.reasonParams ? { params: entry.reasonParams } : {}),
+  ...whyOf(entry),
 })
 
 const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange => ({
   key: entry.key,
   from: entry.from,
   to: entry.to,
-  code: 'category_requirement',
-  reason: entry.reason,
-  reasonCode: entry.reasonCode,
-  ...(entry.reasonParams ? { params: entry.reasonParams } : {}),
+  ...whyOf(entry),
 })
 
 type VariantIds = { variantId: string; mappingTargetId?: string }
@@ -351,7 +315,7 @@ function conflictPlan(
   return {
     ...ids,
     targetCategoryId: target,
-    currentCategoryId: categoryForSide(tags, side) ?? null,
+    currentCategoryId: categoryForSide(tags, side, target) ?? null,
     aligned: false,
     add: [],
     change: [],
@@ -380,86 +344,19 @@ function planOne(
   const mismatch = categoryGeometryMismatch(tags, target, side)
   if (mismatch) return conflictPlan(tags, target, side, geometryConflict(tags, mismatch), ids)
 
-  // one side: split `:both` first and make sure the side has the right `cycleway:<side>` value
-  const split =
-    side === 'self'
-      ? { tags, remove: [] as string[], add: [] as PlannedAdd[] }
-      : splitBothSides(tags)
-  let working = split.tags
-  const add: PlannedAdd[] = [...split.add]
-  const change: PlannedChange[] = []
-
-  const presence = side === 'self' ? undefined : SIDE_PRESENCE[target]
-  if (presence) {
-    const key = `cycleway:${side}`
-    const current = working[key]
-    if (current !== presence) {
-      const splitEntry = add.find((entry) => entry.key === key)
-      if (splitEntry) {
-        splitEntry.value = presence
-        splitEntry.code = 'side_presence'
-        splitEntry.params = { key }
-      } else if (current === undefined) {
-        add.push({ key, value: presence, code: 'side_presence', params: { key } })
-      } else {
-        change.push({ key, from: current, to: presence, code: 'side_presence', params: { key } })
-      }
-      working = { ...working, [key]: presence }
-    }
-  }
-
-  if (side !== 'self' && SIDEWALK_CATEGORY.test(target)) {
-    const key = `sidewalk:${side}`
-    const present = [key, 'sidewalk:both', 'sidewalk'].some(
-      (k) => working[k] !== undefined && working[k] !== 'no' && working[k] !== 'separate',
-    )
-    if (!present) {
-      if (working[key] === undefined) {
-        add.push({ key, value: 'yes', code: 'side_presence', params: { key } })
-      } else {
-        change.push({ key, from: working[key]!, to: 'yes', code: 'side_presence', params: { key } })
-      }
-      working = { ...working, [key]: 'yes' }
-    }
-  }
-
   const fixedKeys = Object.keys(fixed)
-  const base = planTagsForCategory(working, target, {
+  const base = planTagsForCategory(tags, target, {
     ...(side === 'self' ? {} : { side }),
     ...(fixedKeys.length ? { fixed: { ...fixed } } : {}),
   })
-  // On a road side `highway` would retag the whole road, and the presence key (`cycleway`) is set
-  // above as `cycleway:<side>`: both are for separate ways only.
+  // On a road side `highway` would retag the whole road, and the core sets the presence key
+  // (`cycleway:<side>`) itself: both suggestions are for separate ways only.
   const suggestions = MACRO_CATEGORY_SUGGESTIONS[target]?.filter(
     (entry) => side === 'self' || (entry.key !== 'highway' && entry.key !== 'cycleway'),
   )
-  const library = suggestions
-    ? withSuggestions(base, suggestions, working)
+  const { add, change } = suggestions
+    ? withSuggestions(base, suggestions, applyCategoryPlan(tags, base), side)
     : { add: base.add.map(fromCoreAdd), change: base.change.map(fromCoreChange) }
-
-  const isFixed = (key: string) =>
-    fixedKeys.some((fixedKey) => key === fixedKey || key.endsWith(`:${side}:${fixedKey}`))
-  const asFixed = <T extends PlannedAdd | PlannedChange>(entry: T): T => {
-    if (!isFixed(entry.key)) return entry
-    const next = { ...entry, code: 'mapping_target' as const }
-    delete next.reason
-    delete next.reasonCode
-    delete next.params
-    return next
-  }
-
-  for (const entry of library.add) {
-    const key = sideKey(entry.key, side)
-    if (working[key] === undefined && !add.some((existing) => existing.key === key)) {
-      add.push(asFixed({ ...entry, key }))
-    }
-  }
-  for (const entry of library.change) {
-    const key = sideKey(entry.key, side)
-    if (working[key] !== entry.to) {
-      change.push(asFixed({ ...entry, key, from: working[key] ?? entry.from }))
-    }
-  }
 
   const plan: CategoryChangePlan = {
     ...ids,
@@ -468,10 +365,10 @@ function planOne(
     aligned: base.aligned,
     add,
     change,
-    remove: split.remove,
+    remove: base.remove,
     conflicts: [],
   }
-  const result = categoryForSide(applyCategoryPlan(tags, plan), side)
+  const result = categoryForSide(applyCategoryPlan(tags, plan), side, target)
   if (result === target) return { ...plan, aligned: true }
 
   const hasEdits = add.length > 0 || change.length > 0 || plan.remove.length > 0

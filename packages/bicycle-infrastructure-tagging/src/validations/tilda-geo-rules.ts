@@ -38,6 +38,8 @@ interface TodoMeta {
   roadWide?: boolean
   /** Keys of a finding of a lane or side; default: `keys` resolved for the side */
   sideKeys?: (tags: OsmTags, row: BikelaneResult) => string[]
+  /** Keys of a finding of the road; default: `keys` resolved for the road */
+  roadKeys?: (tags: OsmTags) => string[]
   params?: (tags: OsmTags, key: string | undefined) => MessageParams
 }
 
@@ -197,9 +199,11 @@ const TODO_META: Record<string, TodoMeta> = {
   deprecated_cycleway_shared: {
     severity: 'warning',
     appliesTo: ['road'],
-    keys: ['cycleway'],
+    keys: MIXED_CYCLEWAY_KEYS,
     fromBikelanes: false,
     fromRoad: true,
+    roadKeys: (tags) => MIXED_CYCLEWAY_KEYS.filter((key) => tags[key] === 'shared'),
+    params: (_tags, key) => ({ key: key ?? 'cycleway' }),
   },
 }
 
@@ -276,12 +280,14 @@ function hitsOfRoad(id: string, meta: TodoMeta, context: RuleContext): RuleHit[]
     selfBikelaneHasUnusualWidth: selfRow?.todos?.includes('unusual_width') ?? false,
   })
   if (!todos.includes(id)) return []
-  const keys = resolveKeys(
-    tags,
-    'road',
-    null,
-    meta.keys.filter((key) => key !== 'check_date:width'),
-  )
+  const keys =
+    meta.roadKeys?.(tags) ??
+    resolveKeys(
+      tags,
+      'road',
+      null,
+      meta.keys.filter((key) => key !== 'check_date:width'),
+    )
   return [{ scope: 'road', keys, message: { params: meta.params?.(tags, keys[0]) ?? {} } }]
 }
 

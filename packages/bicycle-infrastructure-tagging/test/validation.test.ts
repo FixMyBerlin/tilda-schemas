@@ -356,6 +356,18 @@ describe('validateTags: options', () => {
     }
   })
 
+  test('deprecated_cycleway_shared names the key that is shared, also on a side', () => {
+    for (const key of ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right']) {
+      const tags = { ...ROAD, 'cycleway:left': 'lane', [key]: 'shared' } as OsmTags
+      const finding = validateTags(tags).find((f) => f.ruleId === 'deprecated_cycleway_shared')
+      expect({ key, keys: finding?.keys, params: finding?.message.params }).toEqual({
+        key,
+        keys: [key],
+        params: { key },
+      })
+    }
+  })
+
   test('only and skip pick rules by id', () => {
     const tags = { ...partWidth, surface: undefined } as OsmTags
     expect(ids(validateTags(tags, { ...RADNETZ, only: ['width_part_whole'] }))).toEqual([

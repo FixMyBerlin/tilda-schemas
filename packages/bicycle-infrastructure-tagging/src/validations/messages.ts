@@ -39,7 +39,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     unexpected_oneway_direction:
       '{key}={value} lässt den Radweg gegen den Verkehr seiner Seite fahren.',
     deprecated_cycleway_shared:
-      'cycleway=shared ist veraltet und sollte ersetzt oder entfernt werden.',
+      '{key}=shared ist veraltet und sollte ersetzt oder entfernt werden.',
     // radnetz: widths
     width_part_sum:
       'width={width} ist nicht die Summe der Teilbreiten (cycleway:width + footway:width = {sum}).',
@@ -93,7 +93,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     missing_oneway: 'Missing: an explicit oneway.',
     unexpected_oneway_direction:
       '{key}={value} makes the cycle path run against the traffic of its side.',
-    deprecated_cycleway_shared: 'cycleway=shared is deprecated and should be replaced or removed.',
+    deprecated_cycleway_shared: '{key}=shared is deprecated and should be replaced or removed.',
     width_part_sum:
       'width={width} is not the sum of the part widths (cycleway:width + footway:width = {sum}).',
     width_part_whole:

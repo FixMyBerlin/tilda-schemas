@@ -11,8 +11,18 @@
     "expect": { "todos_exclude": ["deprecated_cycleway_shared"] }
   },
   {
-    "name": "deprecated_cycleway_shared: a sided key is not looked at (as in LUA)",
+    "name": "deprecated_cycleway_shared: cycleway:right=shared on a side (tilda-geo 6ede844cc)",
     "input": { "highway": "residential", "cycleway:right": "shared" },
+    "expect": { "todos_include": ["deprecated_cycleway_shared"] }
+  },
+  {
+    "name": "deprecated_cycleway_shared: cycleway:both=shared",
+    "input": { "highway": "residential", "cycleway:both": "shared" },
+    "expect": { "todos_include": ["deprecated_cycleway_shared"] }
+  },
+  {
+    "name": "deprecated_cycleway_shared: shared_lane on a side is no todo",
+    "input": { "highway": "residential", "cycleway:left": "shared_lane" },
     "expect": { "todos_exclude": ["deprecated_cycleway_shared"] }
   },
   {

@@ -32,11 +32,14 @@ export interface RoadTodoDefinition {
   condition: (tags: OsmTags, result: RoadTodoResult) => boolean
 }
 
+/** Also on the sides: `cycleway:right=shared` gives no bikelane either (tilda-geo 6ede844cc) */
+export const SHARED_KEYS = ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right'] as const
+
 const deprecatedCyclewayShared: RoadTodoDefinition = {
   id: 'deprecated_cycleway_shared',
-  desc: 'The tagging `cycleway=shared` is deprecated and should be replaced or removed.',
+  desc: 'The tagging `cycleway=shared` (also `cycleway:both|left|right=shared`) is deprecated and should be replaced or removed.',
   todoTableOnly: false,
-  condition: (tags) => tags.cycleway === 'shared',
+  condition: (tags) => SHARED_KEYS.some((key) => tags[key] === 'shared'),
 }
 
 const unusualWidth: RoadTodoDefinition = {

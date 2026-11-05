@@ -127,7 +127,7 @@ Not ported (no counterpart in the package): `bikelanes_presence` (`oneway=-1`), 
 
 ## Probable LUA bugs and questions
 
-Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported to the package:
+Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported to the package, or checked and left as it is:
 
 1. `missing_segregated` had `(object_tags.segregated ~= 'yes' or object_tags.segregated ~= 'no')`, which is always true.
    Now a set lookup, `not SEGREGATED_VALUES[object_tags.segregated]` (tilda-geo `ed8478350`). In practice the todo could not fire
@@ -140,12 +140,15 @@ Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported 
    `sharedMotorVehicleLane`. That is right: the processing splits a road into one object per side, and a `shared_lane` on a side is
    the car lane of that side, which runs in one direction. `cycleway:<side>:oneway=no` still gives `no`. The category flag
    `implicitOneWay = false` of `sharedMotorVehicleLane` only matters for ways of their own, which this category never is.
-   One odd case stays: on a `oneway=yes` road with `oneway:bicycle=no`, `cycleway:both=shared_lane` makes the left side a contraflow
-   shared lane. Not changed.
+   On a `oneway=yes` road with `oneway:bicycle=no` the left side is the contraflow side, also for `shared_lane`. That is right:
+   in Germany (extract of 2026-10-25) 107 ways have this, 63 of them with `shared_lane` only on the left (pictograms for the
+   contraflow, mostly `cycleway:right=no`), 44 with `cycleway=shared_lane` or `cycleway:both=shared_lane` (pictograms for both
+   directions on the one lane). Not changed.
 4. `missing_access_tag_240` fired only when neither `bicycle` nor `foot` was `designated`. Now when one of them is missing (tilda-geo `61252e31f`, with tests).
-5. `deprecated_cycleway_shared` reads only `cycleway=shared`. Germany (extract of 2026-10-25) has 555 ways with `cycleway=shared`
-   and 73 with a side key (`cycleway:right=shared` 29, `cycleway:left=shared` 12, `cycleway:both=shared` 33). Those 73 get no
-   bikelane feature and no road todo. Not changed.
+5. `deprecated_cycleway_shared` read only `cycleway=shared`. Germany (extract of 2026-10-25) has 555 ways with `cycleway=shared`
+   and 73 with a side key (`cycleway:right=shared` 29, `cycleway:left=shared` 12, `cycleway:both=shared` 33), which got no
+   bikelane feature and no todo. The road todo now checks all four keys, and the campaign text names them (tilda-geo `6ede844cc`).
+   In the package the finding names the key that is `shared`.
 6. The `unexpected_highway_path` text said `highway=cyclway` (tilda-geo `e812de936`).
 
 Not handled on purpose (too few cases): `parse_length` reads only the exact decimal-comma strings `0,3 0,5 0,6 1,5 2,2 2,5 2,50` (use

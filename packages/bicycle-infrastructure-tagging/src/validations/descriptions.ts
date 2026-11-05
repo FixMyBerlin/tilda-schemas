@@ -22,7 +22,7 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     mixed_cycleway_both:
       'Die Angaben für beide Seiten einer Straße (cycleway oder cycleway:both) stehen neben Angaben für eine einzelne Seite (cycleway:left oder cycleway:right). Das lässt sich nicht eindeutig lesen.',
     deprecated_cycleway_shared:
-      'cycleway=shared ist ein veralteter Wert und wird nicht ausgewertet. Er sollte durch einen genaueren Wert ersetzt oder entfernt werden.',
+      'cycleway=shared (auch cycleway:both, :left oder :right=shared) ist ein veralteter Wert und wird nicht ausgewertet. Er sollte durch einen genaueren Wert ersetzt oder entfernt werden.',
     unexpected_highway_path:
       'Ein Weg ist nur für Fahrräder bestimmt (bicycle=designated, foot=no), aber als highway=path erfasst; er ist kein Mountainbike-Pfad und hat keine unbefestigte Oberfläche. Erwartet wird highway=cycleway, mit oder ohne Verkehrszeichen DE:237.',
     missing_traffic_sign_vehicle_destination:
@@ -75,7 +75,7 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     mixed_cycleway_both:
       'The tags for both sides of a road (cycleway or cycleway:both) are mixed with tags for a single side (cycleway:left or cycleway:right). This cannot be read unambiguously.',
     deprecated_cycleway_shared:
-      'cycleway=shared is a deprecated value and is not evaluated. Replace it with a more precise value or remove it.',
+      'cycleway=shared (also cycleway:both, :left or :right=shared) is a deprecated value and is not evaluated. Replace it with a more precise value or remove it.',
     unexpected_highway_path:
       'A way is meant for bicycles only (bicycle=designated, foot=no) but mapped as highway=path; it is no mountain bike trail and has no unpaved surface. Expected is highway=cycleway, with or without traffic sign DE:237.',
     missing_traffic_sign_vehicle_destination:

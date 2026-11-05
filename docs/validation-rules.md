@@ -72,14 +72,14 @@ The spec asked for one optional fix per finding; `fixes` is a list because iD of
 
 ### Severities
 
-No rule is an `error` yet; the severity is kept for contradictions that make the data unreadable. An app maps the three levels to its own: iD has `error`, `warning`, `suggestion` (= `info`); Maid has `error` and `warning`, so it shows `info` as a quiet line or leaves it out. A todo of the LUA has no severity (its priority comes from Mapillary), the ones here are ours: `warning` when the tagging is unclear, wrong or blocks a clear category, `info` when only an attribute is missing.
+`error` is for contradictions that make the data unreadable: `width_part_whole` (a part width as wide as the whole path, for example `highway=path` + `width=1` + `cycleway:width=1`; it never makes sense, whatever `segregated` says). An app maps the three levels to its own: iD has `error`, `warning`, `suggestion` (= `info`); Maid has `error` and `warning`, so it shows `info` as a quiet line or leaves it out. A todo of the LUA has no severity (its priority comes from Mapillary), the ones here are ours: `warning` when the tagging is unclear, wrong or blocks a clear category, `info` when only an attribute is missing.
 
 ## Overlaps
 
 A rule of the `radnetz` source never repeats a todo of tilda-geo (a test checks that the ids differ, and the behaviour is tested):
 
 - `cyclewayOnewayFindings` also reports `cycleway:left:oneway=yes` on a road that is not oneway (reason `two_way_road`). That is the todo `unexpected_oneway_direction`. The rule `cycleway_oneway_wrong` reports only the contraflow case (a one-way road with `oneway:bicycle=no`), which the todo skips. The function `cyclewayOnewayFindings` still returns both reasons, for tools that use it directly.
-- Part widths on a way with `segregated=no` are one finding (`width_part_unsegregated`); `width_part_sum` and `width_part_whole` stay quiet there.
+- Part widths on a way with `segregated=no` are one finding: `width_part_unsegregated`, or the error `width_part_whole` when a part is as wide as the whole way. `width_part_sum` stays quiet there.
 - `unusual_width` exists for the way itself, the lanes and the road in the LUA. It is listed once per way: the road does not repeat it when the own line has it.
 
 Not a rule: the required attributes (`requiredAttributes`) are an engine of their own with a state per attribute. Rules that need the geometry (`categoryGeometryMismatch`) or other ways are not pure tag rules.
@@ -241,7 +241,7 @@ The table is generated: `bun run validation-rules-doc` in `packages/bicycle-infr
 | Id                          | Severity | Applies to | Keys                                                                                    | Message (de)                                                                                             |
 | --------------------------- | -------- | ---------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `width_part_sum`            | warning  | self, road | `width` `cycleway:width` `footway:width`                                                | width={width} ist nicht die Summe der Teilbreiten (cycleway:width + footway:width = {sum}).              |
-| `width_part_whole`          | warning  | self       | `width` `cycleway:width` `footway:width`                                                | Eine Teilbreite (cycleway:width oder footway:width) ist so breit wie der ganze Weg.                      |
+| `width_part_whole`          | error    | self       | `width` `cycleway:width` `footway:width`                                                | Eine Teilbreite (cycleway:width oder footway:width) ist so breit wie der ganze Weg.                      |
 | `width_part_unsegregated`   | warning  | self       | `segregated` `cycleway:width` `footway:width`                                           | Teilbreiten ({keys}) an einem Weg mit segregated=no. Ohne Trennung gibt es nur width.                    |
 | `cycleway_oneway_wrong`     | warning  | road       | `cycleway:left:oneway` `cycleway:right:oneway` `cycleway:both:oneway` `cycleway:oneway` | cycleway:*:oneway gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg. |
 | `cycleway_oneway_redundant` | info     | road       | `cycleway:left:oneway` `cycleway:right:oneway` `cycleway:both:oneway` `cycleway:oneway` | {key}={value} ist die Richtung, in der der Radweg dieser Seite ohnehin fährt.                            |

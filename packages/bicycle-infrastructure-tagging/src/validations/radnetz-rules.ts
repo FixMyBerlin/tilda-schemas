@@ -62,15 +62,18 @@ const widthPartSum: Rule = {
   },
 }
 
+/**
+ * An error, also with `segregated=no`: a part as wide as the whole way never makes sense (on a
+ * path for bikes only the part width should not be there at all).
+ */
 const widthPartWhole: Rule = {
   id: 'width_part_whole',
-  severity: 'warning',
+  severity: 'error',
   source: 'radnetz',
   appliesTo: ['self'],
   keys: ['width', ...PART_WIDTH_KEYS],
   message: { code: 'width_part_whole' },
   check({ tags }) {
-    if (isUnsegregated(tags)) return []
     const whole = partWidthWholeWay(tags)
     if (!whole) return []
     const part = whole.key === 'cycleway:width' ? 'cycleway' : 'footway'
@@ -101,6 +104,8 @@ const widthPartUnsegregated: Rule = {
   message: { code: 'width_part_unsegregated' },
   check({ tags }) {
     if (!isUnsegregated(tags) || !isPathWay(tags)) return []
+    // a part as wide as the whole way is the error `width_part_whole`; one finding is enough
+    if (partWidthWholeWay(tags)) return []
     const parts = PART_WIDTH_KEYS.filter((key) => tags[key] !== undefined)
     if (!parts.length) return []
     return [

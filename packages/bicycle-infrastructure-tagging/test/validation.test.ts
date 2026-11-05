@@ -348,6 +348,14 @@ describe('validateTags: options', () => {
     expect(ids(validateTags(partWidth, RADNETZ))).toContain('width_part_whole')
   })
 
+  test('a part as wide as the whole path is an error, whatever segregated says', () => {
+    for (const extra of [{ segregated: 'yes' }, { segregated: 'no' }, {}, { foot: 'no' }]) {
+      const tags = { ...PATH, ...extra, width: '1', 'cycleway:width': '1' } as OsmTags
+      const finding = validateTags(tags, RADNETZ).find((f) => f.ruleId === 'width_part_whole')
+      expect({ extra, severity: finding?.severity }).toEqual({ extra, severity: 'error' })
+    }
+  })
+
   test('only and skip pick rules by id', () => {
     const tags = { ...partWidth, surface: undefined } as OsmTags
     expect(ids(validateTags(tags, { ...RADNETZ, only: ['width_part_whole'] }))).toEqual([
@@ -395,9 +403,14 @@ describe('validateTags: overlap with tilda-geo', () => {
   })
 
   test('part widths of a way without separation are one finding, not three', () => {
-    const tags = { ...PATH, segregated: 'no', width: '1.5', 'cycleway:width': '1.5' }
+    const tags = { ...PATH, segregated: 'no', width: '3', 'cycleway:width': '1.5' }
     expect(ids(validateTags(tags, RADNETZ)).filter((id) => id.startsWith('width_part'))).toEqual([
       'width_part_unsegregated',
+    ])
+    // a part as wide as the whole way: the error alone
+    const whole = { ...PATH, segregated: 'no', width: '1.5', 'cycleway:width': '1.5' }
+    expect(ids(validateTags(whole, RADNETZ)).filter((id) => id.startsWith('width_part'))).toEqual([
+      'width_part_whole',
     ])
   })
 })

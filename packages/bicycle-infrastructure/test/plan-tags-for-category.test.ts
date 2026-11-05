@@ -4,6 +4,7 @@ import {
   listTargetCategories,
   planTagVariantsForCategory,
   planTagsForCategory,
+  writeKeyForSide,
   TAG_REASON_CODES,
   processBikelanes,
   isIncompleteCategoryId,
@@ -296,5 +297,33 @@ describe('reason codes', () => {
       reasonCode: expect.stringMatching(/^plan_(not_enough|no_edits)$/),
       reasonParams: { target: 'cyclewayOnHighwayBetweenLanes' },
     })
+  })
+})
+
+describe('writeKeyForSide', () => {
+  test('the key that names the road side is the value of cycleway:<side>', () => {
+    expect(writeKeyForSide('cycleway', 'right', 'cycleway')).toBe('cycleway:right')
+    expect(writeKeyForSide('cycleway', 'left', 'cycleway')).toBe('cycleway:left')
+    expect(writeKeyForSide('sidewalk', 'right', 'sidewalk')).toBe('sidewalk:right')
+  })
+
+  test('other keys are nested under the side, self keys stay bare', () => {
+    expect(writeKeyForSide('lane', 'right', 'cycleway')).toBe('cycleway:right:lane')
+    expect(writeKeyForSide('is_sidepath', 'left', 'cycleway')).toBe('cycleway:left:is_sidepath')
+    expect(writeKeyForSide('cycleway', 'self', null)).toBe('cycleway')
+    expect(writeKeyForSide('cycleway', 'right', null)).toBe('cycleway')
+  })
+
+  test('a plan with the bare macro key `cycleway` writes cycleway:right, never cycleway:right:cycleway', () => {
+    const tags = { highway: 'secondary', 'cycleway:right': 'shared_lane' }
+    for (const target of [
+      'sharedBusLaneBusWithBike',
+      'cyclewayLink',
+      'cyclewayOnHighway_exclusive',
+    ]) {
+      const plan = planTagsForCategory(tags, target, { side: 'right' })
+      const keys = [...plan.add, ...plan.change].map((e) => e.key)
+      expect(keys.some((k) => k.endsWith(':cycleway'))).toBe(false)
+    }
   })
 })

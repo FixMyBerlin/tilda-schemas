@@ -120,7 +120,7 @@ Plan entries carry the core's English `reason` and a stable `reasonCode` (`requi
 
 ## Gaps
 
-`analyzeCategoryGaps` (core) says which tags would make an incomplete category exact (`gap.key`, `gap.values`, `gap.unlocksCategory`). `gapWriteKey(gap, result)` and `gapTags(gap, result, value)` give the OSM key and the tag for a road side. The core's `writeKeyForSide` alone is right for all gaps but one: the gap `cycleway` (`track`, `lane`) on a road side is the value of `cycleway:right`, not of `cycleway:right:cycleway`.
+`analyzeCategoryGaps` (core) says which tags would make an incomplete category exact (`gap.key`, `gap.values`, `gap.unlocksCategory`). `gapWriteKey(gap, result)` and `gapTags(gap, result, value)` give the OSM key and the tag for a road side. Both use the core's `writeKeyForSide`: `lane` is written as `cycleway:right:lane`, and the gap `cycleway` (`track`, `lane`) on a road side as `cycleway:right`.
 
 ## Open
 

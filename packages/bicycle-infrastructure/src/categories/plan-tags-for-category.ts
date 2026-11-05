@@ -165,7 +165,8 @@ function categorizeSide(wayTags: OsmTags, side: BikelaneResult['_side']): string
 
 /**
  * Map a transformed tag key back to OSM way tags for writing.
- * Left/right cycleway (and sidewalk) sub-objects use nested keys (`cycleway:right:lane`).
+ * Left/right cycleway (and sidewalk) sub-objects use nested keys (`cycleway:right:lane`); the key
+ * that names the side itself (`cycleway`) is `cycleway:right`.
  */
 export function writeKeyForSide(
   transformedKey: string,
@@ -174,6 +175,8 @@ export function writeKeyForSide(
 ): string {
   if (side === 'self' || prefix == null) return transformedKey
   if (prefix === 'cycleway' || prefix === 'sidewalk') {
+    // The key that names the road side itself (`cycleway=track`) is the value of `cycleway:right`.
+    if (transformedKey === prefix) return `${prefix}:${side}`
     return `${prefix}:${side}:${transformedKey}`
   }
   return transformedKey

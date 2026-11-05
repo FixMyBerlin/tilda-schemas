@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "bun run --filter '@tilda-geo/bicycle-infrastructure' build && bun run --filter '@tilda-geo/bicycle-infrastructure-tagging' build",
-    "test-run": "bun run --filter '@tilda-geo/bicycle-infrastructure' test-run && bun run --filter '@tilda-geo/bicycle-infrastructure-tagging' test-run",
+    "test-run": "bun run --filter '@tilda-geo/bicycle-infrastructure' test-run && bun run --filter '@tilda-geo/bicycle-infrastructure-tagging' test-run && bun run --filter preview test-run",
     "type-check": "bun run --filter '*' type-check",
     "lint": "oxlint -c oxlint.config.mjs .",
     "lint-check": "oxlint --deny-warnings -c oxlint.config.mjs .",

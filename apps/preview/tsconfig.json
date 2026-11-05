@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "node", "bun"],
     "noEmit": true,
     // The package source imports with `.ts` extensions; the viewer type-checks it through `paths`.
     "allowImportingTsExtensions": true,

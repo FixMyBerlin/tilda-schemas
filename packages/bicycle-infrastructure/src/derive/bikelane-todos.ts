@@ -115,11 +115,13 @@ const missingAccessTag240: BikelaneTodoDefinition = {
   todoTableOnly: false,
   condition: (tags) =>
     (containsSubstring(tags.traffic_sign, '240') || containsSubstring(tags.traffic_sign, '241')) &&
-    tags.bicycle !== 'designated' &&
-    tags.foot !== 'designated' &&
+    // either one missing (tilda-geo 61252e31f; before, only when both were missing)
+    (tags.bicycle !== 'designated' || tags.foot !== 'designated') &&
     tags.cycleway !== 'track' &&
     tags.cycleway !== 'lane',
 }
+
+const SEGREGATED_VALUES = new Set(['yes', 'no'])
 
 const missingSegregated: BikelaneTodoDefinition = {
   id: 'missing_segregated',
@@ -127,9 +129,8 @@ const missingSegregated: BikelaneTodoDefinition = {
   todoTableOnly: false,
   condition: (tags, result) =>
     result.category === 'needsClarification' &&
-    // LUA also has `(segregated ~= 'yes' or segregated ~= 'no')` here, which is always true, so the
-    // condition does not look at `segregated`. Kept like that (probable bug, see
-    // docs/lua-sync-2026-11.md).
+    // neither `yes` nor `no` (tilda-geo ed8478350)
+    !SEGREGATED_VALUES.has(tags.segregated ?? '') &&
     ((tags.bicycle === 'designated' && tags.foot === 'designated') ||
       containsSubstring(tags.traffic_sign, '240') ||
       containsSubstring(tags.traffic_sign, '241')),
@@ -159,7 +160,7 @@ const EXCLUDED_SURFACES = new Set([
 
 const unexpectedHighwayPath: BikelaneTodoDefinition = {
   id: 'unexpected_highway_path',
-  desc: 'Expected `highway=cyclway` (unsigned/explicit DE:237)',
+  desc: 'Expected `highway=cycleway` (unsigned/explicit DE:237)',
   todoTableOnly: true,
   // REFERENCE: See conditions in the `needsClarification` category.
   condition: (tags) =>

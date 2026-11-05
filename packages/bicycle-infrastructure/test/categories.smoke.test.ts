@@ -2,7 +2,7 @@
  * Smoke tests ported from the LUA `__tests__/bikelane_categories.test.lua`.
  * Verifies the category id of the first infrastructure feature for a given tag set.
  */
-import { expect, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { categorizeBikelane } from '../src/categories/bikelane-categories.ts'
 import { processBikelanes } from '../src/index.ts'
 
@@ -81,4 +81,23 @@ test('protected bike lane: cycleway:right=track + separation:right=bollard + is_
     'separation:left': 'bollard',
   })
   expect(cat).toBe('cyclewayOnHighwayProtected')
+})
+
+describe('lane between the car lanes, also tagged on the road side', () => {
+  test('the side object is no unsigned cycleway (tilda-geo 34fb8457d)', () => {
+    // Berlin way 529891428
+    const results = processBikelanes({
+      highway: 'secondary',
+      oneway: 'yes',
+      lanes: '3',
+      'cycleway:lanes': 'no|no|lane|no',
+      'bicycle:lanes': 'yes|no|designated|yes',
+      'cycleway:left': 'no',
+      'cycleway:right:lane': 'advisory',
+      'cycleway:right:traffic_sign': 'none',
+      traffic_sign: 'none',
+    })
+    expect(results.find((r) => r._side === 'right')?.category).toBeUndefined()
+    expect(results.find((r) => r._side === 'self')?.category).toBe('cyclewayOnHighwayBetweenLanes')
+  })
 })

@@ -818,5 +818,28 @@
     },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "todos_exclude": ["unusual_width"] }
+  },
+  {
+    "name": "missing_access_tag_240: DE:240 with bicycle=designated and no foot",
+    "input": { "highway": "path", "traffic_sign": "DE:240", "bicycle": "designated" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_access_tag_240"] }
+  },
+  {
+    "name": "missing_access_tag_240: DE:240 with foot=designated and no bicycle",
+    "input": { "highway": "path", "traffic_sign": "DE:240", "foot": "designated" },
+    "select": { "side": "self" },
+    "expect": { "todos_include": ["missing_access_tag_240"] }
+  },
+  {
+    "name": "missing_access_tag_240: DE:240 with both designated",
+    "input": {
+      "highway": "path",
+      "traffic_sign": "DE:240",
+      "bicycle": "designated",
+      "foot": "designated"
+    },
+    "select": { "side": "self" },
+    "expect": { "todos_exclude": ["missing_access_tag_240"] }
   }
 ]

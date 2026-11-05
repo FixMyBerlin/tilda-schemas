@@ -73,7 +73,13 @@ export function bicycleRoadVehicleDestination(tags: OsmTags): boolean | undefine
  * `highway=cycleway` without any `traffic_sign` stays `needsClarification`.
  */
 export function unsignedCycleway(tags: OsmTags): boolean | undefined {
-  if (tags.highway === 'cycleway' && sanitizeTrafficSign(tags.traffic_sign) === 'none') return true
+  if (
+    tags.highway === 'cycleway' &&
+    sanitizeTrafficSign(tags.traffic_sign) === 'none' &&
+    // the side object of a lane between the car lanes (tilda-geo 34fb8457d)
+    !hasBetweenLanesConditions(tags)
+  )
+    return true
   return undefined
 }
 

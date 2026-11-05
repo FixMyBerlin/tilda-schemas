@@ -125,25 +125,32 @@ Not ported (no counterpart in the package): `bikelanes_presence` (`oneway=-1`), 
   `fence`, `jersey_barrier`, `guard_rail`): the package already matched; now pinned by category fixtures for each value, in and out.
 - **Decision view.** LUA removed it (`df5a54bed`). The package keeps its Proxy, which behaves the same; see the table.
 
-## Probable LUA bugs and questions (not "fixed" in the package)
+## Probable LUA bugs and questions
 
-1. `missing_segregated` has `(object_tags.segregated ~= 'yes' or object_tags.segregated ~= 'no')`, which is always true. Probably `and`.
-   Effect is small (`needsClarification` with `segregated=yes|no` is rare), the package copies it.
-2. `highway=cycleway` + `traffic_sign=none` (`98e649800`) also matches a side object of a road that is tagged only with sub-keys, for example
-   `cycleway:right:lane=advisory` + `cycleway:right:traffic_sign=none` + `cycleway:lanes=no|no|lane|no` (a "Radweg in Mittellage" with the lane tagged
-   twice). The `needsClarification` category skips those on purpose ("HACK" for `cyclewayOnHighwayBetweenLanes`), the new rule has no such guard,
-   so Berlin gets 3 extra `cycleway_adjoining` features (ways 1207199791, 529891428, 1442781274). Probably the new case needs
-   `not has_cycleway_on_highway_between_lanes_conditions(tags)` like `needsClarification`.
-3. Oneway branch: every lane on the road without a side tag is `implicit_yes`, also `sharedMotorVehicleLane` (`cycleway:right=shared_lane`),
-   whose category says `implicitOneWay = false` ("the whole road is shared"). `missing_oneway` is gone for them. Intended?
-4. `missing_access_tag_240` says "Expected `bicycle=designated` and `foot=designated`", but the condition is `bicycle ~= 'designated' and foot ~= 'designated'`: it
-   triggers only when neither is designated, so `traffic_sign=DE:240` with `bicycle=designated` and no `foot` gets no todo. Probably `or`. Copied.
-5. `deprecated_cycleway_shared` reads only `cycleway=shared`, but `needs_clarification` skips every side object with `cycleway=shared` ("handled by the road
-   todo"). `cycleway:right=shared` and `cycleway:both=shared` give no bikelane feature and no road todo, so nothing flags them. Found while porting the road todos.
-6. Cosmetic: the `unexpected_highway_path` text says `highway=cyclway`.
+Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported to the package:
 
-Not bugs, but good to know: `parse_length` reads only the exact decimal-comma strings `0,3 0,5 0,6 1,5 2,2 2,5 2,50` (use count in Germany above 10), so `2,0` or
-`1,50` stay unreadable and show up as `unusual_width`; and a check date on the road closes `unusual_width` for all its lanes.
+1. `missing_segregated` had `(object_tags.segregated ~= 'yes' or object_tags.segregated ~= 'no')`, which is always true.
+   Now a set lookup, `not SEGREGATED_VALUES[object_tags.segregated]` (tilda-geo `ed8478350`). In practice the todo could not fire
+   wrongly: with `segregated=yes|no` the category is no longer `needsClarification`.
+2. `highway=cycleway` + `traffic_sign=none` (`98e649800`) also matched the side object of a lane between the car lanes ("Angstweiche",
+   `cycleway:lanes=no|no|lane|no`) that is tagged on the road side as well (`cycleway:right:lane=advisory` + `cycleway:right:traffic_sign=none`).
+   The three Berlin ways 1207199791, 529891428 and 1442781274 are all of this kind (Berlin extract of 2026-08-06). The unsigned
+   case now has the guard `not has_cycleway_on_highway_between_lanes_conditions(tags)` like `needsClarification` (tilda-geo `34fb8457d`).
+3. Oneway on the road sides: every lane on a road side without `cycleway:<side>:oneway` is `implicit_yes`, also
+   `sharedMotorVehicleLane`. That is right: the processing splits a road into one object per side, and a `shared_lane` on a side is
+   the car lane of that side, which runs in one direction. `cycleway:<side>:oneway=no` still gives `no`. The category flag
+   `implicitOneWay = false` of `sharedMotorVehicleLane` only matters for ways of their own, which this category never is.
+   One odd case stays: on a `oneway=yes` road with `oneway:bicycle=no`, `cycleway:both=shared_lane` makes the left side a contraflow
+   shared lane. Not changed.
+4. `missing_access_tag_240` fired only when neither `bicycle` nor `foot` was `designated`. Now when one of them is missing (tilda-geo `61252e31f`, with tests).
+5. `deprecated_cycleway_shared` reads only `cycleway=shared`. Germany (extract of 2026-10-25) has 555 ways with `cycleway=shared`
+   and 73 with a side key (`cycleway:right=shared` 29, `cycleway:left=shared` 12, `cycleway:both=shared` 33). Those 73 get no
+   bikelane feature and no road todo. Not changed.
+6. The `unexpected_highway_path` text said `highway=cyclway` (tilda-geo `e812de936`).
+
+Not handled on purpose (too few cases): `parse_length` reads only the exact decimal-comma strings `0,3 0,5 0,6 1,5 2,2 2,5 2,50` (use
+count in Germany above 10), so `2,0` or `1,50` stay unreadable and show up as `unusual_width`; and a check date on the road closes
+`unusual_width` for all its lanes.
 
 ## Berlin spot check (snapshot of 2026-06-12, package after the sync)
 
@@ -152,7 +159,7 @@ Not bugs, but good to know: `parse_length` reads only the exact decimal-comma st
 | Field        | Agreement                   | Explained by                                                                                                                                                                                                                                             |
 | ------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | category     | 43,086 / 43,258 (99.60 %)   | 172 features `needsClarification` to `cycleway_adjoiningOrIsolated` or `_adjoining`: `highway=cycleway` + `traffic_sign=none` (`98e649800`), e.g. way/1085238554, way/1005124622, way/1160762471                                                         |
-| TS only      | 3 features                  | probable LUA side effect, see bug 2                                                                                                                                                                                                                      |
+| TS only      | 3 features                  | lanes between the car lanes, gone since the guard of bug 2 (`34fb8457d`)                                                                                                                                                                                 |
 | oneway       | 92.60 % (3,200 differences) | 3,137 lanes on the road without `cycleway:<side>:oneway`: `assumed_no` to `implicit_yes` (e.g. way/1416568188/cycleway/left); 55 `implicit_yes` to `yes` and 8 `assumed_no` to `yes` for `oneway=-1` (e.g. way/1464913206/cycleway/left, way/1311757495) |
 | width        | 99.99 %                     | 4 features `width=0` is no width now (way/1391518414), 1 date artifact (way/74370276)                                                                                                                                                                    |
 | other fields | unchanged                   | `smoothness` 99.98 %, `smoothness_source` 99.96 %, `traffic_sign` 99.95 % are the old date artifacts                                                                                                                                                     |

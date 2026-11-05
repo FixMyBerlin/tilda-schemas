@@ -452,5 +452,22 @@
     },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "category": "cyclewayOnHighway_advisory" }
+  },
+  {
+    "name": "lane between the car lanes, also tagged on the road side with traffic_sign=none (Berlin way 529891428)",
+    "input": {
+      "highway": "secondary",
+      "oneway": "yes",
+      "lanes": "3",
+      "cycleway:lanes": "no|no|lane|no",
+      "bicycle:lanes": "yes|no|designated|yes",
+      "vehicle:lanes": "yes|yes|no|yes",
+      "cycleway:left": "no",
+      "cycleway:right:lane": "advisory",
+      "cycleway:right:traffic_sign": "none",
+      "traffic_sign": "none"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cyclewayOnHighwayBetweenLanes" }
   }
 ]

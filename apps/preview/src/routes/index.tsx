@@ -4,8 +4,13 @@ import {
   type BikelaneResult,
   type OsmTags,
 } from '@tilda-geo/bicycle-infrastructure'
-import { mappingTargetById, tildaQaState } from '@tilda-geo/bicycle-infrastructure-tagging'
+import {
+  mappingTargetById,
+  qaStateLabel,
+  tildaQaState,
+} from '@tilda-geo/bicycle-infrastructure-tagging'
 import { radnetzBerlin } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/radnetz-berlin'
+import { tildaGeo } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/tilda-geo'
 import { Badge } from '../components/catalyst/badge'
 import { Description, Label } from '../components/catalyst/fieldset'
 import { Switch, SwitchField } from '../components/catalyst/switch'
@@ -59,7 +64,8 @@ function Viewer() {
   const results = bikelanes(tags)
   const result = results.find((r) => r._side === search.side) ?? results[0]
   const target = search.target ? mappingTargetById(search.target) : undefined
-  const qa = profile === 'radnetz-berlin' ? tildaQaState(tags, radnetzBerlin) : undefined
+  const requirementsProfile = profile === 'radnetz-berlin' ? radnetzBerlin : tildaGeo
+  const qa = tildaQaState(tags, requirementsProfile)
 
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:px-8">
@@ -70,7 +76,10 @@ function Viewer() {
             <TagInput tags={tags} onChange={setTags} />
             <SwitchField>
               <Label>Profil radnetz-berlin</Label>
-              <Description>Pflichtangaben und die Regeln des Radnetz-Editors.</Description>
+              <Description>
+                Pflichtangaben des Radnetz-Datensatzes und die Regeln des Radnetz-Editors. Aus: nur
+                das, was TILDA selbst liest.
+              </Description>
               <Switch
                 name="profile"
                 color="dark/zinc"
@@ -89,6 +98,7 @@ function Viewer() {
             results={results}
             side={result?._side}
             onSelect={(side) => updateSearch({ side })}
+            onSetTag={(key, value) => setTags({ ...tags, [key]: value })}
           />
         </Section>
 
@@ -104,14 +114,17 @@ function Viewer() {
           </Section>
         )}
 
-        {result && profile === 'radnetz-berlin' && (
+        {result && (
           <Section
             id="requirements"
             title="Pflichtangaben"
             aside={
               qa && (
                 <span className="flex items-center gap-2 text-sm/6 text-zinc-500">
-                  QA <Badge color={QA_COLOR[qa.state]}>{qa.state}</Badge>
+                  QA{' '}
+                  <Badge color={QA_COLOR[qa.state]} title={qa.state}>
+                    {qaStateLabel(qa.state, 'de')}
+                  </Badge>
                 </span>
               )
             }
@@ -119,6 +132,7 @@ function Viewer() {
             <Requirements
               tags={tags}
               result={result}
+              profile={requirementsProfile}
               targetCategory={target?.categoryId}
               onSetTag={(key, value) => setTags({ ...tags, [key]: value })}
             />

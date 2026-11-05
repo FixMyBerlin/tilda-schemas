@@ -28,6 +28,10 @@ export default defineConfig({
         replacement: resolve(taggingDir, 'src/profiles/radnetz-berlin.ts'),
       },
       {
+        find: /^@tilda-geo\/bicycle-infrastructure-tagging\/profiles\/tilda-geo$/,
+        replacement: resolve(taggingDir, 'src/profiles/tilda-geo.ts'),
+      },
+      {
         find: /^@tilda-geo\/bicycle-infrastructure-tagging$/,
         replacement: resolve(taggingDir, 'src/index.ts'),
       },

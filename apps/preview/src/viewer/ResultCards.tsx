@@ -6,10 +6,11 @@ import {
 import {
   TILDA_LABELS,
   categoryLabel,
+  gapWriteKey,
   type ResultSide,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
 import clsx from 'clsx'
-import { Badge } from '../components/catalyst/badge'
+import { Badge, BadgeButton } from '../components/catalyst/badge'
 import { SIDE_LABEL } from './copy'
 import { Tag } from './Section'
 
@@ -35,9 +36,11 @@ type Props = {
   results: BikelaneResult[]
   side: ResultSide | undefined
   onSelect: (side: ResultSide) => void
+  /** A gap was answered: add this tag */
+  onSetTag: (key: string, value: string) => void
 }
 
-export function ResultCards({ tags, results, side, onSelect }: Props) {
+export function ResultCards({ tags, results, side, onSelect, onSetTag }: Props) {
   if (!results.length) {
     return (
       <p className="text-sm/6 text-zinc-500">
@@ -54,17 +57,20 @@ export function ResultCards({ tags, results, side, onSelect }: Props) {
         const selected = result._side === side
         const missing = gaps[index]?.missing ?? []
         return (
-          <li key={result._side}>
+          <li
+            key={result._side}
+            className={clsx(
+              'flex h-full flex-col rounded-lg ring-1 transition',
+              selected
+                ? 'bg-sky-50 ring-2 ring-sky-500'
+                : 'bg-white ring-zinc-950/10 hover:ring-zinc-950/20',
+            )}
+          >
             <button
               type="button"
               aria-pressed={selected}
               onClick={() => onSelect(result._side)}
-              className={clsx(
-                'block h-full w-full cursor-pointer rounded-lg p-4 text-left ring-1 transition',
-                selected
-                  ? 'bg-sky-50 ring-2 ring-sky-500'
-                  : 'bg-white ring-zinc-950/10 hover:ring-zinc-950/20',
-              )}
+              className="block w-full cursor-pointer rounded-lg p-4 text-left"
             >
               <div className="flex flex-wrap items-center gap-2 text-sm/6 text-zinc-500">
                 <span className="font-medium text-zinc-950">{SIDE_LABEL[result._side]}</span>
@@ -103,27 +109,42 @@ export function ResultCards({ tags, results, side, onSelect }: Props) {
                   </div>
                 )}
               </dl>
-              {!!missing.length && (
-                <div className="mt-3 rounded-md bg-amber-50 p-3 text-sm/5">
-                  <p className="font-medium text-amber-900">Diese Tags würden entscheiden:</p>
-                  <ul className="mt-1 space-y-1">
-                    {missing.map((gap) => (
-                      <li key={`${gap.key}=${gap.values.join('|')}`} className="text-amber-900">
-                        <Tag k={gap.key} v={gap.values.join(' | ')} />
+            </button>
+            {!!missing.length && (
+              <div className="mx-4 mb-4 rounded-md bg-amber-50 p-3 text-sm/5" data-testid="gaps">
+                <p className="font-medium text-amber-900">Diese Tags würden entscheiden:</p>
+                <ul className="mt-1 space-y-2">
+                  {missing.map((gap) => {
+                    const key = gapWriteKey(gap, result)
+                    return (
+                      <li
+                        key={`${gap.key}=${gap.values.join('|')}`}
+                        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-amber-900"
+                      >
+                        {gap.values.map((value) => (
+                          <BadgeButton
+                            key={value}
+                            color="amber"
+                            data-testid="gap-button"
+                            title={`${key}=${value} hinzufügen`}
+                            onClick={() => onSetTag(key, value)}
+                          >
+                            {key}={value}
+                          </BadgeButton>
+                        ))}
                         {gap.unlocksCategory && (
                           <span>
-                            {' '}
                             →{' '}
                             {categoryLabel(gap.unlocksCategory, TILDA_LABELS.de) ??
                               gap.unlocksCategory}
                           </span>
                         )}
                       </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </button>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
           </li>
         )
       })}

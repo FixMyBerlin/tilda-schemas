@@ -72,3 +72,68 @@ test('applying a plan changes the tags and the category', async ({ page }) => {
     'footAndCyclewayShared_adjoining',
   )
 })
+
+test('a gap is a button that adds the tag', async ({ page }) => {
+  await page.goto('/?tags=highway=cycleway')
+  await page.getByRole('button', { name: 'traffic_sign=DE:240' }).first().click()
+  await expect(page).toHaveURL(/traffic_sign=DE:240/)
+  await expect(page.getByTestId('category-id').first()).toHaveText(
+    'footAndCyclewayShared_adjoiningOrIsolated',
+  )
+  // the base category of the gap has a German label
+  await page.goto('/?tags=highway=cycleway')
+  await expect(page.getByTestId('gaps').first()).toContainText('Gemeinsamer Geh- & Radweg')
+})
+
+test('a gap on a road side writes the key of the side', async ({ page }) => {
+  await page.goto('/?tags=highway=residential;cycleway:right=yes')
+  await page.getByRole('button', { name: 'cycleway:right=lane' }).first().click()
+  await expect(page).toHaveURL(/cycleway:right=lane/)
+  await expect(page).not.toHaveURL(/cycleway:right:cycleway/)
+  await expect(page.getByTestId('category-id').first()).toHaveText(
+    'cyclewayOnHighway_advisoryOrExclusive',
+  )
+})
+
+test('required attributes, reminders and QA state are in German', async ({ page }) => {
+  await page.goto('/?tags=highway=cycleway;is_sidepath=yes;traffic_sign=DE:237')
+  const attributes = page.getByTestId('attributes')
+  await expect(attributes.getByText('Verkehrsschild (oder keines)')).toBeVisible()
+  await expect(attributes.getByText('Breite', { exact: true })).toBeVisible()
+  await expect(page.getByTestId('reminders')).toContainText('Auf Schadenschilder prüfen.')
+  await expect(page.locator('section[aria-labelledby="requirements-title"]')).toContainText(
+    'Tags fehlen',
+  )
+  await expect(page.locator('section[aria-labelledby="requirements-title"]')).toContainText('Fehlt')
+})
+
+test('the tilda-geo profile has required attributes without the Radnetz extras', async ({
+  page,
+}) => {
+  await page.goto('/?tags=highway=cycleway;is_sidepath=yes;traffic_sign=DE:237&profile=tilda-geo')
+  const attributes = page.getByTestId('attributes')
+  await expect(attributes.getByText('Breite', { exact: true })).toBeVisible()
+  await expect(page.getByTestId('reminders')).toHaveCount(0)
+  await expect(page.locator('section[aria-labelledby="requirements-title"]')).toContainText(
+    'tilda-geo',
+  )
+  await expect(page.getByText('infraVelo')).toHaveCount(0)
+})
+
+test('a plan explains its tags and its conflicts in German', async ({ page }) => {
+  await page.goto('/?tags=highway=cycleway&target=footAndCyclewaySegregated_adjoining:signed')
+  await expect(page.getByTestId('plan')).toContainText('Festes Tag des gewählten Ziels.')
+  await expect(page.getByTestId('plan')).toContainText('Unterscheidet „Getrennter Rad- und Gehweg')
+  await page.goto(
+    '/?tags=highway=residential;cycleway:right=track&target=footAndCyclewaySegregated_adjoining:twoLines',
+  )
+  await expect(page.getByTestId('plan')).toContainText('brauchen einen eigenen Weg')
+})
+
+test('a rule without a finding shows its description', async ({ page }) => {
+  await page.goto('/?tags=highway=cycleway')
+  const rule = page.locator('[data-testid="rule"][data-rule="missing_surface"]')
+  await expect(rule).toContainText('Radinfrastruktur hat keine Oberfläche')
+  // no unfilled placeholder in any rule text
+  await expect(page.getByTestId('rules')).not.toContainText(/\{\w+\}/)
+})

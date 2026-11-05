@@ -14,23 +14,25 @@ The Vite alias and the `paths` in `tsconfig.json` point at the package source, s
 
 ## What it shows
 
-| Part           | Package function                                                                                                       |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Ergebnis       | `processBikelanes`, `analyzeCategoryGaps`, `categoryLabel` + `TILDA_LABELS.de`                                         |
-| Ändern in      | `groupMappingTargets`, `MAPPING_TARGET_LABELS.de`, `planForMappingTarget`, `planCategoryVariants`, `applyCategoryPlan` |
-| Pflichtangaben | `requiredAttributes`, `roadAttributes`, `reminders`, `tildaQaState` with the profile `radnetz-berlin`                  |
-| Validierung    | `RULES`, `activeRules`, `validateTags`, `renderMessage`, `MESSAGES.de`, `applyTagFix`                                  |
+| Part           | Package function                                                                                                                                                                                               |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ergebnis       | `processBikelanes`, `analyzeCategoryGaps`, `gapWriteKey` (a gap is a button that adds its tag), `categoryLabel` + `TILDA_LABELS.de`                                                                            |
+| Ändern in      | `groupMappingTargets`, `MAPPING_TARGET_LABELS.de`, `planForMappingTarget`, `planCategoryVariants`, `applyCategoryPlan`, `renderPlanReason`, `renderPlanConflict`                                               |
+| Pflichtangaben | `requiredAttributes`, `roadAttributes`, `reminders`, `tildaQaState` with the profile `radnetz-berlin` or `tilda-geo`; `attributeLabel`, `attributeNote`, `attributeStateLabel`, `reminderText`, `qaStateLabel` |
+| Validierung    | `RULES`, `activeRules`, `validateTags`, `renderMessage`, `ruleDescription`, `applyTagFix`                                                                                                                      |
+
+All texts are German and come from the packages; the viewer holds only its own UI copy (headings, side names, severity words). Where a package has no text for something, the viewer shows the raw code.
 
 ## URL
 
 The whole state is in the URL:
 
-| Param     | What                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------- |
-| `tags`    | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`). |
-| `side`    | `self`, `left` or `right`; default the first result                                                           |
-| `target`  | id of a mapping target, e.g. `footAndCyclewayShared_adjoining:unsigned`                                       |
-| `profile` | `tilda-geo` turns the profile `radnetz-berlin` (default) off                                                  |
+| Param     | What                                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `tags`    | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`).             |
+| `side`    | `self`, `left` or `right`; default the first result                                                                       |
+| `target`  | id of a mapping target, e.g. `footAndCyclewayShared_adjoining:unsigned`                                                   |
+| `profile` | `tilda-geo` turns the profile `radnetz-berlin` (default) off; the Pflichtangaben then use the minimal profile `tilda-geo` |
 
 Example: `/?tags=highway=cycleway;bicycle=designated`. The example links come from [docs/viewer-examples.md](../../docs/viewer-examples.md); keep both in sync (`src/viewer/examples.ts`).
 

@@ -12,6 +12,9 @@
       ],
       "@tilda-geo/bicycle-infrastructure-tagging/profiles/radnetz-berlin": [
         "../../packages/bicycle-infrastructure-tagging/src/profiles/radnetz-berlin.ts"
+      ],
+      "@tilda-geo/bicycle-infrastructure-tagging/profiles/tilda-geo": [
+        "../../packages/bicycle-infrastructure-tagging/src/profiles/tilda-geo.ts"
       ]
     }
   },

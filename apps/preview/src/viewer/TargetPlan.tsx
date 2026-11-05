@@ -9,6 +9,8 @@ import {
   mappingTargetById,
   planCategoryVariants,
   planForMappingTarget,
+  renderPlanConflict,
+  renderPlanReason,
   type CategoryChangePlan,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
 import clsx from 'clsx'
@@ -26,6 +28,8 @@ type Props = {
   onTarget: (targetId: string | undefined) => void
   onApply: (tags: OsmTags) => void
 }
+
+const TEXT_OPTIONS = { categoryLabels: TILDA_LABELS.de }
 
 const targetLabel = (id: string | undefined) => {
   const target = id ? mappingTargetById(id) : undefined
@@ -149,7 +153,9 @@ function PlanCard({
               +
             </span>
             <Tag k={entry.key} v={entry.value} />
-            <span className="font-mono text-xs text-zinc-500">{entry.code}</span>
+            <span className="text-xs/5 text-zinc-500" title={entry.reasonCode ?? entry.code}>
+              {renderPlanReason(entry, 'de', TEXT_OPTIONS)}
+            </span>
           </li>
         ))}
         {plan.change.map((entry) => (
@@ -160,7 +166,9 @@ function PlanCard({
             <Tag k={entry.key} v={entry.from} />
             <span>→</span>
             <Tag k={entry.key} v={entry.to} />
-            <span className="font-mono text-xs text-zinc-500">{entry.code}</span>
+            <span className="text-xs/5 text-zinc-500" title={entry.reasonCode ?? entry.code}>
+              {renderPlanReason(entry, 'de', TEXT_OPTIONS)}
+            </span>
           </li>
         ))}
         {plan.remove.map((key) => (
@@ -176,17 +184,8 @@ function PlanCard({
       {!!plan.conflicts.length && (
         <ul className="mt-2 space-y-1 rounded-md bg-red-50 p-3 text-sm/5 text-red-900">
           {plan.conflicts.map((conflict) => (
-            <li key={`${conflict.code}-${conflict.key}`}>
-              <span className="font-mono text-xs">{conflict.code}</span>{' '}
-              {conflict.key && <Tag k={conflict.key} v={conflict.value} />}
-              {conflict.params?.result && (
-                <span>
-                  {' '}
-                  ergibt „
-                  {categoryLabel(conflict.params.result, TILDA_LABELS.de) ?? conflict.params.result}
-                  “
-                </span>
-              )}
+            <li key={`${conflict.code}-${conflict.key}`} title={conflict.code}>
+              {renderPlanConflict(conflict, 'de', TEXT_OPTIONS)}
             </li>
           ))}
         </ul>

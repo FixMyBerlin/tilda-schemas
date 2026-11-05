@@ -1,10 +1,10 @@
 import type { OsmTags } from '@tilda-geo/bicycle-infrastructure'
 import {
-  MESSAGES,
   RULES,
   activeRules,
   applyTagFix,
   renderMessage,
+  ruleDescription,
   validateTags,
   type Finding,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
@@ -62,7 +62,7 @@ export function ValidationList({ tags, profile, onApply }: Props) {
                 {!active.has(rule.id) && <Badge>nur Profil radnetz-berlin</Badge>}
               </div>
               {!triggered && (
-                <p className="mt-1 text-sm/5 text-zinc-600">{MESSAGES.de[rule.message.code]}</p>
+                <p className="mt-1 text-sm/5 text-zinc-600">{ruleDescription(rule.id, 'de')}</p>
               )}
               {hits.map((finding, index) => (
                 <div key={`${finding.scope}-${index}`} className="mt-2">

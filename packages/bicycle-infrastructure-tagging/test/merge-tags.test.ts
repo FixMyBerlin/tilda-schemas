@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
   combinedPathTags,
+  validateTags,
   commonTags,
   joinSignsPlain,
   mergeSelection,
@@ -317,5 +318,18 @@ describe('mergeSelection', () => {
       disabled: false,
       surviving: 'foot',
     })
+  })
+})
+
+describe('combinedPathTags width', () => {
+  it('the merged width is the exact sum of the parts, so width_part_sum stays quiet', () => {
+    const { tags } = combinedPathTags(
+      { highway: 'cycleway', width: '1.25' },
+      { highway: 'footway', footway: 'sidewalk', width: '2' },
+    )
+    expect(tags.width).toBe('3.25')
+    expect(
+      validateTags(tags, { profile: 'radnetz-berlin' }).map((finding) => finding.ruleId),
+    ).not.toContain('width_part_sum')
   })
 })

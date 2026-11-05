@@ -73,7 +73,7 @@ function roleOfSide(tags: OsmTags, side: 'left' | 'right', category: string | un
  * On a way, a mode counts when it is `designated`, `yes` or `permissive`. `highway=cycleway`
  * always carries bicycles, `highway=footway` always pedestrians; a `highway=path` carries only
  * what is tagged, because its access depends on the country. A path without any access tag still
- * counts as one way for both when the category says so (`footAndCycleway*`).
+ * counts for a mode that is not tagged when the category says the path is for both (`footAndCycleway*`).
  */
 export function pathRole(tags: OsmTags, options: PathRoleOptions = {}): PathRole {
   const { side = 'self', category } = options
@@ -102,9 +102,10 @@ export function pathRole(tags: OsmTags, options: PathRoleOptions = {}): PathRole
     case 'path':
       carriesFoot = allowed(tags.foot)
       carriesBike = allowed(tags.bicycle)
-      if (!carriesFoot && !carriesBike && category?.startsWith('footAndCycleway')) {
-        carriesFoot = tags.foot !== 'no'
-        carriesBike = tags.bicycle !== 'no'
+      // The category says the path is for both: an untagged mode counts unless it is excluded
+      if (category?.startsWith('footAndCycleway')) {
+        carriesFoot ||= tags.foot === undefined
+        carriesBike ||= tags.bicycle === undefined
       }
       break
     default:

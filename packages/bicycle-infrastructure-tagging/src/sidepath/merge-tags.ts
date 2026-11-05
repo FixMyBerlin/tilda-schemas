@@ -1,6 +1,7 @@
 import { parseWidth } from '@tilda-geo/bicycle-infrastructure'
 import { pathRole } from '../path-role.ts'
 import type { OsmTags } from '../types.ts'
+import { formatMeters } from '../widths/part-widths.ts'
 
 /**
  * Tag logic for one foot and cycle path made of a bike part and a foot part (WORKDOC features
@@ -159,7 +160,7 @@ export function combinedPathTags(
   const bikeWidth = parseWidth(bike.width)
   const footWidth = parseWidth(foot.width)
   if (bikeWidth !== undefined && footWidth !== undefined)
-    tags.width = String(Math.round((bikeWidth + footWidth) * 10) / 10)
+    tags.width = formatMeters(bikeWidth + footWidth)
 
   // everything else: both parts' keys; the primary part wins a conflict
   const [first, second] = primary === 'bike' ? [bike, foot] : [foot, bike]

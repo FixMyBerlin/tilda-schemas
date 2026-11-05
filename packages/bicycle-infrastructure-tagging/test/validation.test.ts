@@ -497,3 +497,10 @@ describe('rule descriptions', () => {
     }
   })
 })
+
+test('width_part_sum ignores roads: there width is the carriageway', () => {
+  const road = { highway: 'residential', width: '9', 'cycleway:width': '1.5', 'footway:width': '2' }
+  expect(
+    validateTags(road, { profile: 'radnetz-berlin' }).map((finding) => finding.ruleId),
+  ).not.toContain('width_part_sum')
+})

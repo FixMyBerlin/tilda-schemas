@@ -1,13 +1,14 @@
 import type { OsmTags } from '../types.ts'
 import {
   PART_WIDTH_KEYS,
+  PATH_HIGHWAYS,
   formatMeters,
   partWidthMismatch,
   partWidthWholeWay,
 } from '../widths/part-widths.ts'
 import { cyclewayOnewayFindings } from './cycleway-oneway.ts'
 import { removeTagsFix, setTagFix } from './fix.ts'
-import type { Rule, RuleHit, RuleScope } from './types.ts'
+import type { Rule, RuleHit } from './types.ts'
 
 /**
  * Rules of the iD Radnetz Berlin editor (`modules/validations/width_parts.ts`,
@@ -18,12 +19,7 @@ import type { Rule, RuleHit, RuleScope } from './types.ts'
  * rule here reports only the contraflow case, which the todo leaves out (it skips one-way roads).
  */
 
-const PATH_HIGHWAYS = new Set(['path', 'cycleway', 'footway', 'bridleway'])
-
-/** `self` for a way of its own for walking and cycling, else the tags of the road */
-function wayScope(tags: OsmTags): RuleScope {
-  return PATH_HIGHWAYS.has(tags.highway ?? '') ? 'self' : 'road'
-}
+const isPathWay = (tags: OsmTags) => PATH_HIGHWAYS.has(tags.highway ?? '')
 
 const isUnsegregated = (tags: OsmTags) => tags.segregated === 'no'
 
@@ -36,12 +32,13 @@ const widthPartSum: Rule = {
   id: 'width_part_sum',
   severity: 'warning',
   source: 'radnetz',
-  appliesTo: ['self', 'road'],
+  appliesTo: ['self'],
   keys: ['width', ...PART_WIDTH_KEYS],
   message: { code: 'width_part_sum' },
   check({ tags }) {
-    // Part widths with `segregated=no` are a finding of their own
-    if (isUnsegregated(tags)) return []
+    // On a road `width` is the carriageway, not the sum of the parts.
+    // Part widths with `segregated=no` are a finding of their own.
+    if (!isPathWay(tags) || isUnsegregated(tags)) return []
     const mismatch = partWidthMismatch(tags)
     if (!mismatch) return []
     const sum = formatMeters(mismatch.sum)
@@ -49,7 +46,7 @@ const widthPartSum: Rule = {
     const fix = setTagFix(tags, 'width', sum)
     return [
       {
-        scope: wayScope(tags),
+        scope: 'self',
         keys: ['width', ...PART_WIDTH_KEYS],
         message: {
           params: {
@@ -103,7 +100,7 @@ const widthPartUnsegregated: Rule = {
   keys: ['segregated', ...PART_WIDTH_KEYS],
   message: { code: 'width_part_unsegregated' },
   check({ tags }) {
-    if (!isUnsegregated(tags) || !PATH_HIGHWAYS.has(tags.highway ?? '')) return []
+    if (!isUnsegregated(tags) || !isPathWay(tags)) return []
     const parts = PART_WIDTH_KEYS.filter((key) => tags[key] !== undefined)
     if (!parts.length) return []
     return [

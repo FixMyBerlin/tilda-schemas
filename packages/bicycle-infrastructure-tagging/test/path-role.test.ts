@@ -96,3 +96,20 @@ describe('part widths follow pathRole', () => {
     ).toBe(undefined)
   })
 })
+
+describe('pathRole with one mode tagged', () => {
+  it('a path for both by its category counts the untagged mode', () => {
+    const tags = { highway: 'path', bicycle: 'yes', traffic_sign: 'DE:241' }
+    const role = pathRole(tags, { category: 'footAndCyclewaySegregated_adjoining' })
+    expect(role.style).toBe('oneLine')
+    expect(role.carriesFoot).toBe(true)
+    expect(role.segregated).toBe(true)
+  })
+
+  it('an excluded mode stays excluded', () => {
+    const tags = { highway: 'path', bicycle: 'yes', foot: 'no' }
+    const role = pathRole(tags, { category: 'footAndCyclewayShared_adjoining' })
+    expect(role.style).toBe('twoLines')
+    expect(role.part).toBe('bike')
+  })
+})

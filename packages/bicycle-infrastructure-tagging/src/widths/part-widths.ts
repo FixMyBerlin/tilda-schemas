@@ -65,7 +65,13 @@ export function formatMeters(meters: number): string {
 
 export type PartWidthWholeWay = { key: PartWidthKey; meters: number; width: number }
 
-const PATH_HIGHWAYS = new Set(['path', 'cycleway', 'footway', 'bridleway'])
+/** Highways that can be a way of its own for walking and cycling (with part widths) */
+export const PATH_HIGHWAYS: ReadonlySet<string> = new Set([
+  'path',
+  'cycleway',
+  'footway',
+  'bridleway',
+])
 
 /**
  * A part (`cycleway:width` or `footway:width`) of a foot and cycle path is as wide as the whole

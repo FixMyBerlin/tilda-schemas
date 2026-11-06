@@ -182,9 +182,12 @@ export function categoryGeometryMismatch(
   if (target.startsWith('bicycleRoad') && isSidewalkFootway(tags)) {
     return 'geometry_bicycle_road_on_sidewalk'
   }
+  // A protected cycle lane can also be a way of its own (`highway=cycleway`, `is_sidepath=yes`)
+  const protectedOwnWay = target === 'cyclewayOnHighwayProtected' && tags.highway === 'cycleway'
   if (
     (target.startsWith('cyclewayOnHighway') || target === 'sharedMotorVehicleLane') &&
-    !isCarriageway(tags)
+    !isCarriageway(tags) &&
+    !protectedOwnWay
   ) {
     return 'geometry_lane_needs_road'
   }

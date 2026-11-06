@@ -23,7 +23,8 @@ function ownWay(target: MappingTarget): OsmTags {
   if (id === 'pedestrianAreaBicycleYes') return { highway: 'pedestrian' }
   if (id.startsWith('bicycleRoad')) return { highway: 'residential' }
   if (id.startsWith('footwayBicycleYes')) return { highway: 'footway' }
-  if (/^(cycleway_|cyclewayLink$|crossing$|sharedBusLane)/.test(id)) return { highway: 'cycleway' }
+  if (/^(cycleway_|cyclewayLink$|crossing$|sharedBusLane|cyclewayOnHighwayProtected$)/.test(id))
+    return { highway: 'cycleway' }
   return { highway: 'path' }
 }
 

@@ -102,9 +102,13 @@ const LANE = /^(cyclewayOnHighway|sharedMotorVehicleLane)/
 
 export const EXPECTED_UNREACHABLE: UnreachableRule[] = [
   {
-    reason: 'A lane needs a road: a path, footway, cycleway or pedestrian area has no lanes',
+    reason:
+      'A lane needs a road: a path, footway, cycleway or pedestrian area has no lanes (a protected lane can be a highway=cycleway of its own)',
     code: 'geometry_lane_needs_road',
-    applies: (t, c) => LANE.test(t.categoryId) && isOwnWay(c),
+    applies: (t, c) =>
+      LANE.test(t.categoryId) &&
+      isOwnWay(c) &&
+      !(t.categoryId === 'cyclewayOnHighwayProtected' && c.tags.highway === 'cycleway'),
   },
   {
     reason: 'A bus lane needs a road or a highway=cycleway of its own',
@@ -159,8 +163,9 @@ export const EXPECTED_UNREACHABLE: UnreachableRule[] = [
       'A protected lane must not carry segregated (LUA); the planner adds and changes tags, it does not remove them',
     applies: (t, c) =>
       t.categoryId === 'cyclewayOnHighwayProtected' &&
-      isRoadSide(c) &&
-      c.tags['cycleway:right:segregated'] !== undefined,
+      (isRoadSide(c)
+        ? c.tags['cycleway:right:segregated'] !== undefined
+        : c.tags.segregated !== undefined),
   },
   {
     reason:

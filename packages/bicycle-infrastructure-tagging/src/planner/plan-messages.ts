@@ -45,6 +45,8 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Geschützter Radfahrstreifen: bauliche Trennung zur Fahrbahn.',
     'category_requirement.protected_lane_parking':
       'Geschützter Radfahrstreifen: parkende Fahrzeuge zur Fahrbahn hin.',
+    'category_requirement.protected_lane_sidepath':
+      'Geschützter Radfahrstreifen: verläuft an einer Straße (is_sidepath=yes).',
     'category_requirement.cycleway_crossing': 'Die Querung eines Radwegs.',
     'category_requirement.split_both_sides':
       '{from} gilt für beide Seiten und wird auf die Seiten aufgeteilt.',
@@ -108,6 +110,8 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Protected cycle lane: physical separation towards the road.',
     'category_requirement.protected_lane_parking':
       'Protected cycle lane: parked vehicles towards the road.',
+    'category_requirement.protected_lane_sidepath':
+      'Protected cycle lane: runs along a road (is_sidepath=yes).',
     'category_requirement.cycleway_crossing': 'The crossing of a cycleway.',
     'category_requirement.split_both_sides':
       '{from} covers both sides and is split into the sides.',

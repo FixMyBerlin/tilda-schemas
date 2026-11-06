@@ -16,6 +16,7 @@ import { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from '../transform/tr
 import type { BikelaneResult, OsmTags } from '../types.ts'
 import { categorizeBikelane } from './bikelane-categories.ts'
 import { CATEGORY_DEFINITIONS } from './bikelane-categories.ts'
+import { categoryIsSidepath } from './category-is-sidepath.ts'
 import {
   CATEGORY_SPECS,
   isIncompleteCategoryId,
@@ -102,6 +103,7 @@ export const TAG_REASON_CODES = [
   'cycle_lane_shared_with_buses',
   'protected_lane_separation',
   'protected_lane_parking',
+  'protected_lane_sidepath',
   'cycleway_crossing',
   /** `{from}`: `cycleway:both` (or `cycleway`) split into `cycleway:left` and `cycleway:right` */
   'split_both_sides',
@@ -124,6 +126,8 @@ interface PlanAtom {
   reason: string
   reasonCode: TagReasonCode
   reasonParams?: Record<string, string>
+  /** The condition holds by other tags than `key` (a road side is a sidepath by its road) */
+  holdsOn?: (tags: OsmTags) => boolean
 }
 
 /** An alternative: all atoms together are enough for the match. */
@@ -210,13 +214,16 @@ export function writeKeyForSide(
   return transformedKey
 }
 
-/** Value of `cycleway:<side>` that the categories on a road side need */
-const SIDE_PRESENCE: Readonly<Record<string, string>> = {
+/**
+ * Value of `cycleway:<side>` that the categories on a road side need. A list accepts each of its
+ * values and writes the first: a protected cycle lane is mapped as `track` or as `lane`.
+ */
+const SIDE_PRESENCE: Readonly<Record<string, string | readonly string[]>> = {
   cyclewayOnHighway_advisory: 'lane',
   cyclewayOnHighway_exclusive: 'lane',
   cyclewayOnHighway_advisoryOrExclusive: 'lane',
   cyclewayOnHighwayBetweenLanes: 'lane',
-  cyclewayOnHighwayProtected: 'track',
+  cyclewayOnHighwayProtected: ['track', 'lane'],
   cycleway_adjoining: 'track',
   cycleway_isolated: 'track',
   cycleway_adjoiningOrIsolated: 'track',
@@ -285,10 +292,11 @@ function setUpRoadSide(
     tags[key] = value
   }
 
-  const presence = SIDE_PRESENCE[targetCategoryId]
+  const presence = [SIDE_PRESENCE[targetCategoryId] ?? []].flat()
   const presenceKey = `cycleway:${side}`
-  if (presence && tags[presenceKey] !== presence) {
-    setSide(presenceKey, presence, `The category needs ${presenceKey}=${presence}`)
+  const current = tags[presenceKey]
+  if (presence[0] && (current === undefined || !presence.includes(current))) {
+    setSide(presenceKey, presence[0], `The category needs ${presenceKey}=${presence[0]}`)
   }
 
   if (SIDEWALK_CATEGORY.test(targetCategoryId)) {
@@ -319,6 +327,16 @@ const eqAtom = (
   reason,
   reasonCode,
 })
+
+/** A protected cycle lane runs along a road: on a way of its own that is `is_sidepath=yes` */
+const pblSidepath: PlanAtom = {
+  key: 'is_sidepath',
+  accepts: (v) => v === 'yes',
+  holdsOn: categoryIsSidepath,
+  value: 'yes',
+  reason: 'Protected cycle lane: runs along a road',
+  reasonCode: 'protected_lane_sidepath',
+}
 
 const footwayOrPath: PlanAtom = {
   key: 'highway',
@@ -430,6 +448,7 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
   ],
   cycleway_on_highway_protected: [
     [
+      pblSidepath,
       {
         key: 'separation:left',
         accepts: (v) => v != null && (PROTECTIVE_SEPARATION as readonly string[]).includes(v),
@@ -439,6 +458,7 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
       },
     ],
     [
+      pblSidepath,
       eqAtom(
         'traffic_mode:left',
         'parking',
@@ -639,6 +659,7 @@ function candidateFor(
     const planned = edits.get(atom.key)?.value
     const current = planned ?? base[atom.key]
     if (atom.accepts(current)) continue
+    if (planned === undefined && atom.holdsOn?.(base)) continue
     if (planned !== undefined) return undefined // two conditions on one key contradict
     if (atom.value === undefined) return undefined
     if (atom.key.startsWith('_')) return undefined // derived by the processing, not a tag

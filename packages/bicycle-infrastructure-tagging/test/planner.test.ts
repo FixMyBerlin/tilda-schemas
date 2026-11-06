@@ -77,6 +77,13 @@ describe('planCategoryChange', () => {
     expect(
       categoryGeometryMismatch({ highway: 'residential' }, 'cyclewayOnHighway_exclusive'),
     ).toBe(undefined)
+    // a protected lane can be a way of its own, other lanes cannot
+    expect(categoryGeometryMismatch({ highway: 'cycleway' }, 'cyclewayOnHighwayProtected')).toBe(
+      undefined,
+    )
+    expect(categoryGeometryMismatch({ highway: 'footway' }, 'cyclewayOnHighwayProtected')).toBe(
+      'geometry_lane_needs_road',
+    )
     // a track is no carriageway
     expect(categoryGeometryMismatch({ highway: 'track' }, 'cyclewayOnHighway_exclusive')).toBe(
       'geometry_lane_needs_road',

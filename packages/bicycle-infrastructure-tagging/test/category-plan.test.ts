@@ -50,6 +50,33 @@ describe('tilda/category_plan', () => {
     expect(category).toBe('cycleway_adjoining')
   })
 
+  it('plans a protected cycle lane on a line of its own', () => {
+    const { plan, category } = categoryAfter(
+      { highway: 'cycleway', oneway: 'yes' },
+      'cyclewayOnHighwayProtected',
+      'self',
+    )
+    expect(plan.aligned).toBe(true)
+    expect(plan.add.map((e) => `${e.key}=${e.value}`).sort()).toEqual([
+      'is_sidepath=yes',
+      'separation:left=bollard',
+    ])
+    expect(category).toBe('cyclewayOnHighwayProtected')
+  })
+
+  it('keeps cycleway:right=lane for a protected cycle lane on the road', () => {
+    const plan = planCategory(
+      { highway: 'secondary', 'cycleway:right': 'lane' },
+      'cyclewayOnHighwayProtected',
+      'right',
+    )
+    expect(plan.aligned).toBe(true)
+    expect(plan.change).toEqual([])
+    expect(plan.add.map((e) => `${e.key}=${e.value}`)).toEqual([
+      'cycleway:right:separation:left=bollard',
+    ])
+  })
+
   it('explains targets that do not fit the way', () => {
     const plan = planCategory(
       { highway: 'footway', footway: 'sidewalk' },

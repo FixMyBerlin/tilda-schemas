@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-export const PROFILES = ['radnetz-berlin', 'tilda-geo'] as const
+/** In the order of the radio group: the minimal profile first */
+export const PROFILES = ['tilda-geo', 'radnetz-berlin'] as const
 export type Profile = (typeof PROFILES)[number]
 export const DEFAULT_PROFILE: Profile = 'radnetz-berlin'
 

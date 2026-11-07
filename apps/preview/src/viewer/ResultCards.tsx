@@ -71,7 +71,7 @@ export function ResultCards({ tags, results, side, onSelect, onSetTag }: Props) 
               type="button"
               aria-pressed={selected}
               onClick={() => onSelect(result._side)}
-              className="block w-full cursor-pointer rounded-lg p-4 text-left"
+              className="block w-full cursor-pointer rounded-lg p-3 text-left"
             >
               <div className="flex flex-wrap items-center gap-2 text-sm/6 text-zinc-500">
                 <span className="font-medium text-zinc-950">{SIDE_LABEL[result._side]}</span>
@@ -112,7 +112,7 @@ export function ResultCards({ tags, results, side, onSelect, onSetTag }: Props) 
               </dl>
             </button>
             {!!missing.length && (
-              <div className="mx-4 mb-4 rounded-md bg-amber-50 p-3 text-sm/5" data-testid="gaps">
+              <div className="mx-3 mb-3 rounded-md bg-amber-50 p-3 text-sm/5" data-testid="gaps">
                 <p className="font-medium text-amber-900">Diese Tags würden entscheiden:</p>
                 <ul className="mt-1 space-y-2">
                   {missing.map((gap) => {

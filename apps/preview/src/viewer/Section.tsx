@@ -17,13 +17,13 @@ export function Section({
       aria-labelledby={`${id}-title`}
       className="divide-y divide-zinc-950/5 rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5"
     >
-      <header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5">
         <h2 id={`${id}-title`} className="text-base/7 font-semibold text-zinc-950">
           {title}
         </h2>
         {aside}
       </header>
-      <div className="px-4 py-4 sm:px-6">{children}</div>
+      <div className="px-4 py-3 sm:px-5">{children}</div>
     </section>
   )
 }

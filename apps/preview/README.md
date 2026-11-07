@@ -27,12 +27,12 @@ All texts are German and come from the packages; the viewer holds only its own U
 
 The whole state is in the URL:
 
-| Param     | What                                                                                                                      |
-| --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `tags`    | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`).             |
-| `side`    | `self`, `left` or `right`; default the first result                                                                       |
-| `target`  | id of a mapping target, e.g. `footAndCyclewayShared_adjoining:unsigned`                                                   |
-| `profile` | `tilda-geo` turns the profile `radnetz-berlin` (default) off; the Pflichtangaben then use the minimal profile `tilda-geo` |
+| Param     | What                                                                                                                               |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `tags`    | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`).                      |
+| `side`    | `self`, `left` or `right`; default the first result                                                                                |
+| `target`  | id of a mapping target, e.g. `footAndCyclewayShared_adjoining:unsigned`                                                            |
+| `profile` | `radnetz-berlin` (default) or `tilda-geo` (the minimal profile), picked in the radio group "Profil"; it decides the Pflichtangaben |
 
 Example: `/?tags=highway=cycleway;bicycle=designated`. The example links come from [docs/viewer-examples.md](../../docs/viewer-examples.md); keep both in sync (`src/viewer/examples.ts`).
 

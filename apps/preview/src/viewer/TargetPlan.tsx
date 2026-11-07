@@ -46,9 +46,9 @@ export function TargetPlan({ tags, result, targetId, onTarget, onApply }: Props)
     : []
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Field>
-        <Label>Ändern in ({SIDE_LABEL[result._side]})</Label>
+        <Label className="sr-only">Ziel für {SIDE_LABEL[result._side]}</Label>
         <Select
           name="target"
           value={target?.id ?? ''}
@@ -124,7 +124,7 @@ function PlanCard({
     <article
       data-testid={primary ? 'plan' : 'plan-variant'}
       className={clsx(
-        'rounded-lg p-4 ring-1',
+        'rounded-lg p-3 ring-1',
         primary ? 'bg-white ring-zinc-950/15' : 'bg-zinc-50 ring-zinc-950/5',
       )}
     >

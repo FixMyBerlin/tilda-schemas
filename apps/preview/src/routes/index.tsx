@@ -14,7 +14,7 @@ import { tildaGeo } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/til
 import { Badge } from '../components/catalyst/badge'
 import { Description, Fieldset, Label, Legend } from '../components/catalyst/fieldset'
 import { Radio, RadioField, RadioGroup } from '../components/catalyst/radio'
-import { QA_COLOR } from '../viewer/copy'
+import { QA_COLOR, SIDE_LABEL } from '../viewer/copy'
 import { ExampleList } from '../viewer/ExampleList'
 import { Requirements } from '../viewer/Requirements'
 import { ResultCards } from '../viewer/ResultCards'
@@ -86,16 +86,17 @@ function Viewer() {
   const qa = tildaQaState(tags, requirementsProfile)
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:px-8">
+    <main className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:px-8">
       {/* Phone: input, results, examples. Wide: input and examples on the left. */}
-      <div className="lg:col-start-1 lg:row-start-1">
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
         <Section id="input" title="Eingabe">
-          <div className="space-y-6">
+          <div className="space-y-4">
             <TagInput tags={tags} onChange={setTags} />
             <Fieldset>
               <Legend>Profil</Legend>
               <RadioGroup
                 name="profile"
+                className="mt-2"
                 value={profile}
                 onChange={(value: string) => {
                   const next = PROFILES.find((id) => id === value)
@@ -115,7 +116,7 @@ function Viewer() {
         </Section>
       </div>
 
-      <div className="min-w-0 space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+      <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         <Section id="result" title="Ergebnis (processBikelanes)">
           <ResultCards
             tags={tags}
@@ -127,7 +128,7 @@ function Viewer() {
         </Section>
 
         {result && (
-          <Section id="target" title="Ändern in">
+          <Section id="target" title={`Ändern in · ${SIDE_LABEL[result._side]}`}>
             <TargetPlan
               tags={tags}
               result={result}
@@ -168,7 +169,7 @@ function Viewer() {
         </Section>
       </div>
 
-      <div className="lg:col-start-1 lg:row-start-2">
+      <div className="min-w-0 lg:col-start-1 lg:row-start-2">
         <Section id="examples" title="Beispiele">
           <ExampleList current={tagsParam} profile={search.profile} />
         </Section>

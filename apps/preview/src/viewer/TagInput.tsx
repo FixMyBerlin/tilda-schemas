@@ -1,9 +1,12 @@
 import type { OsmTags } from '@tilda-geo/bicycle-infrastructure'
 import { useState } from 'react'
-import { Button } from '../components/catalyst/button'
 import { Field, Label, Description } from '../components/catalyst/fieldset'
 import { Textarea } from '../components/catalyst/textarea'
 import { parseTagsText, serializeTagsParam, tagsToText } from './tagsParam'
+
+/** A small action next to a label */
+const TEXT_BUTTON =
+  'cursor-pointer text-zinc-500 underline decoration-zinc-950/20 hover:text-zinc-950 disabled:cursor-default disabled:no-underline disabled:opacity-50'
 
 type Props = {
   tags: OsmTags
@@ -11,6 +14,7 @@ type Props = {
 }
 
 export function TagInput({ tags, onChange }: Props) {
+  const empty = !Object.keys(tags).length
   const param = serializeTagsParam(tags)
   const [draft, setDraft] = useState(() => tagsToText(tags))
   const [draftParam, setDraftParam] = useState(param)
@@ -38,27 +42,34 @@ export function TagInput({ tags, onChange }: Props) {
 
   return (
     <Field>
-      <Label>Tags</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label>Tags</Label>
+        <div className="flex gap-3 text-xs/5">
+          <button type="button" className={TEXT_BUTTON} onClick={copyTags} disabled={empty}>
+            {copied ? 'Kopiert' : 'Kopieren'}
+          </button>
+          <button
+            type="button"
+            className={TEXT_BUTTON}
+            onClick={() => onChange({})}
+            disabled={empty}
+          >
+            Leeren
+          </button>
+        </div>
+      </div>
       <Description>Ein Tag pro Zeile, als key=value.</Description>
       <Textarea
         name="tags"
-        rows={8}
+        rows={6}
         spellCheck={false}
         autoCapitalize="off"
         autoComplete="off"
-        className="mt-3 font-mono"
+        className="mt-2 font-mono"
         value={draft}
         onChange={(event) => handleChange(event.target.value)}
         placeholder={'highway=cycleway\nbicycle=designated'}
       />
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button outline onClick={copyTags} disabled={!Object.keys(tags).length}>
-          {copied ? 'Kopiert' : 'Tags kopieren'}
-        </Button>
-        <Button plain onClick={() => onChange({})} disabled={!Object.keys(tags).length}>
-          Leeren
-        </Button>
-      </div>
     </Field>
   )
 }

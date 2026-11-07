@@ -25,7 +25,7 @@ const RootLayout = () => (
             Tags rein, Kategorie, Plan und Prüfungen raus. Alles kommt aus den Paketen.
           </p>
         </div>
-        <ul className="flex flex-col gap-1 text-sm/6">
+        <ul className="flex flex-col text-xs/5">
           {PACKAGES.map((pkg) => (
             <li key={pkg.name} className="flex flex-wrap items-baseline gap-x-2">
               <code className="font-mono text-xs text-zinc-950">{pkg.name}</code>

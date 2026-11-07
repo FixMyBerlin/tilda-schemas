@@ -12,13 +12,19 @@ import {
 import { radnetzBerlin } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/radnetz-berlin'
 import { tildaGeo } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/tilda-geo'
 import { Badge } from '../components/catalyst/badge'
-import { Description, Label } from '../components/catalyst/fieldset'
-import { Switch, SwitchField } from '../components/catalyst/switch'
+import { Description, Fieldset, Label, Legend } from '../components/catalyst/fieldset'
+import { Radio, RadioField, RadioGroup } from '../components/catalyst/radio'
 import { QA_COLOR } from '../viewer/copy'
 import { ExampleList } from '../viewer/ExampleList'
 import { Requirements } from '../viewer/Requirements'
 import { ResultCards } from '../viewer/ResultCards'
-import { DEFAULT_PROFILE, viewerSearchSchema, type ViewerSearch } from '../viewer/search'
+import {
+  DEFAULT_PROFILE,
+  PROFILES,
+  viewerSearchSchema,
+  type Profile,
+  type ViewerSearch,
+} from '../viewer/search'
 import { Section } from '../viewer/Section'
 import { TagInput } from '../viewer/TagInput'
 import { parseTagsParam, serializeTagsParam } from '../viewer/tagsParam'
@@ -29,6 +35,18 @@ export const Route = createFileRoute('/')({
   validateSearch: viewerSearchSchema,
   component: Viewer,
 })
+
+/** Which attributes are required and which editor rules apply */
+const PROFILE_COPY: Record<Profile, { label: string; description: string }> = {
+  'radnetz-berlin': {
+    label: 'Radnetz Berlin',
+    description: 'Pflichtangaben des Radnetz-Datensatzes und die Regeln des Radnetz-Editors.',
+  },
+  'tilda-geo': {
+    label: 'TILDA',
+    description: 'Nur das, was TILDA selbst liest.',
+  },
+}
 
 function bikelanes(tags: OsmTags): BikelaneResult[] {
   if (!tags.highway) return []
@@ -74,19 +92,25 @@ function Viewer() {
         <Section id="input" title="Eingabe">
           <div className="space-y-6">
             <TagInput tags={tags} onChange={setTags} />
-            <SwitchField>
-              <Label>Profil radnetz-berlin</Label>
-              <Description>
-                Pflichtangaben des Radnetz-Datensatzes und die Regeln des Radnetz-Editors. Aus: nur
-                das, was TILDA selbst liest.
-              </Description>
-              <Switch
+            <Fieldset>
+              <Legend>Profil</Legend>
+              <RadioGroup
                 name="profile"
-                color="dark/zinc"
-                checked={profile === 'radnetz-berlin'}
-                onChange={(checked) => updateSearch({ profile: checked ? undefined : 'tilda-geo' })}
-              />
-            </SwitchField>
+                value={profile}
+                onChange={(value: string) => {
+                  const next = PROFILES.find((id) => id === value)
+                  updateSearch({ profile: next === DEFAULT_PROFILE ? undefined : next })
+                }}
+              >
+                {PROFILES.map((id) => (
+                  <RadioField key={id}>
+                    <Radio value={id} color="dark/zinc" />
+                    <Label>{PROFILE_COPY[id].label}</Label>
+                    <Description>{PROFILE_COPY[id].description}</Description>
+                  </RadioField>
+                ))}
+              </RadioGroup>
+            </Fieldset>
           </div>
         </Section>
       </div>

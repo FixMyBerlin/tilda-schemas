@@ -67,6 +67,29 @@ export function transformLifecycleTags(tags: OsmTags): void {
       for (const t of blockedRestricted) tags[t] = undefined
     }
   }
+
+  transformTemporary(tags)
+}
+
+const TEMPORARY_SIDE_PREFIXES = ['cycleway', 'sidewalk'].flatMap((prefix) =>
+  ['', ':left', ':right', ':both'].map((infix) => `${prefix}${infix}`),
+)
+
+/**
+ * `temporary=yes` → `lifecycle=temporary`, `cycleway:right:temporary=yes` →
+ * `cycleway:right:lifecycle=temporary` (same for `sidewalk` and all sides). An existing lifecycle
+ * wins; the `temporary` key is removed (transform_lifecycle_tags.lua, tilda-geo `08b1428b5`).
+ */
+function transformTemporary(tags: OsmTags): void {
+  if (tags.temporary === 'yes') {
+    tags.temporary = undefined
+    tags.lifecycle ??= 'temporary'
+  }
+  for (const prefix of TEMPORARY_SIDE_PREFIXES) {
+    if (tags[`${prefix}:temporary`] !== 'yes') continue
+    tags[`${prefix}:temporary`] = undefined
+    tags[`${prefix}:lifecycle`] ??= 'temporary'
+  }
 }
 
 /**
@@ -123,7 +146,8 @@ export function transformConstructionPrefix(tags: OsmTags): void {
     const baseTag = key.slice('construction:'.length)
     tags[baseTag] = value
     tags[key] = undefined
-    if (baseTag.startsWith('cycleway:') || baseTag.startsWith('sidewalk:')) {
+    // `construction:cycleway=lane` is the cycleway of the road, not the road: `cycleway:lifecycle`
+    if (/^(cycleway|sidewalk)(:|$)/.test(baseTag)) {
       tags[`${baseTag}:lifecycle`] = 'construction'
     } else {
       tags.lifecycle = 'construction'

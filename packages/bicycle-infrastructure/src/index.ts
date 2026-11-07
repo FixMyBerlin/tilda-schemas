@@ -62,6 +62,8 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
         const laneLeftOfLine = (t._side === 'left') !== direction.lineReversed
         result.offset = ((laneLeftOfLine ? 1 : -1) * roadWidth(t._parent ?? tags)) / 2
       }
+      // The side's own lifecycle wins, else it gets the lifecycle of its road
+      result.lifecycle = t.lifecycle ?? tags.lifecycle ?? null
       result.width = parseWidth(t.width) ?? null
       result.surface_color = clean(surfaceColor(t))
       result.separation_left = clean(separation(t, 'left'))
@@ -151,6 +153,7 @@ export type {
   CategoryTagPlanVariantId,
   ListTargetCategoriesOptions,
   PlanTagsForCategoryOptions,
+  PlanLifecycle,
   TagChangeEntry,
   TagConflictEntry,
   TagPlanEntry,

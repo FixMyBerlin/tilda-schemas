@@ -109,6 +109,10 @@ export const TAG_REASON_CODES = [
   'split_both_sides',
   /** `{key}`: the `cycleway:<side>` (or `sidewalk:<side>`) value the category needs on that side */
   'side_presence',
+  /** `{lifecycle}`: the lifecycle a mapping target asks for (`temporary=yes`, `construction:*`) */
+  'lifecycle',
+  /** conflict, `{lifecycle}` `{result}`: the side keeps another lifecycle (an existing one wins) */
+  'lifecycle_not_reached',
   /** conflict, `{target}` `{result}`: the suggested edits do not reach the target */
   'plan_not_enough',
   /** conflict, `{target}` `{result}`: nothing could be derived */
@@ -180,6 +184,17 @@ function findTransformedTags(
 function sidePrefixFor(targetCategoryId: string, side: BikelaneResult['_side']) {
   if (side === 'self') return undefined
   return SIDEWALK_CATEGORY.test(targetCategoryId) ? 'sidewalk' : 'cycleway'
+}
+
+/** The lifecycle TILDA reads for the side: its own, else the one of its road */
+function lifecycleOfSide(
+  wayTags: OsmTags,
+  side: BikelaneResult['_side'],
+  prefix?: string,
+): string | undefined {
+  const road: OsmTags = { ...wayTags }
+  prepareTags(road)
+  return findTransformedTags(wayTags, side, prefix)?.lifecycle ?? road.lifecycle
 }
 
 function categorizeSide(
@@ -737,7 +752,16 @@ export interface PlanTagsForCategoryOptions {
    * fixed tag is an explicit choice of the mapper (a mapping target).
    */
   fixed?: Record<string, string>
+  /**
+   * The lifecycle the side must get. `temporary` writes `temporary=yes` for the side
+   * (`cycleway:right:temporary=yes`). `construction` writes a way of its own as
+   * `highway=construction` + `construction=<highway>` and a road side under the prefix
+   * (`construction:cycleway:right=lane`).
+   */
+  lifecycle?: PlanLifecycle
 }
+
+export type PlanLifecycle = 'construction' | 'temporary'
 
 export class UnknownTargetCategoryError extends Error {
   constructor(public readonly targetCategoryId: string) {
@@ -800,6 +824,13 @@ export function planTagsForCategory(
       add[planned] = { key: writeKey, value, ...why }
       return
     }
+    const plannedChange = change.findIndex((entry) => entry.key === writeKey)
+    if (plannedChange >= 0) {
+      const from = change[plannedChange]!.from
+      change.splice(plannedChange, 1)
+      if (from !== value) change.push({ key: writeKey, from, to: value, ...why })
+      return
+    }
     const current = working[writeKey] ?? tags[key]
     if (current === value) return
     if (current == null) add.push({ key: writeKey, value, ...why })
@@ -812,7 +843,49 @@ export function planTagsForCategory(
     plan(fixedAdd, fixedChange, key, value, FIXED_REASON)
   }
 
-  if (currentCategoryId === targetCategoryId && !fixedAdd.length && !fixedChange.length) {
+  const lifecycle = options?.lifecycle
+  const lifecycleHolds = (next: OsmTags) =>
+    lifecycle === undefined || lifecycleOfSide(next, side, sidePrefix) === lifecycle
+  const lifecycleWhy: TagReason = {
+    reason: `The mapping target is ${lifecycle}`,
+    reasonCode: 'lifecycle',
+    reasonParams: { lifecycle: lifecycle ?? '' },
+  }
+
+  // Writes the lifecycle on top of a plan that reaches the category.
+  const withLifecycle = (add: TagPlanEntry[], change: TagChangeEntry[], remove: string[]) => {
+    if (lifecycle === undefined) return
+    const next = applyPlanToWayTags(wayTags, add, change, remove)
+    if (lifecycleHolds(next)) return
+    if (lifecycle === 'temporary') {
+      plan(add, change, 'temporary', 'yes', lifecycleWhy)
+      return
+    }
+    if (side === 'self') {
+      const highway = next.highway
+      if (highway === undefined || highway === 'construction') return
+      plan(add, change, 'highway', 'construction', lifecycleWhy)
+      plan(add, change, 'construction', highway, lifecycleWhy)
+      return
+    }
+    // A road side: its presence key moves under the prefix
+    const presenceKey = `${sidePrefix ?? 'cycleway'}:${side}`
+    const value = next[presenceKey] ?? 'yes'
+    const plannedAdd = add.findIndex((entry) => entry.key === presenceKey)
+    if (plannedAdd >= 0) add.splice(plannedAdd, 1)
+    const plannedChange = change.findIndex((entry) => entry.key === presenceKey)
+    if (plannedChange >= 0) change.splice(plannedChange, 1)
+    if (wayTags[presenceKey] !== undefined && !remove.includes(presenceKey))
+      remove.push(presenceKey)
+    add.push({ key: `construction:${presenceKey}`, value, ...lifecycleWhy })
+  }
+
+  if (
+    currentCategoryId === targetCategoryId &&
+    !fixedAdd.length &&
+    !fixedChange.length &&
+    lifecycleHolds(wayTags)
+  ) {
     return {
       targetCategoryId,
       currentCategoryId,
@@ -835,9 +908,16 @@ export function planTagsForCategory(
   }
   candidates.sort((a, b) => a.cost - b.cost) // stable: spec order breaks ties
 
-  const { remove } = setup
   const seen = new Set<string>()
-  let fallback: { add: TagPlanEntry[]; change: TagChangeEntry[]; result: string | null } | undefined
+  let fallback:
+    | {
+        add: TagPlanEntry[]
+        change: TagChangeEntry[]
+        remove: string[]
+        result: string | null
+        next: OsmTags
+      }
+    | undefined
 
   for (const candidate of candidates) {
     const signature = [...candidate.edits.entries()]
@@ -849,16 +929,15 @@ export function planTagsForCategory(
 
     const add: TagPlanEntry[] = [...setup.add, ...fixedAdd]
     const change: TagChangeEntry[] = [...setup.change, ...fixedChange]
+    const remove = [...setup.remove]
     for (const [key, edit] of candidate.edits) {
       plan(add, change, key, edit.value, reasonOf(edit))
     }
+    withLifecycle(add, change, remove)
 
-    const result = categorizeSide(
-      applyPlanToWayTags(wayTags, add, change, remove),
-      side,
-      sidePrefix,
-    )
-    if (result === targetCategoryId) {
+    const next = applyPlanToWayTags(wayTags, add, change, remove)
+    const result = categorizeSide(next, side, sidePrefix)
+    if (result === targetCategoryId && lifecycleHolds(next)) {
       return {
         targetCategoryId,
         currentCategoryId,
@@ -871,13 +950,34 @@ export function planTagsForCategory(
     }
     // The first candidate with edits explains best why the target is out of reach.
     if (!fallback || (!fallback.add.length && !fallback.change.length)) {
-      fallback = { add, change, result }
+      fallback = { add, change, remove, result, next }
     }
   }
 
   const add = fallback?.add ?? []
   const change = fallback?.change ?? []
+  const remove = fallback?.remove ?? setup.remove
   const resultCategory = fallback?.result ?? currentCategoryId
+  if (resultCategory === targetCategoryId && lifecycle !== undefined) {
+    const result = lifecycleOfSide(fallback?.next ?? wayTags, side, sidePrefix) ?? 'none'
+    return {
+      targetCategoryId,
+      currentCategoryId,
+      aligned: false,
+      add,
+      change,
+      remove,
+      conflicts: [
+        {
+          key: '_lifecycle',
+          value: result,
+          reason: `The side keeps lifecycle=${result}; an existing lifecycle wins over ${lifecycle}.`,
+          reasonCode: 'lifecycle_not_reached',
+          reasonParams: { lifecycle, result },
+        },
+      ],
+    }
+  }
   const suggested =
     add.length > 0 || change.length > 0
       ? 'Suggested tag edits are not enough to reach that classification.'

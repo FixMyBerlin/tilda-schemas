@@ -41,6 +41,11 @@ export interface BikelaneResult {
   _prefix: string | null
   _infrastructureExists: boolean
   category: string
+  /**
+   * `construction`, `construction_no_access`, `blocked` or `temporary`: the side's own lifecycle,
+   * else the one of its road. Only for features with infrastructure.
+   */
+  lifecycle?: string | null
   oneway?: string
   /**
    * Whether the published line runs against the OSM way (`_line_reversed` in LUA).

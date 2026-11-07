@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
  * Three cases of docs/viewer-examples.md: the category the package gives and one rule that triggers.
  * With `SCREENSHOT_DIR` set, each page is also saved as a screenshot (desktop and 375 px).
  */
-const CASES: { name: string; tags: string; target?: string; category: string; rule: string }[] = [
+const CASES: { name: string; tags: string; choice?: string; category: string; rule: string }[] = [
   {
     name: 'bare-cycleway',
     tags: 'highway=cycleway',
@@ -14,7 +14,7 @@ const CASES: { name: string; tags: string; target?: string; category: string; ru
   {
     name: 'shared-unsigned',
     tags: 'highway=path;bicycle=designated;foot=designated;segregated=no',
-    target: 'footAndCyclewayShared_adjoining:unsigned',
+    choice: 'kind=footAndCyclewayShared&position=adjoining&sign=unsigned',
     category: 'footAndCyclewayShared_adjoiningOrIsolated',
     rule: 'missing_traffic_sign',
   },
@@ -33,7 +33,7 @@ for (const c of CASES) {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
 
-    await page.goto(`/?tags=${c.tags}${c.target ? `&target=${c.target}` : ''}`)
+    await page.goto(`/?tags=${c.tags}${c.choice ? `&${c.choice}` : ''}`)
 
     await expect(page.getByTestId('category-id').first()).toHaveText(c.category)
     await expect(page.getByTestId('category-label').first()).not.toBeEmpty()
@@ -64,7 +64,7 @@ test('the tag text updates the URL', async ({ page }) => {
 
 test('applying a plan changes the tags and the category', async ({ page }) => {
   await page.goto(
-    '/?tags=highway=path;bicycle=designated;foot=designated;segregated=no&target=footAndCyclewayShared_adjoining:unsigned',
+    '/?tags=highway=path;bicycle=designated;foot=designated;segregated=no&kind=footAndCyclewayShared&position=adjoining&sign=unsigned',
   )
   await page.getByTestId('plan').getByRole('button', { name: 'Plan übernehmen' }).click()
   await expect(page).toHaveURL(/traffic_sign=none/)
@@ -120,14 +120,26 @@ test('the tilda-geo profile has required attributes without the Radnetz extras',
   await expect(page.getByText('infraVelo')).toHaveCount(0)
 })
 
-test('a plan explains its tags and its conflicts in German', async ({ page }) => {
-  await page.goto('/?tags=highway=cycleway&target=footAndCyclewaySegregated_adjoining:signed')
+test('a plan explains its tags in German', async ({ page }) => {
+  await page.goto(
+    '/?tags=highway=cycleway&kind=footAndCyclewaySegregated&position=adjoining&sign=signed',
+  )
   await expect(page.getByTestId('plan')).toContainText('Festes Tag des gewählten Ziels.')
   await expect(page.getByTestId('plan')).toContainText('Unterscheidet „Getrennter Rad- und Gehweg')
-  await page.goto(
-    '/?tags=highway=residential;cycleway:right=track&target=footAndCyclewaySegregated_adjoining:twoLines',
-  )
-  await expect(page.getByTestId('plan')).toContainText('brauchen einen eigenen Weg')
+})
+
+test('a kind with options: under construction there is no sign option', async ({ page }) => {
+  await page.goto('/?tags=highway=path;bicycle=designated;foot=designated;segregated=no')
+  await page
+    .getByRole('combobox', { name: /^Art für/ })
+    .selectOption({ label: 'Getrennter Rad- und Gehweg' })
+  await expect(page).toHaveURL(/kind=footAndCyclewaySegregated/)
+  const sign = page.getByRole('group', { name: 'Beschilderung' })
+  await expect(sign).toBeVisible()
+  await page.getByRole('group', { name: 'Zustand' }).getByRole('button', { name: 'im Bau' }).click()
+  await expect(page).toHaveURL(/lifecycle=construction/)
+  await expect(page.getByRole('group', { name: 'Beschilderung' })).toHaveCount(0)
+  await expect(page.getByTestId('plan').getByRole('heading', { level: 4 })).toContainText('im Bau')
 })
 
 test('a rule without a finding shows its description', async ({ page }) => {

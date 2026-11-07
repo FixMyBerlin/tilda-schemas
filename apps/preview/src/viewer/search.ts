@@ -15,13 +15,19 @@ const text = z.preprocess(
  * The whole state of the viewer. Keys at their default are left out of the URL.
  * - `tags`: `key=value;key=value` (see `tagsParam.ts`)
  * - `side`: the result to look at (`self`, `left`, `right`); default the first result
- * - `target`: id of a mapping target (`footAndCyclewayShared_isolated:unsigned`)
+ * - `kind`: kind of infrastructure to change to (`footAndCyclewayShared`, `cycleway`, …), see `MAPPING_KINDS`
+ * - `position`, `sign`, `lines`, `lifecycle`: options of the kind (`adjoining`/`isolated`,
+ *   `signed`/`unsigned`, `two`, `construction`/`temporary`); left out when not set or at the default
  * - `profile`: `radnetz-berlin` (default) or `tilda-geo`
  */
 export const viewerSearchSchema = z.object({
   tags: text,
   side: z.enum(['self', 'left', 'right']).optional().catch(undefined),
-  target: text,
+  kind: text,
+  position: z.enum(['adjoining', 'isolated']).optional().catch(undefined),
+  sign: z.enum(['signed', 'unsigned']).optional().catch(undefined),
+  lines: z.enum(['one', 'two']).optional().catch(undefined),
+  lifecycle: z.enum(['construction', 'temporary']).optional().catch(undefined),
   profile: z.enum(PROFILES).optional().catch(undefined),
 })
 

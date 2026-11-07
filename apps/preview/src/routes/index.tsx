@@ -5,7 +5,7 @@ import {
   type OsmTags,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
-  mappingTargetById,
+  resolveMappingChoice,
   qaStateLabel,
   tildaQaState,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
@@ -14,6 +14,7 @@ import { tildaGeo } from '@tilda-geo/bicycle-infrastructure-tagging/profiles/til
 import { Badge } from '../components/catalyst/badge'
 import { Description, Fieldset, Label, Legend } from '../components/catalyst/fieldset'
 import { Radio, RadioField, RadioGroup } from '../components/catalyst/radio'
+import { choiceFromSearch } from '../viewer/choice'
 import { QA_COLOR, SIDE_LABEL } from '../viewer/copy'
 import { ExampleList } from '../viewer/ExampleList'
 import { Requirements } from '../viewer/Requirements'
@@ -64,6 +65,8 @@ function Viewer() {
   const updateSearch = (partial: Partial<ViewerSearch>) => {
     void navigate({
       replace: true,
+      // the state changes in place: keep the scroll position
+      resetScroll: false,
       search: (prev) => {
         const next: Record<string, unknown> = { ...prev }
         for (const [key, value] of Object.entries(partial)) {
@@ -81,7 +84,9 @@ function Viewer() {
   const profile = search.profile ?? DEFAULT_PROFILE
   const results = bikelanes(tags)
   const result = results.find((r) => r._side === search.side) ?? results[0]
-  const target = search.target ? mappingTargetById(search.target) : undefined
+  const choice = choiceFromSearch(search)
+  const targetCategory =
+    result && choice ? resolveMappingChoice(choice, result._side)?.categoryId : undefined
   const requirementsProfile = profile === 'radnetz-berlin' ? radnetzBerlin : tildaGeo
   const qa = tildaQaState(tags, requirementsProfile)
 
@@ -132,8 +137,8 @@ function Viewer() {
             <TargetPlan
               tags={tags}
               result={result}
-              targetId={target?.id}
-              onTarget={(id) => updateSearch({ target: id })}
+              choice={choice}
+              onChoice={updateSearch}
               onApply={setTags}
             />
           </Section>
@@ -158,7 +163,7 @@ function Viewer() {
               tags={tags}
               result={result}
               profile={requirementsProfile}
-              targetCategory={target?.categoryId}
+              targetCategory={targetCategory}
               onSetTag={(key, value) => setTags({ ...tags, [key]: value })}
             />
           </Section>

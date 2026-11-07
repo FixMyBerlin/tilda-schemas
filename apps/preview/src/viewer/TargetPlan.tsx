@@ -1,66 +1,135 @@
 import type { BikelaneResult, OsmTags } from '@tilda-geo/bicycle-infrastructure'
 import {
+  MAPPING_OPTION_LABELS,
   MAPPING_TARGET_GROUP_LABELS,
-  MAPPING_TARGET_LABELS,
   TILDA_LABELS,
   applyCategoryPlan,
-  categoryLabel,
-  groupMappingTargets,
-  mappingTargetById,
-  planCategoryVariants,
-  planForMappingTarget,
+  groupMappingKinds,
+  mappingChoiceForCategory,
+  mappingChoiceLabel,
+  mappingChoiceOptions,
+  mappingKindLabel,
+  normalizeMappingChoice,
+  planForMappingChoice,
   renderPlanConflict,
   renderPlanReason,
   type CategoryChangePlan,
+  type MappingChoice,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
 import clsx from 'clsx'
 import { Badge } from '../components/catalyst/badge'
 import { Button } from '../components/catalyst/button'
 import { Field, Label } from '../components/catalyst/fieldset'
 import { Select } from '../components/catalyst/select'
+import { searchFromChoice, type ChoiceSearch } from './choice'
 import { SIDE_LABEL } from './copy'
 import { Tag } from './Section'
 
 type Props = {
   tags: OsmTags
   result: BikelaneResult
-  targetId: string | undefined
-  onTarget: (targetId: string | undefined) => void
+  /** The choice of the URL; `undefined` while no kind is picked */
+  choice: MappingChoice | undefined
+  onChoice: (search: ChoiceSearch) => void
   onApply: (tags: OsmTags) => void
 }
 
 const TEXT_OPTIONS = { categoryLabels: TILDA_LABELS.de }
+const WORDS = MAPPING_OPTION_LABELS.de
 
-const targetLabel = (id: string | undefined) => {
-  const target = id ? mappingTargetById(id) : undefined
-  return target ? (MAPPING_TARGET_LABELS.de[target.labelCode] ?? target.id) : undefined
+type OptionRow = {
+  axis: 'position' | 'sign' | 'lines' | 'lifecycle'
+  label: string
+  /** `value` is what the choice gets; `undefined` is "not set" */
+  buttons: { value: string | undefined; label: string }[]
 }
 
-export function TargetPlan({ tags, result, targetId, onTarget, onApply }: Props) {
-  const target = targetId ? mappingTargetById(targetId) : undefined
-  const plan = target ? planForMappingTarget(tags, target.id, result._side) : undefined
-  const variants = target
-    ? planCategoryVariants(tags, target.categoryId, result._side).filter(
-        (variant) => variant.mappingTargetId !== target.id,
-      )
-    : []
+/** The rows that apply to the choice, in the order Lage, Beschilderung, Linien, Zustand */
+function optionRows(choice: MappingChoice, side: BikelaneResult['_side']): OptionRow[] {
+  const options = mappingChoiceOptions(choice, side)
+  const rows: OptionRow[] = []
+  if (options.position.length > 1) {
+    rows.push({
+      axis: 'position',
+      label: WORDS.position,
+      buttons: options.position.map((value) => ({ value, label: WORDS[value] })),
+    })
+  }
+  if (options.sign.length) {
+    rows.push({
+      axis: 'sign',
+      label: WORDS.sign,
+      buttons: [
+        { value: undefined, label: WORDS.asIs },
+        ...options.sign.map((value) => ({
+          value,
+          label:
+            value === 'signed' && options.signValue
+              ? `${WORDS.signed} (${options.signValue})`
+              : WORDS[value],
+        })),
+      ],
+    })
+  }
+  if (options.lines.length > 1) {
+    rows.push({
+      axis: 'lines',
+      label: WORDS.lines,
+      buttons: options.lines.map((value) => ({
+        // "one" is not set: the choice keeps the lines the way has
+        value: value === 'one' ? undefined : value,
+        label: WORDS[value],
+      })),
+    })
+  }
+  if (options.lifecycle.length) {
+    rows.push({
+      axis: 'lifecycle',
+      label: WORDS.lifecycle,
+      buttons: [
+        { value: undefined, label: WORDS.built },
+        ...options.lifecycle.map((value) => ({ value, label: WORDS[value] })),
+      ],
+    })
+  }
+  return rows
+}
+
+export function TargetPlan({ tags, result, choice, onChoice, onApply }: Props) {
+  const side = result._side
+  const normalized = choice ? normalizeMappingChoice(choice, side) : undefined
+  const plan = normalized ? planForMappingChoice(tags, normalized, side) : undefined
+  const rows = normalized ? optionRows(normalized, side) : []
+  const currentKind = mappingChoiceForCategory(result.category)?.kind
+
+  const setChoice = (next: MappingChoice) => {
+    const settled = normalizeMappingChoice(next, side)
+    onChoice(
+      searchFromChoice(settled, mappingChoiceOptions({ kind: settled.kind }, side).position[0]),
+    )
+  }
 
   return (
     <div className="space-y-3">
       <Field>
-        <Label className="sr-only">Ziel für {SIDE_LABEL[result._side]}</Label>
+        <Label className="sr-only">Art für {SIDE_LABEL[side]}</Label>
         <Select
-          name="target"
-          value={target?.id ?? ''}
-          onChange={(event) => onTarget(event.target.value || undefined)}
+          name="kind"
+          value={normalized?.kind ?? ''}
+          onChange={(event) => {
+            const kind = event.target.value
+            if (!kind) return onChoice(searchFromChoice(undefined))
+            // the options that are still possible stay
+            setChoice({ kind, sign: normalized?.sign, lifecycle: normalized?.lifecycle })
+          }}
         >
-          <option value="">Ziel wählen …</option>
-          {groupMappingTargets().map((group) => (
+          <option value="">Art wählen …</option>
+          {groupMappingKinds().map((group) => (
             <optgroup key={group.id} label={MAPPING_TARGET_GROUP_LABELS.de[group.id]}>
-              {group.targets.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {MAPPING_TARGET_LABELS.de[option.labelCode] ?? option.id}
-                  {option.categoryId === result.category ? ' (aktuell)' : ''}
+              {group.kinds.map((kind) => (
+                <option key={kind.id} value={kind.id}>
+                  {mappingKindLabel(kind.id, 'de')}
+                  {kind.id === currentKind ? ' (aktuell)' : ''}
                 </option>
               ))}
             </optgroup>
@@ -68,39 +137,53 @@ export function TargetPlan({ tags, result, targetId, onTarget, onApply }: Props)
         </Select>
       </Field>
 
-      {target && plan && (
-        <>
-          <PlanCard
-            title={targetLabel(target.id) ?? target.id}
-            plan={plan}
-            primary
-            tags={tags}
-            onApply={onApply}
-          />
-          {!!variants.length && (
-            <div>
-              <h3 className="text-sm/6 font-semibold text-zinc-950">
-                Weitere Wege zu „
-                {categoryLabel(target.categoryId, TILDA_LABELS.de) ?? target.categoryId}“
-              </h3>
-              <div className="mt-2 grid gap-3 lg:grid-cols-2">
-                {variants.map((variant) => (
-                  <PlanCard
-                    key={variant.variantId}
-                    title={
-                      variant.variantId === 'default'
-                        ? 'Vorschlag des Planers (wenigste Änderungen)'
-                        : (targetLabel(variant.mappingTargetId) ?? variant.variantId)
-                    }
-                    plan={variant}
-                    tags={tags}
-                    onApply={onApply}
-                  />
-                ))}
+      {normalized && !!rows.length && (
+        <div className="space-y-1.5">
+          {rows.map((row) => {
+            const current = normalized[row.axis]
+            return (
+              <div
+                key={row.axis}
+                role="group"
+                aria-label={row.label}
+                data-testid={`option-${row.axis}`}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1"
+              >
+                <span className="w-28 shrink-0 text-sm/6 text-zinc-500">{row.label}</span>
+                <div className="flex flex-wrap gap-1">
+                  {row.buttons.map((button) => {
+                    const pressed = button.value === current
+                    return (
+                      <button
+                        key={button.value ?? 'none'}
+                        type="button"
+                        aria-pressed={pressed}
+                        onClick={() => setChoice({ ...normalized, [row.axis]: button.value })}
+                        className={clsx(
+                          'rounded-md px-2.5 py-1 text-sm/5 ring-1 ring-inset focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
+                          pressed
+                            ? 'bg-zinc-900 text-white ring-zinc-900'
+                            : 'bg-white text-zinc-950 ring-zinc-950/10 hover:bg-zinc-50',
+                        )}
+                      >
+                        {button.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </>
+            )
+          })}
+        </div>
+      )}
+
+      {normalized && plan && (
+        <PlanCard
+          title={mappingChoiceLabel(normalized, 'de')}
+          plan={plan}
+          tags={tags}
+          onApply={onApply}
+        />
       )}
     </div>
   )
@@ -109,29 +192,21 @@ export function TargetPlan({ tags, result, targetId, onTarget, onApply }: Props)
 function PlanCard({
   title,
   plan,
-  primary,
   tags,
   onApply,
 }: {
   title: string
   plan: CategoryChangePlan
-  primary?: boolean
   tags: OsmTags
   onApply: (tags: OsmTags) => void
 }) {
   const edits = plan.add.length + plan.change.length + plan.remove.length
   return (
-    <article
-      data-testid={primary ? 'plan' : 'plan-variant'}
-      className={clsx(
-        'rounded-lg p-3 ring-1',
-        primary ? 'bg-white ring-zinc-950/15' : 'bg-zinc-50 ring-zinc-950/5',
-      )}
-    >
+    <article data-testid="plan" className="rounded-lg bg-white p-3 ring-1 ring-zinc-950/15">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h4 className="text-sm/6 font-semibold text-zinc-950">{title}</h4>
-          <p className="font-mono text-xs/5 text-zinc-500">{plan.variantId}</p>
+          <p className="font-mono text-xs/5 text-zinc-500">{plan.choiceId}</p>
         </div>
         {plan.conflicts.length ? (
           <Badge color="red">Konflikt</Badge>
@@ -191,20 +266,15 @@ function PlanCard({
         </ul>
       )}
 
-      {!!edits &&
-        (primary ? (
-          <Button
-            className="mt-3"
-            color="dark/zinc"
-            onClick={() => onApply(applyCategoryPlan(tags, plan))}
-          >
-            Plan übernehmen
-          </Button>
-        ) : (
-          <Button className="mt-3" outline onClick={() => onApply(applyCategoryPlan(tags, plan))}>
-            Plan übernehmen
-          </Button>
-        ))}
+      {!!edits && (
+        <Button
+          className="mt-3"
+          color="dark/zinc"
+          onClick={() => onApply(applyCategoryPlan(tags, plan))}
+        >
+          Plan übernehmen
+        </Button>
+      )}
     </article>
   )
 }

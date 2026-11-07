@@ -14,12 +14,12 @@ The Vite alias and the `paths` in `tsconfig.json` point at the package source, s
 
 ## What it shows
 
-| Part           | Package function                                                                                                                                                                                               |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ergebnis       | `processBikelanes`, `analyzeCategoryGaps`, `gapWriteKey` (a gap is a button that adds its tag), `categoryLabel` + `TILDA_LABELS.de`                                                                            |
-| Ändern in      | `groupMappingTargets`, `MAPPING_TARGET_LABELS.de`, `planForMappingTarget`, `planCategoryVariants`, `applyCategoryPlan`, `renderPlanReason`, `renderPlanConflict`                                               |
-| Pflichtangaben | `requiredAttributes`, `roadAttributes`, `reminders`, `tildaQaState` with the profile `radnetz-berlin` or `tilda-geo`; `attributeLabel`, `attributeNote`, `attributeStateLabel`, `reminderText`, `qaStateLabel` |
-| Validierung    | `RULES`, `activeRules`, `validateTags`, `renderMessage`, `ruleDescription`, `applyTagFix`                                                                                                                      |
+| Part           | Package function                                                                                                                                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ergebnis       | `processBikelanes`, `analyzeCategoryGaps`, `gapWriteKey` (a gap is a button that adds its tag), `categoryLabel` + `TILDA_LABELS.de`                                                                                                                                                                                      |
+| Ändern in      | `groupMappingKinds`, `mappingKindLabel`, `MAPPING_TARGET_GROUP_LABELS.de`, `MAPPING_OPTION_LABELS.de`, `mappingChoiceOptions`, `normalizeMappingChoice`, `mappingChoiceForCategory`, `resolveMappingChoice`, `planForMappingChoice`, `mappingChoiceLabel`, `applyCategoryPlan`, `renderPlanReason`, `renderPlanConflict` |
+| Pflichtangaben | `requiredAttributes`, `roadAttributes`, `reminders`, `tildaQaState` with the profile `radnetz-berlin` or `tilda-geo`; `attributeLabel`, `attributeNote`, `attributeStateLabel`, `reminderText`, `qaStateLabel`                                                                                                           |
+| Validierung    | `RULES`, `activeRules`, `validateTags`, `renderMessage`, `ruleDescription`, `applyTagFix`                                                                                                                                                                                                                                |
 
 All texts are German and come from the packages; the viewer holds only its own UI copy (headings, side names, severity words). Where a package has no text for something, the viewer shows the raw code.
 
@@ -27,12 +27,16 @@ All texts are German and come from the packages; the viewer holds only its own U
 
 The whole state is in the URL:
 
-| Param     | What                                                                                                                               |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `tags`    | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`).                      |
-| `side`    | `self`, `left` or `right`; default the first result                                                                                |
-| `target`  | id of a mapping target, e.g. `footAndCyclewayShared_adjoining:unsigned`                                                            |
-| `profile` | `radnetz-berlin` (default) or `tilda-geo` (the minimal profile), picked in the radio group "Profil"; it decides the Pflichtangaben |
+| Param       | What                                                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `tags`      | `key=value` joined by `;`. A part without `=` belongs to the value before it (`traffic_sign=DE:240;1022-10`).                      |
+| `side`      | `self`, `left` or `right`; default the first result                                                                                |
+| `kind`      | kind of infrastructure to change to, e.g. `footAndCyclewayShared`; the options below apply to it                                   |
+| `position`  | `adjoining` or `isolated` (only for paths; default `adjoining`)                                                                    |
+| `sign`      | `signed` or `unsigned`; left out keeps the signs the way has                                                                       |
+| `lines`     | `two`: the footway as a line of its own (segregated path)                                                                          |
+| `lifecycle` | `construction` or `temporary`; left out means built                                                                                |
+| `profile`   | `radnetz-berlin` (default) or `tilda-geo` (the minimal profile), picked in the radio group "Profil"; it decides the Pflichtangaben |
 
 Example: `/?tags=highway=cycleway;bicycle=designated`. The example links come from [docs/viewer-examples.md](../../docs/viewer-examples.md); keep both in sync (`src/viewer/examples.ts`).
 
@@ -52,4 +56,4 @@ Not part of `bun run check` (it needs a browser: `bunx playwright install chromi
 
 ## UI
 
-Tailwind CSS 4 and components of the Catalyst UI kit (`src/components/catalyst/`, copied from the Tailwind Plus workspace). German UI; category, mapping target and rule texts come from the packages.
+Tailwind CSS 4 and components of the Catalyst UI kit (`src/components/catalyst/`, copied from the Tailwind Plus workspace). German UI; category, mapping choice and rule texts come from the packages.

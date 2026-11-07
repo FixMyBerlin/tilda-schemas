@@ -3,17 +3,20 @@ import { readFileSync } from 'node:fs'
 import { listTargetCategories } from '@tilda-geo/bicycle-infrastructure'
 import {
   CATEGORY_GROUPS,
+  MAPPING_KINDS,
   MAPPING_TARGET_GROUPS,
-  MAPPING_TARGET_LABELS,
-  MAPPING_TARGETS,
+  allMappingChoices,
   applyCategoryPlan,
   categoryForSide,
+  groupMappingKinds,
   lifecycleForSide,
-  groupMappingTargets,
-  mappingTargetById,
-  planCategoryChange,
-  planCategoryVariants,
-  planForMappingTarget,
+  mappingChoiceForCategory,
+  mappingChoiceLabel,
+  mappingChoiceOptions,
+  mappingKindLabel,
+  normalizeMappingChoice,
+  planForMappingChoice,
+  resolveMappingChoice,
 } from '../src/index.ts'
 import {
   EXPECTED_UNREACHABLE,
@@ -22,52 +25,27 @@ import {
   type UnreachableRule,
 } from './round-trip-cases.ts'
 
-describe('MAPPING_TARGETS', () => {
-  it('every category the planner can target has at least one mapping target', () => {
+describe('MAPPING_KINDS', () => {
+  it('every category the planner can target is a kind or a kind with a position', () => {
     for (const category of listTargetCategories()) {
-      expect(MAPPING_TARGETS.some((target) => target.categoryId === category)).toBe(true)
+      const choice = mappingChoiceForCategory(category)
+      expect(choice, category).toBeDefined()
+      expect(resolveMappingChoice(choice!)?.categoryId).toBe(category)
     }
   })
 
-  it('ids are unique, labels exist in de and en, every target has a legend group', () => {
-    const ids = MAPPING_TARGETS.map((target) => target.id)
-    expect(new Set(ids).size).toBe(ids.length)
-    for (const target of MAPPING_TARGETS) {
-      expect(MAPPING_TARGET_LABELS.de[target.labelCode]).toBeString()
-      expect(MAPPING_TARGET_LABELS.en[target.labelCode]).toBeString()
-      expect(target.group).not.toBe('needsClarification')
+  it('paths are one kind with two positions; labels exist in de and en', () => {
+    expect(MAPPING_KINDS.find((k) => k.id === 'footAndCyclewaySegregated')?.categories).toEqual([
+      'footAndCyclewaySegregated_adjoining',
+      'footAndCyclewaySegregated_isolated',
+    ])
+    expect(mappingKindLabel('footAndCyclewaySegregated', 'de')).toBe('Getrennter Rad- und Gehweg')
+    expect(mappingKindLabel('cycleway', 'en')).toBe('Cycleway')
+    for (const kind of MAPPING_KINDS) {
+      expect(mappingKindLabel(kind.id, 'de')).not.toBe(kind.id)
+      expect(mappingKindLabel(kind.id, 'en')).not.toBe(kind.id)
+      expect(kind.group).not.toBe('needsClarification')
     }
-  })
-
-  it('the initial list of the concept', () => {
-    expect(mappingTargetById('footAndCyclewayShared_adjoining:signed')?.fixed).toEqual({
-      traffic_sign: 'DE:240',
-    })
-    expect(mappingTargetById('footAndCyclewayShared_adjoining:unsigned')?.fixed).toEqual({
-      traffic_sign: 'none',
-      segregated: 'no',
-    })
-    expect(mappingTargetById('footAndCyclewaySegregated_isolated:signed')?.fixed).toEqual({
-      traffic_sign: 'DE:241',
-    })
-    expect(mappingTargetById('footAndCyclewaySegregated_isolated:unsigned')?.fixed).toEqual({
-      traffic_sign: 'none',
-      segregated: 'yes',
-    })
-    // LUA: highway=cycleway + traffic_mode:right=foot is a segregated foot and cycle path
-    expect(mappingTargetById('footAndCyclewaySegregated_isolated:twoLines')).toMatchObject({
-      fixed: { highway: 'cycleway', 'traffic_mode:right': 'foot' },
-      group: 'separated',
-      separateWayOnly: true,
-    })
-    // one attribute, two categories already: no duplicate targets
-    expect(mappingTargetById('bicycleRoad')?.variant).toBe('default')
-    expect(mappingTargetById('bicycleRoad_vehicleDestination')?.variant).toBe('default')
-  })
-
-  it('docs/mapping-targets.md lists every target (bun run mapping-targets-doc)', () => {
-    const doc = readFileSync(new URL('../../../docs/mapping-targets.md', import.meta.url), 'utf8')
-    for (const target of MAPPING_TARGETS) expect(doc).toContain(`| \`${target.id}\``)
   })
 
   it('groups follow the legend of tilda-geo and cover the groups of the iD fork', () => {
@@ -83,65 +61,103 @@ describe('MAPPING_TARGETS', () => {
     for (const group of CATEGORY_GROUPS) {
       for (const category of group.categories) expect(legend.has(category)).toBe(true)
     }
-    expect(groupMappingTargets().flatMap((group) => group.targets)).toHaveLength(
-      MAPPING_TARGETS.length,
-    )
+    expect(groupMappingKinds().flatMap((group) => group.kinds)).toHaveLength(MAPPING_KINDS.length)
   })
 })
 
-describe('planCategoryVariants', () => {
-  it('the default plan first, then the mapping targets of the category', () => {
-    const tags = { highway: 'path' }
-    const variants = planCategoryVariants(tags, 'footAndCyclewayShared_isolated', 'self')
-    expect(variants.map((v) => v.variantId)).toEqual([
-      'default',
-      'footAndCyclewayShared_isolated:signed',
-      'footAndCyclewayShared_isolated:unsigned',
-      'footAndCyclewayShared_isolated:construction',
-      'footAndCyclewayShared_isolated:temporary',
-    ])
-    expect(variants[0]).toEqual(planCategoryChange(tags, 'footAndCyclewayShared_isolated', 'self'))
-    expect(variants[1]!.add).toContainEqual(
-      expect.objectContaining({ key: 'traffic_sign', value: 'DE:240', code: 'mapping_target' }),
-    )
+describe('mapping choices', () => {
+  it('the options of a kind depend on the side and on each other', () => {
+    expect(mappingChoiceOptions({ kind: 'footAndCyclewaySegregated' }, 'self')).toEqual({
+      position: ['adjoining', 'isolated'],
+      sign: ['signed', 'unsigned'],
+      signValue: 'DE:241',
+      lines: ['one', 'two'],
+      lifecycle: ['construction', 'temporary'],
+    })
+    // a road side runs along the road and has no second line
+    expect(mappingChoiceOptions({ kind: 'footAndCyclewaySegregated' }, 'right')).toMatchObject({
+      position: ['adjoining'],
+      lines: [],
+    })
+    // no sign while under construction
+    expect(
+      mappingChoiceOptions({ kind: 'footAndCyclewayShared', lifecycle: 'construction' }).sign,
+    ).toEqual([])
+    // a bicycle road exists only by its sign; it is never temporary
+    expect(mappingChoiceOptions({ kind: 'bicycleRoad' })).toEqual({
+      position: [],
+      sign: [],
+      lines: [],
+      lifecycle: ['construction'],
+    })
   })
 
-  it('a category with one plain target names it in the default variant', () => {
-    const variants = planCategoryVariants(
-      { highway: 'secondary' },
-      'cyclewayOnHighway_exclusive',
-      'right',
-    )
-    expect(variants.map((v) => v.variantId)).toEqual([
-      'default',
-      'cyclewayOnHighway_exclusive:construction',
-      'cyclewayOnHighway_exclusive:temporary',
-    ])
-    expect(variants[0]).toMatchObject({ mappingTargetId: 'cyclewayOnHighway_exclusive' })
+  it('normalizing drops what the kind does not offer', () => {
+    expect(
+      normalizeMappingChoice(
+        {
+          kind: 'footAndCyclewayShared',
+          position: 'isolated',
+          sign: 'signed',
+          lines: 'two',
+          lifecycle: 'construction',
+        },
+        'right',
+      ),
+    ).toEqual({ kind: 'footAndCyclewayShared', position: 'adjoining', lifecycle: 'construction' })
+    expect(normalizeMappingChoice({ kind: 'bicycleRoad', lifecycle: 'temporary' })).toEqual({
+      kind: 'bicycleRoad',
+    })
   })
 
-  it('a two-line target on a road side is a conflict', () => {
-    const plan = planForMappingTarget(
-      { highway: 'secondary' },
-      'footAndCyclewaySegregated_adjoining:twoLines',
-      'right',
+  it('resolves to the category and the tags of the concept', () => {
+    const fixed = (choice: Parameters<typeof resolveMappingChoice>[0]) =>
+      resolveMappingChoice(choice)?.fixed
+    expect(fixed({ kind: 'footAndCyclewayShared', sign: 'signed' })).toEqual({
+      traffic_sign: 'DE:240',
+    })
+    expect(fixed({ kind: 'footAndCyclewayShared', sign: 'unsigned' })).toEqual({
+      traffic_sign: 'none',
+      segregated: 'no',
+    })
+    expect(
+      fixed({ kind: 'footAndCyclewaySegregated', position: 'isolated', sign: 'unsigned' }),
+    ).toEqual({ traffic_sign: 'none', segregated: 'yes' })
+    // LUA: highway=cycleway + traffic_mode:right=foot is a segregated foot and cycle path
+    expect(resolveMappingChoice({ kind: 'footAndCyclewaySegregated', lines: 'two' })).toMatchObject(
+      {
+        id: 'footAndCyclewaySegregated:adjoining:two',
+        categoryId: 'footAndCyclewaySegregated_adjoining',
+        fixed: { highway: 'cycleway', 'traffic_mode:right': 'foot' },
+        separateWayOnly: true,
+      },
     )
-    expect(plan.aligned).toBe(false)
-    expect(plan.conflicts[0]!.code).toBe('geometry_needs_separate_way')
+    expect(
+      mappingChoiceLabel(
+        { kind: 'footAndCyclewaySegregated', position: 'adjoining', sign: 'signed' },
+        'de',
+      ),
+    ).toBe('Getrennter Rad- und Gehweg, straßenbegleitend, beschildert (DE:241)')
   })
 
-  it('plans construction and temporary targets on a road side and on a way of its own', () => {
+  it('docs/mapping-targets.md lists every choice (bun run mapping-targets-doc)', () => {
+    const doc = readFileSync(new URL('../../../docs/mapping-targets.md', import.meta.url), 'utf8')
+    for (const resolved of allMappingChoices()) expect(doc).toContain(`| \`${resolved.id}\``)
+  })
+
+  it('plans construction and temporary on a road side and on a way of its own', () => {
     const keys = (plan: { add: { key: string; value: string }[]; remove: string[] }) => [
       ...plan.add.map((e) => `${e.key}=${e.value}`),
       ...plan.remove.map((key) => `-${key}`),
     ]
     const road = { highway: 'secondary', 'cycleway:right': 'lane' }
-    const construction = planForMappingTarget(
+    const construction = planForMappingChoice(
       road,
-      'cyclewayOnHighway_exclusive:construction',
+      { kind: 'cyclewayOnHighway_exclusive', lifecycle: 'construction' },
       'right',
     )
     expect(construction.aligned).toBe(true)
+    expect(construction.choiceId).toBe('cyclewayOnHighway_exclusive:construction')
     expect(keys(construction).sort()).toEqual([
       '-cycleway:right',
       'construction:cycleway:right=lane',
@@ -149,18 +165,26 @@ describe('planCategoryVariants', () => {
     ])
     expect(lifecycleForSide(applyCategoryPlan(road, construction), 'right')).toBe('construction')
 
-    const temporary = planForMappingTarget(road, 'cyclewayOnHighway_advisory:temporary', 'right')
+    const temporary = planForMappingChoice(
+      road,
+      { kind: 'cyclewayOnHighway_advisory', lifecycle: 'temporary' },
+      'right',
+    )
     expect(temporary.aligned).toBe(true)
     expect(keys(temporary)).toContain('cycleway:right:temporary=yes')
 
-    const sidewalk = planForMappingTarget(
+    const sidewalk = planForMappingChoice(
       { highway: 'secondary', sidewalk: 'both' },
-      'footwayBicycleYes_adjoining:temporary',
+      { kind: 'footwayBicycleYes', lifecycle: 'temporary' },
       'right',
     )
     expect(keys(sidewalk)).toContain('sidewalk:right:temporary=yes')
 
-    const way = planForMappingTarget({ highway: 'residential' }, 'bicycleRoad:construction', 'self')
+    const way = planForMappingChoice(
+      { highway: 'residential' },
+      { kind: 'bicycleRoad', lifecycle: 'construction' },
+      'self',
+    )
     expect(way.aligned).toBe(true)
     expect(way.change).toContainEqual(
       expect.objectContaining({ key: 'highway', to: 'construction' }),
@@ -168,8 +192,8 @@ describe('planCategoryVariants', () => {
     expect(keys(way)).toContain('construction=residential')
   })
 
-  it('a temporary target on a way under construction is a conflict', () => {
-    const plan = planForMappingTarget(
+  it('a temporary choice on a way under construction is a conflict', () => {
+    const plan = planForMappingChoice(
       {
         highway: 'construction',
         construction: 'path',
@@ -178,7 +202,7 @@ describe('planCategoryVariants', () => {
         foot: 'designated',
         is_sidepath: 'yes',
       },
-      'footAndCyclewayShared_adjoining:temporary',
+      { kind: 'footAndCyclewayShared', lifecycle: 'temporary' },
       'self',
     )
     expect(plan.aligned).toBe(false)
@@ -188,21 +212,13 @@ describe('planCategoryVariants', () => {
     })
   })
 
-  it('only some categories have a temporary target, all have a construction target', () => {
-    const ids = MAPPING_TARGETS.map((t) => t.id)
-    expect(ids).toContain('bicycleRoad:construction')
-    expect(ids).not.toContain('bicycleRoad:temporary')
-    expect(ids).toContain('cyclewayOnHighwayProtected:temporary')
-  })
-
-  it('an unknown id is a conflict', () => {
-    expect(planForMappingTarget({ highway: 'path' }, 'nope', 'self').conflicts[0]!.code).toBe(
-      'unknown_mapping_target',
-    )
+  it('an unknown kind is a conflict', () => {
+    expect(
+      planForMappingChoice({ highway: 'path' }, { kind: 'nope' }, 'self').conflicts[0]!.code,
+    ).toBe('unknown_mapping_kind')
   })
 })
 
-/** The value of a fixed key on the object the target lives on (`sidewalk:<side>` for a footway) */
 function fixedValue(
   next: Record<string, string | undefined>,
   c: StartCase,
@@ -218,11 +234,13 @@ describe('round trip: plan → apply → processBikelanes', () => {
   const cases = startCases()
   const used = new Set<UnreachableRule>()
 
-  for (const target of MAPPING_TARGETS) {
+  for (const target of allMappingChoices()) {
     it(target.id, () => {
       const problems: string[] = []
       for (const c of cases) {
-        const plan = planForMappingTarget(c.tags, target.id, c.side)
+        // A choice the side does not offer (isolated, two lines on a road side) is not planned there
+        if (resolveMappingChoice(target.choice, c.side)?.id !== target.id) continue
+        const plan = planForMappingChoice(c.tags, target.choice, c.side)
         const next = applyCategoryPlan(c.tags, plan)
         const rule = EXPECTED_UNREACHABLE.find((r) => r.applies(target, c))
         if (rule) {
@@ -238,9 +256,17 @@ describe('round trip: plan → apply → processBikelanes', () => {
           problems.push(`${c.name}: ${category} (${plan.conflicts[0]?.code ?? 'aligned'})`)
           continue
         }
+        if (lifecycleForSide(next, c.side, target.categoryId) !== target.lifecycle) {
+          problems.push(`${c.name}: lifecycle≠${target.lifecycle}`)
+          continue
+        }
         for (const [key, value] of Object.entries(target.fixed)) {
-          if (fixedValue(next, c, key, target.categoryId) !== value)
-            problems.push(`${c.name}: ${key}≠${value}`)
+          // under construction `highway=cycleway` becomes `highway=construction` + `construction=cycleway`
+          const written =
+            key === 'highway' && target.lifecycle === 'construction'
+              ? fixedValue(next, c, 'construction', target.categoryId)
+              : fixedValue(next, c, key, target.categoryId)
+          if (written !== value) problems.push(`${c.name}: ${key}≠${value}`)
         }
         if (
           c.tags[c.signKey] === 'none' &&

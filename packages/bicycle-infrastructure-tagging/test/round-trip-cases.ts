@@ -1,9 +1,9 @@
 /**
- * Start cases for the round trip of every mapping target: plan → apply → `processBikelanes`.
+ * Start cases for the round trip of every mapping choice: plan → apply → `processBikelanes`.
  * Generated as a matrix; combinations the planner cannot reach are listed in
  * `EXPECTED_UNREACHABLE` with a reason, never skipped silently.
  */
-import type { MappingTarget, OsmTags, PlanConflictCode, ResultSide } from '../src/index.ts'
+import type { OsmTags, PlanConflictCode, ResolvedMappingChoice, ResultSide } from '../src/index.ts'
 
 export interface StartCase {
   name: string
@@ -90,7 +90,7 @@ export function startCases(): StartCase[] {
 export interface UnreachableRule {
   reason: string
   code?: PlanConflictCode
-  applies: (target: MappingTarget, start: StartCase) => boolean
+  applies: (target: ResolvedMappingChoice, start: StartCase) => boolean
 }
 
 const OWN_WAYS = new Set(['path', 'footway', 'cycleway', 'pedestrian'])
@@ -103,10 +103,11 @@ const LANE = /^(cyclewayOnHighway|sharedMotorVehicleLane)/
 export const EXPECTED_UNREACHABLE: UnreachableRule[] = [
   {
     reason:
-      'A lifecycle target (construction, temporary) plans like the default plan: on a footway it keeps an observed DE:240 with segregated=no',
+      'Without a sign choice the planner keeps an observed DE:240 with segregated=no on a footway: a segregated path needs the sign choice (or two lines) there',
     code: 'tags_not_enough',
     applies: (t, c) =>
-      t.lifecycle !== undefined &&
+      t.choice.sign === undefined &&
+      t.choice.lines !== 'two' &&
       t.categoryId.startsWith('footAndCyclewaySegregated_') &&
       c.tags.highway === 'footway' &&
       c.tags.segregated === 'no' &&
@@ -158,16 +159,6 @@ export const EXPECTED_UNREACHABLE: UnreachableRule[] = [
     applies: (t, c) =>
       /^(bicycleRoad|cyclewayOnHighwayBetweenLanes$|cyclewayLink$|crossing$)/.test(t.categoryId) &&
       isRoadSide(c),
-  },
-  {
-    reason: 'Two lines (cycleway + footway of their own) need a way of their own',
-    code: 'geometry_needs_separate_way',
-    applies: (t, c) => t.separateWayOnly && isRoadSide(c),
-  },
-  {
-    reason: 'A road side always runs along the road: it cannot be *_isolated',
-    code: 'geometry_isolated_not_a_road_side',
-    applies: (t, c) => t.categoryId.endsWith('_isolated') && isRoadSide(c),
   },
   {
     reason:

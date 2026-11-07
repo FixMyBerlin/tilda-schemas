@@ -5,19 +5,19 @@ import {
   categoryGeometryMismatch,
   listTargetCategories,
   planCategoryChange,
-  planCategoryVariants,
+  planForMappingChoice,
 } from '../src/index.ts'
 
 describe('planCategoryChange', () => {
-  it('the variants are a list; today the first one is the plan', () => {
+  it('is the plan of the plain mapping choice of the category', () => {
     const tags = { highway: 'residential', 'cycleway:both': 'no' }
-    const variants = planCategoryVariants(tags, 'cyclewayOnHighway_advisory', 'right')
-    expect(variants.map((v) => v.variantId)).toEqual([
-      'default',
-      'cyclewayOnHighway_advisory:construction',
-      'cyclewayOnHighway_advisory:temporary',
-    ])
-    expect(planCategoryChange(tags, 'cyclewayOnHighway_advisory', 'right')).toEqual(variants[0]!)
+    const { choiceId, ...choicePlan } = planForMappingChoice(
+      tags,
+      { kind: 'cyclewayOnHighway_advisory' },
+      'right',
+    )
+    expect(choiceId).toBe('cyclewayOnHighway_advisory')
+    expect(planCategoryChange(tags, 'cyclewayOnHighway_advisory', 'right')).toEqual(choicePlan)
   })
 
   it('entries carry a code, the core text stays as reason', () => {

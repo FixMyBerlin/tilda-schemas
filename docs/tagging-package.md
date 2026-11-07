@@ -6,7 +6,7 @@
 
 | Fork file                                                                 | Package                                                                                           |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `tilda/category_plan.ts`                                                  | `planner/category-plan.ts` (`planCategoryChange`, `planCategoryVariants`, ...)                    |
+| `tilda/category_plan.ts`                                                  | `planner/category-plan.ts` (`planCategoryChange`, `planForMappingChoice`, ...)                    |
 | `tilda/category_labels.ts`, `data/tilda_labels.de.json`, update script    | `labels/`, `scripts/update-labels.ts`                                                             |
 | `tilda/required_attributes.ts`, `qa_state.ts`, `reminders.ts`             | `requirements/`; the dataset's data is `profiles/radnetz-berlin.ts`                               |
 | `width/width_tags.ts`, `part_widths.ts`                                   | `widths/`                                                                                         |
@@ -41,35 +41,25 @@ Stays in the fork: `checks.ts` (key-value DB), `width_indicator.ts`, `offset_lin
 
 `planTagVariantsForCategory` (core) returns the plan of `planTagsForCategory` first (`default`), then `with_sign` and `without_sign` where a sign can settle the category. `categorySignOptions` says which signs settle a category.
 
-## Mapping targets
+## Mapping choices
 
-TILDA knows "shared foot and cycle path"; whether it is signed is an attribute. For mapping, "with sign 240" and "without sign" are two goals. A mapping target (`MappingTarget`) is a TILDA category (the id of tilda-geo, unchanged) plus the tags the plan must contain:
+TILDA knows "shared foot and cycle path"; whether it is signed, under construction or mapped as two lines are attributes or mapping styles of the same infrastructure. A flat list of every combination ("…, signed", "…, unsigned", "…, under construction", "…, signed, under construction") hides that they are independent. So a mapper picks a kind and sets options (`MappingChoice`):
 
-| Field             | What                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `id`              | `categoryId` for `default`, else `<categoryId>:<variant>`                          |
-| `categoryId`      | the TILDA category                                                                 |
-| `variant`         | `default`, `signed`, `unsigned`, `twoLines`, `construction`, `temporary`           |
-| `fixed`           | tags the plan must contain (bare keys, e.g. `traffic_sign=none` + `segregated=no`) |
-| `labelCode`       | key of `MAPPING_TARGET_LABELS.de` / `.en`                                          |
-| `group`           | group of tilda-geo's legend                                                        |
-| `separateWayOnly` | only for a way of its own (two lines), never for a road side                       |
-| `lifecycle`       | `construction` or `temporary`: the lifecycle the plan must give the side           |
+| Field       | Values                               | What it is                    | Offered                                                                                                                                             |
+| ----------- | ------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`      | `MAPPING_KINDS`                      | the infrastructure            | always                                                                                                                                              |
+| `position`  | `adjoining`, `isolated`              | part of the TILDA category id | paths (cycleway, shared and segregated foot and cycle path, footway with bicycles allowed) on a way of their own; a road side is always `adjoining` |
+| `sign`      | (as it is), `signed`, `unsigned`     | `traffic_sign`                | categories a sign settles that also work without one, not under construction (signs are mapped once they hang)                                      |
+| `lines`     | `one`, `two`                         | mapping style                 | the segregated foot and cycle path on a way of its own                                                                                              |
+| `lifecycle` | (built), `construction`, `temporary` | `lifecycle` of tilda-geo      | `construction` for every kind, `temporary` for lanes, the protected lane, foot and cycle paths and footways with bicycles allowed                   |
 
-How the list is derived (`MAPPING_TARGETS`, full table in [mapping-targets.md](mapping-targets.md)):
+- `MAPPING_KINDS` comes from `listTargetCategories`: a category is a kind, the two categories `<path>_adjoining` and `<path>_isolated` are one kind. German kind names come from tilda-geo's labels.
+- `mappingChoiceOptions(choice, side)` lists the values of each option for that side and choice; `normalizeMappingChoice` drops the values that are not offered; `resolveMappingChoice` gives the TILDA category, the tags the plan must contain (`fixed`) and the lifecycle; `mappingChoiceId` writes a choice as `footAndCyclewaySegregated:isolated:unsigned:two:construction`; `mappingChoiceLabel` names it.
+- `signed` writes the sign of the category (`traffic_sign=DE:241`); `unsigned` writes `traffic_sign=none` plus the tag that settles the category on its own, read from the gap discriminators of `needsClarification` (`segregated=no`, `segregated=yes`, `bicycle=yes`). A Fahrradstraße exists only by its sign: no sign option.
+- `two` lines writes `highway=cycleway` + `traffic_mode:right=foot`: the cycleway line with the footway as a line of its own. The LUA classifies it as `footAndCyclewaySegregated_*` (macro `foot_and_cycleway_segregated_separation`).
+- `construction` writes a way of its own as `highway=construction` + `construction=<highway>` and moves the side key of a road side under the prefix (`construction:cycleway:right=lane`). `temporary` writes `temporary=yes` for the side (`cycleway:right:temporary=yes`, `sidewalk:right:temporary=yes`), as tilda-geo reads it since `08b1428b5`. A plan only counts when the side gets that lifecycle (`lifecycleForSide`). An existing lifecycle wins in tilda-geo, so `temporary` on a way under construction is the conflict `lifecycle_not_reached`.
 
-- Every category of `listTargetCategories` gets at least one target.
-- A category that a traffic sign settles (`categorySignOptions`) and that also works without one gets `signed` (`traffic_sign=<sign>`) and `unsigned` (`traffic_sign=none` plus the tag that settles it on its own, read from the gap discriminators of `needsClarification`: `segregated=no`, `segregated=yes`, `bicycle=yes`). These are the shared and segregated foot and cycle paths, the cycleway and the footway with bicycles allowed.
-- A Fahrradstraße exists only by its sign: `bicycleRoad` and `bicycleRoad_vehicleDestination` get one `default` target each (with and without `vehicle=destination` are two categories already).
-- Hand-written: the two-line cycleway (`highway=cycleway` + `traffic_mode:right=foot`, footway as a line of its own). The LUA classifies it as `footAndCyclewaySegregated_*` (macro `foot_and_cycleway_segregated_separation`), so it is a target of that category, not of `cycleway_*` as the concept had it.
-- Everything else gets one `default` target without fixed tags.
-- Every category also gets a `construction` target, a bicycle road too. The planner writes a way of its own as `highway=construction` + `construction=<highway>` and moves the side key of a road side under the prefix (`construction:cycleway:right=lane`); tilda-geo reads both as `lifecycle=construction`.
-- The categories that are realistically set up for a while get a `temporary` target: advisory and exclusive lanes, the protected lane, the shared and segregated foot and cycle paths, the footway with bicycles allowed. The planner writes `temporary=yes` for the side (`cycleway:right:temporary=yes`, `sidewalk:right:temporary=yes`), as tilda-geo reads it since `08b1428b5`.
-- A lifecycle target is checked like the category: the plan must give the side that `lifecycle` (`lifecycleForSide`). An existing lifecycle wins in tilda-geo, so a `temporary` target on a way under construction is the conflict `lifecycle_not_reached`.
-
-`planForMappingTarget(tags, targetId, side)` plans one target. `planCategoryVariants(tags, category, side)` returns the default plan first, then one plan per mapping target of the category (`variantId` = target id, `mappingTargetId` set); targets that do not fit the way are in the list with a conflict. The default variant names the plain target of the category (no fixed tags, no lifecycle), if there is one. `planCategoryChange` is the first variant.
-
-With a side, `categoryGeometryMismatch` also checks road centerline against road side: a path or lane category on the centerline of a road (`geometry_path_needs_road_side`, `geometry_lane_needs_road_side`), a bicycle road, link, crossing or between lanes on a road side (`geometry_not_a_road_side`), `*_isolated` on a road side (`geometry_isolated_not_a_road_side`), a two-line target on a road side (`geometry_needs_separate_way`). Without a side only the rules that hold for any side apply, as before.
+`planForMappingChoice(tags, choice, side)` plans one choice (`choiceId` on the plan). `planCategoryChange(tags, category, side)` is the plan of the plain choice: fewest edits, no new traffic sign, `traffic_sign=none` kept. The full table of kinds, options and choices is in [mapping-targets.md](mapping-targets.md).
 
 ### Groups
 
@@ -89,7 +79,7 @@ Differences to the groups of the iD fork (`CATEGORY_GROUPS`, kept for the fork):
 
 ### Round trip
 
-`test/mapping-targets.test.ts` runs every mapping target against a generated matrix of start cases (`test/round-trip-cases.ts`): ways of their own (`path`, `footway`, `cycleway`, `pedestrian`, `residential`) × `traffic_sign` (unset, `none`, `DE:240`, `DE:241`) × `segregated` (unset, `yes`, `no`) × `is_sidepath` (unset, `yes`, `no`), and the right side of a `secondary` × `cycleway:right` (unset, `track`, `lane`, `no`) × the same sign and `segregated` values on that side. For each: plan → apply → `processBikelanes`; the category must be the target, the fixed tags present and `traffic_sign=none` untouched unless the target fixes a sign. Combinations the planner cannot reach are listed in `EXPECTED_UNREACHABLE` with a reason (and must then report a conflict); a rule that applies to no case fails the test.
+`test/mapping-targets.test.ts` runs every mapping choice (`allMappingChoices`) against a generated matrix of start cases (`test/round-trip-cases.ts`): ways of their own (`path`, `footway`, `cycleway`, `pedestrian`, `residential`) × `traffic_sign` (unset, `none`, `DE:240`, `DE:241`) × `segregated` (unset, `yes`, `no`) × `is_sidepath` (unset, `yes`, `no`), and the right side of a `secondary` × `cycleway:right` (unset, `track`, `lane`, `no`) × the same sign and `segregated` values on that side. For each: plan → apply → `processBikelanes`; the category and the lifecycle must be the choice's, the fixed tags present and `traffic_sign=none` untouched unless the target fixes a sign. Combinations the planner cannot reach are listed in `EXPECTED_UNREACHABLE` with a reason (and must then report a conflict); a rule that applies to no case fails the test.
 
 ## Profiles
 
@@ -129,5 +119,5 @@ Plan entries carry the core's English `reason` and a stable `reasonCode` (`requi
 
 ## Open
 
-- `cyclewayOnHighwayBetweenLanes` has a mapping target but no plan: it needs the lane layout of the road.
+- `cyclewayOnHighwayBetweenLanes` is a mapping kind but has no plan: it needs the lane layout of the road.
 - The planner adds and changes tags, it does not remove them: a protected lane with `segregated` on the side, or a lane with a DE:240 / DE:241 sign on the side, stays out of reach.

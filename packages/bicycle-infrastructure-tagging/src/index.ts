@@ -19,8 +19,7 @@ export {
   lifecycleForSide,
   categoryGeometryMismatch,
   planCategoryChange,
-  planCategoryVariants,
-  planForMappingTarget,
+  planForMappingChoice,
 } from './planner/category-plan.ts'
 export { gapTags, gapWriteKey } from './planner/gaps.ts'
 export type {
@@ -36,25 +35,35 @@ export type { PlanMessageOptions } from './planner/plan-messages.ts'
 // The core planner and the list of targets stay in the core package; re-exported for convenience.
 export { listTargetCategories } from '@tilda-geo/bicycle-infrastructure'
 
-// Mapping targets: what a mapper picks (category + fixed tags), grouped like tilda-geo's legend
+// Mapping choices: what a mapper picks (a kind plus options), grouped like tilda-geo's legend
 export {
-  MAPPING_TARGETS,
+  MAPPING_KINDS,
+  MAPPING_OPTION_LABELS,
   MAPPING_TARGET_GROUPS,
   MAPPING_TARGET_GROUP_LABELS,
-  MAPPING_TARGET_LABELS,
+  allMappingChoices,
   categoryMappingGroup,
-  groupMappingTargets,
-  isPlainMappingTarget,
-  mappingTargetById,
-  mappingTargetLabel,
-  mappingTargetsForCategory,
+  groupMappingKinds,
+  mappingChoiceForCategory,
+  mappingChoiceId,
+  mappingChoiceLabel,
+  mappingChoiceOptions,
+  mappingKindById,
+  mappingKindLabel,
+  normalizeMappingChoice,
+  resolveMappingChoice,
 } from './mapping-targets/mapping-targets.ts'
 export type {
-  MappingTarget,
+  MappingChoice,
+  MappingChoiceOptions,
+  MappingKind,
+  MappingLines,
+  MappingPosition,
+  MappingSign,
   MappingTargetGroup,
   MappingTargetGroupId,
   MappingTargetLanguage,
-  MappingTargetVariant,
+  ResolvedMappingChoice,
 } from './mapping-targets/mapping-targets.ts'
 
 // Labels and groups of categories (data, no localizer)

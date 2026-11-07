@@ -11,10 +11,9 @@ import {
   writeKeyForSide,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
-  isPlainMappingTarget,
-  mappingTargetById,
-  mappingTargetsForCategory,
-  type MappingTarget,
+  mappingChoiceId,
+  resolveMappingChoice,
+  type MappingChoice,
 } from '../mapping-targets/mapping-targets.ts'
 import type { OsmTags, ResultSide } from '../types.ts'
 
@@ -84,8 +83,8 @@ export const PLAN_CONFLICT_CODES = [
   'geometry_isolated_not_a_road_side',
   /** a mapping target for a way of its own (two lines) planned for a road side */
   'geometry_needs_separate_way',
-  /** `planForMappingTarget` with an id that is not in `MAPPING_TARGETS` */
-  'unknown_mapping_target',
+  /** `planForMappingChoice` with a kind that is not in `MAPPING_KINDS` */
+  'unknown_mapping_kind',
   /** the planned tags still classify as another category; `params.target`, `params.result` */
   'tags_not_enough',
   /** no tags could be derived for the target; `params.target`, `params.result` */
@@ -111,10 +110,8 @@ export interface PlanConflict {
  * prefers, then one per mapping target of the category.
  */
 export interface CategoryChangePlan {
-  /** `default` for the first variant, else the id of the mapping target */
-  variantId: string
-  /** The mapping target this plan reaches (`MAPPING_TARGETS`), if any */
-  mappingTargetId?: string
+  /** The mapping choice this plan reaches (`mappingChoiceId`), if it was planned for one */
+  choiceId?: string
   targetCategoryId: string
   currentCategoryId: string | null
   /** `processBikelanes` gives the target for the planned tags */
@@ -323,10 +320,7 @@ const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange
   ...whyOf(entry),
 })
 
-type VariantIds = { variantId: string; mappingTargetId?: string }
-
-const variantIds = (variantId: string, mappingTargetId: string | undefined): VariantIds =>
-  mappingTargetId === undefined ? { variantId } : { variantId, mappingTargetId }
+type VariantIds = { choiceId?: string }
 
 function conflictPlan(
   tags: OsmTags,
@@ -434,85 +428,44 @@ function planOne(
   }
 }
 
-function planMappingTarget(
+/**
+ * The plan to reach a mapping choice on `side` of the way: the TILDA category of the choice with
+ * its tags (`traffic_sign=DE:240`, `traffic_sign=none` + `segregated=no`, two lines) and its
+ * lifecycle. Options the kind does not offer on `side` are left out (`normalizeMappingChoice`).
+ */
+export function planForMappingChoice(
   tags: OsmTags,
-  mappingTarget: MappingTarget,
+  choice: MappingChoice,
   side: ResultSide,
-  variantId: string,
 ): CategoryChangePlan {
-  const ids = variantIds(variantId, mappingTarget.id)
-  if (mappingTarget.separateWayOnly && side !== 'self') {
+  const resolved = resolveMappingChoice(choice, side)
+  if (!resolved) {
     return conflictPlan(
       tags,
-      mappingTarget.categoryId,
+      choice.kind,
       side,
-      { code: 'geometry_needs_separate_way', key: 'side', value: side, params: { side } },
-      ids,
+      { code: 'unknown_mapping_kind', key: 'kind', value: choice.kind },
+      { choiceId: mappingChoiceId(choice) },
     )
   }
   return planOne(
     tags,
-    mappingTarget.categoryId,
+    resolved.categoryId,
     side,
-    mappingTarget.fixed,
-    ids,
-    mappingTarget.lifecycle,
+    resolved.fixed,
+    { choiceId: resolved.id },
+    resolved.lifecycle,
   )
 }
 
 /**
- * The plan to reach a mapping target (`MAPPING_TARGETS`) on `side` of the way: the category of the
- * target with its fixed tags (`traffic_sign=DE:240`, or `traffic_sign=none` + `segregated=no`).
- */
-export function planForMappingTarget(
-  tags: OsmTags,
-  targetId: string,
-  side: ResultSide,
-): CategoryChangePlan {
-  const mappingTarget = mappingTargetById(targetId)
-  if (!mappingTarget) {
-    return conflictPlan(
-      tags,
-      targetId,
-      side,
-      { code: 'unknown_mapping_target', key: 'mappingTarget', value: targetId },
-      { variantId: targetId },
-    )
-  }
-  return planMappingTarget(tags, mappingTarget, side, mappingTarget.id)
-}
-
-/**
- * The ways to reach `target` on `side` of the way. The first one (`default`) is the plan the
- * planner prefers: fewest edits, no new traffic sign, `traffic_sign=none` kept. Then one plan per
- * mapping target of the category (`variantId` = its id), also those that do not fit the way (they
- * carry a conflict). A mapping target without fixed tags is the default plan itself and gets no
- * entry of its own.
- */
-export function planCategoryVariants(
-  tags: OsmTags,
-  target: string,
-  side: ResultSide,
-): CategoryChangePlan[] {
-  const targets = mappingTargetsForCategory(target)
-  const plain = targets.find(isPlainMappingTarget)
-  const variants = [planOne(tags, target, side, {}, variantIds('default', plain?.id))]
-  for (const mappingTarget of targets) {
-    if (mappingTarget === plain) continue
-    variants.push(planMappingTarget(tags, mappingTarget, side, mappingTarget.id))
-  }
-  return variants
-}
-
-/**
- * Tags to add, change or remove so that `side` of the way gets `target`: the first variant of
- * `planCategoryVariants`. Conflicts explain why a target cannot be reached.
+ * Tags to add, change or remove so that `side` of the way gets `target`: fewest edits, no new
+ * traffic sign, `traffic_sign=none` kept. Conflicts explain why a target cannot be reached.
  */
 export function planCategoryChange(
   tags: OsmTags,
   target: string,
   side: ResultSide,
 ): CategoryChangePlan {
-  const plain = mappingTargetsForCategory(target).find(isPlainMappingTarget)
-  return planOne(tags, target, side, {}, variantIds('default', plain?.id))
+  return planOne(tags, target, side, {}, {})
 }

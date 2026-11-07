@@ -23,7 +23,7 @@ ESM only. `@tilda-geo/bicycle-infrastructure` is a dependency.
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `pathRole`                                                               | One definition of "path for foot and bicycle": mapped on the centerline, as one line or as two lines.                                            |
 | `planCategoryChange`                                                     | The tags to add, change or remove so that a way or road side gets a TILDA category.                                                              |
-| `MAPPING_TARGETS`, `planForMappingTarget`                                | What a mapper picks: a TILDA category plus fixed tags (signed / unsigned), grouped like tilda-geo's map legend.                                  |
+| `MAPPING_KINDS`, `mappingChoiceOptions`, `planForMappingChoice`          | What a mapper picks: a kind of infrastructure plus options (position, signs, lines, state), grouped like tilda-geo's map legend.                 |
 | `requiredAttributes`, `roadAttributes`, `tildaQaState`, `reminders`      | The attributes a dataset needs per category, their state (tagged, inherited, guessed, missing), how complete a way is.                           |
 | `profiles/radnetz-berlin`, `profiles/tilda-geo`                          | What belongs to one dataset: which tag feeds which dataset attribute, traffic signs, width sources, reminders. `tilda-geo` is the minimal one.   |
 | `roadWidthFromTags`, `partWidthMode`, ...                                | Fallback widths, which width keys exist, whether part widths add up.                                                                             |
@@ -64,30 +64,38 @@ const plan = planCategoryChange(tags, 'cyclewayOnHighway_advisory', 'right')
 applyCategoryPlan(tags, plan) // the tags after the plan
 ```
 
-`planCategoryVariants` returns the ways to reach the target: the plan the planner prefers first (`variantId: 'default'`: fewest edits, no new traffic sign, `traffic_sign=none` kept), then one plan per mapping target of the category. A target that does not fit the way (a lane on a footway) is a conflict with a code. `planTagsForCategory` itself stays in `@tilda-geo/bicycle-infrastructure` (it needs the category specs, and the core cannot depend on this package).
+`planCategoryChange` is the plan the planner prefers: fewest edits, no new traffic sign, `traffic_sign=none` kept. A target that does not fit the way (a lane on a footway) is a conflict with a code. `planTagsForCategory` itself stays in `@tilda-geo/bicycle-infrastructure` (it needs the category specs, and the core cannot depend on this package).
 
-### Mapping targets
+### Mapping choices
 
 ```ts
 import {
-  MAPPING_TARGET_LABELS,
   applyCategoryPlan,
-  groupMappingTargets,
-  planForMappingTarget,
+  groupMappingKinds,
+  mappingChoiceLabel,
+  mappingChoiceOptions,
+  mappingKindLabel,
+  planForMappingChoice,
 } from '@tilda-geo/bicycle-infrastructure-tagging'
 
-for (const group of groupMappingTargets()) {
+for (const group of groupMappingKinds()) {
   // group.id: 'separated' | 'lane' | 'foot' | 'sidewalk' | 'mixed'
-  for (const target of group.targets) console.log(MAPPING_TARGET_LABELS.de[target.labelCode])
+  for (const kind of group.kinds) console.log(mappingKindLabel(kind.id, 'de'))
 }
 
+const choice = { kind: 'footAndCyclewayShared', position: 'isolated', sign: 'unsigned' } as const
+mappingChoiceOptions(choice, 'self')
+// { position: ['adjoining', 'isolated'], sign: ['signed', 'unsigned'], signValue: 'DE:240',
+//   lines: [], lifecycle: ['construction', 'temporary'] }
+mappingChoiceLabel(choice, 'de') // Gemeinsamer Geh- und Radweg, selbstständig geführt, unbeschildert
+
 const tags = { highway: 'path', traffic_sign: 'none' }
-const plan = planForMappingTarget(tags, 'footAndCyclewayShared_isolated:unsigned', 'self')
+const plan = planForMappingChoice(tags, choice, 'self')
 // plan.add: segregated=no (mapping_target), bicycle=designated, foot=designated, is_sidepath=no
 applyCategoryPlan(tags, plan)
 ```
 
-A mapping target is a TILDA category (the id of tilda-geo, unchanged) plus the tags the plan must contain: `footAndCyclewayShared_adjoining:signed` (`traffic_sign=DE:240`) and `:unsigned` (`traffic_sign=none`, `segregated=no`), the same for segregated paths (`DE:241` / `segregated=yes`), cycleways and footways with bicycles allowed, and the two-line cycleway (`traffic_mode:right=foot`, a segregated path for TILDA). The list is derived from the category specs; the full table is in [docs/mapping-targets.md](../../docs/mapping-targets.md). Groups follow the legend "Führungsform einfach" of tilda-geo.
+A mapping choice is a kind of infrastructure (a TILDA category, or for paths the category without `_adjoining` / `_isolated`) plus options that do not exclude each other: the position (along a road or independent), the signs (as they are, with the sign of the category, or `traffic_sign=none`), the lines (the footway as a line of its own, only for a segregated path) and the state (under construction or temporary). `mappingChoiceOptions(choice, side)` says which options a kind has: a road side has no position and no second line, a way under construction has no sign option, only some kinds can be temporary. A choice resolves to one TILDA category, the tags the plan must contain and a lifecycle (`resolveMappingChoice`). Everything is derived from the category specs; the full table is in [docs/mapping-targets.md](../../docs/mapping-targets.md).
 
 ### Required attributes
 

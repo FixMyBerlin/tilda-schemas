@@ -79,7 +79,7 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Eine Straßenseite verläuft immer an der Straße. „Selbstständig geführt“ gibt es dort nicht.',
     'conflict.geometry_needs_separate_way':
       'Zwei Linien (Radweg und Gehweg je als eigene Linie) brauchen einen eigenen Weg, keine Straßenseite.',
-    'conflict.unknown_mapping_target': 'Dieses Ziel gibt es nicht.',
+    'conflict.unknown_mapping_kind': 'Diese Art gibt es nicht.',
     'conflict.tags_not_enough': 'Mit diesen Tags ergibt sich „{result}“, nicht „{target}“.',
     'conflict.lifecycle_not_reached':
       'Diese Seite bleibt „{result}“: Ein vorhandener Lebenszyklus geht vor „{lifecycle}“.',
@@ -147,7 +147,7 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'A road side always runs along the road. “Separate from the road” does not exist there.',
     'conflict.geometry_needs_separate_way':
       'Two lines (cycleway and footway each as a line of its own) need a way of their own, not a road side.',
-    'conflict.unknown_mapping_target': 'This target does not exist.',
+    'conflict.unknown_mapping_kind': 'This kind does not exist.',
     'conflict.tags_not_enough': 'These tags give “{result}”, not “{target}”.',
     'conflict.lifecycle_not_reached':
       'This side stays “{result}”: an existing lifecycle wins over “{lifecycle}”.',

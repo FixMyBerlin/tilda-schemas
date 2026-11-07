@@ -5,10 +5,9 @@ import {
   PLAN_MESSAGES,
   PLAN_REASON_CODES,
   TILDA_LABELS,
-  mappingTargetsForCategory,
+  allMappingChoices,
   planCategoryChange,
-  planCategoryVariants,
-  planForMappingTarget,
+  planForMappingChoice,
   renderPlanConflict,
   renderPlanReason,
 } from '../src/index.ts'
@@ -76,10 +75,9 @@ describe('plan messages', () => {
         for (const category of categories) {
           const plans = [
             planCategoryChange(tags, category, side),
-            ...planCategoryVariants(tags, category, side),
-            ...mappingTargetsForCategory(category).map((t) =>
-              planForMappingTarget(tags, t.id, side),
-            ),
+            ...allMappingChoices()
+              .filter((choice) => choice.categoryId === category)
+              .map((choice) => planForMappingChoice(tags, choice.choice, side)),
           ]
           for (const plan of plans) {
             for (const language of LANGUAGES) {

@@ -49,11 +49,12 @@ TILDA knows "shared foot and cycle path"; whether it is signed is an attribute. 
 | ----------------- | ---------------------------------------------------------------------------------- |
 | `id`              | `categoryId` for `default`, else `<categoryId>:<variant>`                          |
 | `categoryId`      | the TILDA category                                                                 |
-| `variant`         | `default`, `signed`, `unsigned`, `twoLines`                                        |
+| `variant`         | `default`, `signed`, `unsigned`, `twoLines`, `construction`, `temporary`           |
 | `fixed`           | tags the plan must contain (bare keys, e.g. `traffic_sign=none` + `segregated=no`) |
 | `labelCode`       | key of `MAPPING_TARGET_LABELS.de` / `.en`                                          |
 | `group`           | group of tilda-geo's legend                                                        |
 | `separateWayOnly` | only for a way of its own (two lines), never for a road side                       |
+| `lifecycle`       | `construction` or `temporary`: the lifecycle the plan must give the side           |
 
 How the list is derived (`MAPPING_TARGETS`, full table in [mapping-targets.md](mapping-targets.md)):
 
@@ -62,8 +63,11 @@ How the list is derived (`MAPPING_TARGETS`, full table in [mapping-targets.md](m
 - A Fahrradstraße exists only by its sign: `bicycleRoad` and `bicycleRoad_vehicleDestination` get one `default` target each (with and without `vehicle=destination` are two categories already).
 - Hand-written: the two-line cycleway (`highway=cycleway` + `traffic_mode:right=foot`, footway as a line of its own). The LUA classifies it as `footAndCyclewaySegregated_*` (macro `foot_and_cycleway_segregated_separation`), so it is a target of that category, not of `cycleway_*` as the concept had it.
 - Everything else gets one `default` target without fixed tags.
+- Every category also gets a `construction` target, a bicycle road too. The planner writes a way of its own as `highway=construction` + `construction=<highway>` and moves the side key of a road side under the prefix (`construction:cycleway:right=lane`); tilda-geo reads both as `lifecycle=construction`.
+- The categories that are realistically set up for a while get a `temporary` target: advisory and exclusive lanes, the protected lane, the shared and segregated foot and cycle paths, the footway with bicycles allowed. The planner writes `temporary=yes` for the side (`cycleway:right:temporary=yes`, `sidewalk:right:temporary=yes`), as tilda-geo reads it since `08b1428b5`.
+- A lifecycle target is checked like the category: the plan must give the side that `lifecycle` (`lifecycleForSide`). An existing lifecycle wins in tilda-geo, so a `temporary` target on a way under construction is the conflict `lifecycle_not_reached`.
 
-`planForMappingTarget(tags, targetId, side)` plans one target. `planCategoryVariants(tags, category, side)` returns the default plan first, then one plan per mapping target of the category (`variantId` = target id, `mappingTargetId` set); targets that do not fit the way are in the list with a conflict. A category with one plain target has one variant that names it. `planCategoryChange` is the first variant.
+`planForMappingTarget(tags, targetId, side)` plans one target. `planCategoryVariants(tags, category, side)` returns the default plan first, then one plan per mapping target of the category (`variantId` = target id, `mappingTargetId` set); targets that do not fit the way are in the list with a conflict. The default variant names the plain target of the category (no fixed tags, no lifecycle), if there is one. `planCategoryChange` is the first variant.
 
 With a side, `categoryGeometryMismatch` also checks road centerline against road side: a path or lane category on the centerline of a road (`geometry_path_needs_road_side`, `geometry_lane_needs_road_side`), a bicycle road, link, crossing or between lanes on a road side (`geometry_not_a_road_side`), `*_isolated` on a road side (`geometry_isolated_not_a_road_side`), a two-line target on a road side (`geometry_needs_separate_way`). Without a side only the rules that hold for any side apply, as before.
 

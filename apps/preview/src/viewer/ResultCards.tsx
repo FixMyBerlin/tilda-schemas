@@ -15,6 +15,7 @@ import { SIDE_LABEL } from './copy'
 import { Tag } from './Section'
 
 const FIELDS: { field: keyof BikelaneResult; label: string }[] = [
+  { field: 'lifecycle', label: 'Lebenszyklus' },
   { field: 'oneway', label: 'Fahrtrichtung' },
   { field: 'width', label: 'Breite (m)' },
   { field: 'surface', label: 'Oberfläche' },

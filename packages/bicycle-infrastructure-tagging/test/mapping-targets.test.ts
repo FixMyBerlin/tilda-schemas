@@ -8,6 +8,7 @@ import {
   MAPPING_TARGETS,
   applyCategoryPlan,
   categoryForSide,
+  lifecycleForSide,
   groupMappingTargets,
   mappingTargetById,
   planCategoryChange,
@@ -96,6 +97,8 @@ describe('planCategoryVariants', () => {
       'default',
       'footAndCyclewayShared_isolated:signed',
       'footAndCyclewayShared_isolated:unsigned',
+      'footAndCyclewayShared_isolated:construction',
+      'footAndCyclewayShared_isolated:temporary',
     ])
     expect(variants[0]).toEqual(planCategoryChange(tags, 'footAndCyclewayShared_isolated', 'self'))
     expect(variants[1]!.add).toContainEqual(
@@ -103,17 +106,18 @@ describe('planCategoryVariants', () => {
     )
   })
 
-  it('a category with one plain target has one variant that names it', () => {
+  it('a category with one plain target names it in the default variant', () => {
     const variants = planCategoryVariants(
       { highway: 'secondary' },
       'cyclewayOnHighway_exclusive',
       'right',
     )
-    expect(variants).toHaveLength(1)
-    expect(variants[0]).toMatchObject({
-      variantId: 'default',
-      mappingTargetId: 'cyclewayOnHighway_exclusive',
-    })
+    expect(variants.map((v) => v.variantId)).toEqual([
+      'default',
+      'cyclewayOnHighway_exclusive:construction',
+      'cyclewayOnHighway_exclusive:temporary',
+    ])
+    expect(variants[0]).toMatchObject({ mappingTargetId: 'cyclewayOnHighway_exclusive' })
   })
 
   it('a two-line target on a road side is a conflict', () => {
@@ -124,6 +128,71 @@ describe('planCategoryVariants', () => {
     )
     expect(plan.aligned).toBe(false)
     expect(plan.conflicts[0]!.code).toBe('geometry_needs_separate_way')
+  })
+
+  it('plans construction and temporary targets on a road side and on a way of its own', () => {
+    const keys = (plan: { add: { key: string; value: string }[]; remove: string[] }) => [
+      ...plan.add.map((e) => `${e.key}=${e.value}`),
+      ...plan.remove.map((key) => `-${key}`),
+    ]
+    const road = { highway: 'secondary', 'cycleway:right': 'lane' }
+    const construction = planForMappingTarget(
+      road,
+      'cyclewayOnHighway_exclusive:construction',
+      'right',
+    )
+    expect(construction.aligned).toBe(true)
+    expect(keys(construction).sort()).toEqual([
+      '-cycleway:right',
+      'construction:cycleway:right=lane',
+      'cycleway:right:lane=exclusive',
+    ])
+    expect(lifecycleForSide(applyCategoryPlan(road, construction), 'right')).toBe('construction')
+
+    const temporary = planForMappingTarget(road, 'cyclewayOnHighway_advisory:temporary', 'right')
+    expect(temporary.aligned).toBe(true)
+    expect(keys(temporary)).toContain('cycleway:right:temporary=yes')
+
+    const sidewalk = planForMappingTarget(
+      { highway: 'secondary', sidewalk: 'both' },
+      'footwayBicycleYes_adjoining:temporary',
+      'right',
+    )
+    expect(keys(sidewalk)).toContain('sidewalk:right:temporary=yes')
+
+    const way = planForMappingTarget({ highway: 'residential' }, 'bicycleRoad:construction', 'self')
+    expect(way.aligned).toBe(true)
+    expect(way.change).toContainEqual(
+      expect.objectContaining({ key: 'highway', to: 'construction' }),
+    )
+    expect(keys(way)).toContain('construction=residential')
+  })
+
+  it('a temporary target on a way under construction is a conflict', () => {
+    const plan = planForMappingTarget(
+      {
+        highway: 'construction',
+        construction: 'path',
+        segregated: 'no',
+        bicycle: 'designated',
+        foot: 'designated',
+        is_sidepath: 'yes',
+      },
+      'footAndCyclewayShared_adjoining:temporary',
+      'self',
+    )
+    expect(plan.aligned).toBe(false)
+    expect(plan.conflicts[0]).toMatchObject({
+      code: 'lifecycle_not_reached',
+      params: { lifecycle: 'temporary', result: 'construction' },
+    })
+  })
+
+  it('only some categories have a temporary target, all have a construction target', () => {
+    const ids = MAPPING_TARGETS.map((t) => t.id)
+    expect(ids).toContain('bicycleRoad:construction')
+    expect(ids).not.toContain('bicycleRoad:temporary')
+    expect(ids).toContain('cyclewayOnHighwayProtected:temporary')
   })
 
   it('an unknown id is a conflict', () => {

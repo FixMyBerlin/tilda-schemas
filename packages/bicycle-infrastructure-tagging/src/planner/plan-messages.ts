@@ -47,6 +47,10 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Geschützter Radfahrstreifen: parkende Fahrzeuge zur Fahrbahn hin.',
     'category_requirement.protected_lane_sidepath':
       'Geschützter Radfahrstreifen: verläuft an einer Straße (is_sidepath=yes).',
+    'category_requirement.lifecycle':
+      'Das gewählte Ziel ist „{lifecycle}“ (construction: im Bau, temporary: temporär).',
+    'category_requirement.lifecycle_not_reached':
+      'Ein vorhandener Lebenszyklus „{result}“ geht vor „{lifecycle}“.',
     'category_requirement.cycleway_crossing': 'Die Querung eines Radwegs.',
     'category_requirement.split_both_sides':
       '{from} gilt für beide Seiten und wird auf die Seiten aufgeteilt.',
@@ -77,6 +81,8 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Zwei Linien (Radweg und Gehweg je als eigene Linie) brauchen einen eigenen Weg, keine Straßenseite.',
     'conflict.unknown_mapping_target': 'Dieses Ziel gibt es nicht.',
     'conflict.tags_not_enough': 'Mit diesen Tags ergibt sich „{result}“, nicht „{target}“.',
+    'conflict.lifecycle_not_reached':
+      'Diese Seite bleibt „{result}“: Ein vorhandener Lebenszyklus geht vor „{lifecycle}“.',
     'conflict.no_suggestion':
       'Für „{target}“ gibt es keinen automatischen Vorschlag, es bleibt bei „{result}“. Meist braucht die Kategorie mehr Wissen über den Weg, etwa die Fahrstreifen der Straße.',
   },
@@ -112,6 +118,9 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Protected cycle lane: parked vehicles towards the road.',
     'category_requirement.protected_lane_sidepath':
       'Protected cycle lane: runs along a road (is_sidepath=yes).',
+    'category_requirement.lifecycle': 'The chosen target is “{lifecycle}”.',
+    'category_requirement.lifecycle_not_reached':
+      'An existing lifecycle “{result}” wins over “{lifecycle}”.',
     'category_requirement.cycleway_crossing': 'The crossing of a cycleway.',
     'category_requirement.split_both_sides':
       '{from} covers both sides and is split into the sides.',
@@ -140,6 +149,8 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Two lines (cycleway and footway each as a line of its own) need a way of their own, not a road side.',
     'conflict.unknown_mapping_target': 'This target does not exist.',
     'conflict.tags_not_enough': 'These tags give “{result}”, not “{target}”.',
+    'conflict.lifecycle_not_reached':
+      'This side stays “{result}”: an existing lifecycle wins over “{lifecycle}”.',
     'conflict.no_suggestion':
       'There is no automatic suggestion for “{target}”; it stays “{result}”. The category usually needs more knowledge about the way, such as the lanes of the road.',
   },

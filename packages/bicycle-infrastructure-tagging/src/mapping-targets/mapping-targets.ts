@@ -1,4 +1,5 @@
 import {
+  type PlanLifecycle,
   categorySignOptions,
   listTargetCategories,
   specsWithGapDiscriminators,
@@ -119,8 +120,18 @@ export function categoryMappingGroup(categoryId: string): MappingTargetGroupId |
  * - `signed`: with the traffic sign that settles the category (`traffic_sign=DE:240`)
  * - `unsigned`: `traffic_sign=none` plus the tag that says the same (`segregated=no`)
  * - `twoLines`: cycleway whose footway is a line of its own (`traffic_mode:right=foot`)
+ * - `construction`: the category under construction (`highway=construction` +
+ *   `construction=cycleway`, on a road side `construction:cycleway:right=lane`); every category
+ * - `temporary`: the category set up for a while (`temporary=yes`, on a road side
+ *   `cycleway:right:temporary=yes`); only `TEMPORARY_CATEGORIES`
  */
-export type MappingTargetVariant = 'default' | 'signed' | 'unsigned' | 'twoLines'
+export type MappingTargetVariant =
+  | 'default'
+  | 'signed'
+  | 'unsigned'
+  | 'twoLines'
+  | 'construction'
+  | 'temporary'
 
 export type MappingTargetLanguage = 'de' | 'en'
 
@@ -141,7 +152,30 @@ export interface MappingTarget {
   group: MappingTargetGroupId
   /** Only for a way of its own, never for a road side */
   separateWayOnly: boolean
+  /** The lifecycle the plan must give the side (`lifecycle` of tilda-geo) */
+  lifecycle?: PlanLifecycle
 }
+
+/** A target without fixed tags or lifecycle: the plain category, the default plan */
+export function isPlainMappingTarget(target: MappingTarget): boolean {
+  return Object.keys(target.fixed).length === 0 && target.lifecycle === undefined
+}
+
+/**
+ * Categories that are realistically set up for a while (a temporary lane at a construction site):
+ * lanes on the road, protected lanes, foot and cycle paths and footways with bicycles allowed.
+ */
+const TEMPORARY_CATEGORIES = new Set([
+  'cyclewayOnHighway_advisory',
+  'cyclewayOnHighway_exclusive',
+  'cyclewayOnHighwayProtected',
+  'footAndCyclewayShared_adjoining',
+  'footAndCyclewayShared_isolated',
+  'footAndCyclewaySegregated_adjoining',
+  'footAndCyclewaySegregated_isolated',
+  'footwayBicycleYes_adjoining',
+  'footwayBicycleYes_isolated',
+])
 
 /**
  * Categories a traffic sign settles in the specs, but where an unsigned variant is no legitimate
@@ -195,6 +229,7 @@ function buildMappingTargets(): MappingTarget[] {
     variant: MappingTargetVariant,
     fixed: Record<string, string>,
     separateWayOnly = false,
+    lifecycle?: PlanLifecycle,
   ) => {
     const id = variant === 'default' ? categoryId : `${categoryId}:${variant}`
     targets.push({
@@ -205,6 +240,7 @@ function buildMappingTargets(): MappingTarget[] {
       labelCode: id,
       group: categoryMappingGroup(categoryId) ?? 'needsClarification',
       separateWayOnly,
+      ...(lifecycle ? { lifecycle } : {}),
     })
   }
 
@@ -221,6 +257,8 @@ function buildMappingTargets(): MappingTarget[] {
         push(categoryId, extra.variant, extra.fixed, extra.separateWayOnly)
       }
     }
+    push(categoryId, 'construction', {}, false, 'construction')
+    if (TEMPORARY_CATEGORIES.has(categoryId)) push(categoryId, 'temporary', {}, false, 'temporary')
   }
 
   // in the order of the groups and of their categories, then signed / unsigned / two lines
@@ -291,6 +329,10 @@ function variantSuffix(target: MappingTarget, lang: MappingTargetLanguage): stri
       return lang === 'de' ? 'unbeschildert' : 'unsigned'
     case 'twoLines':
       return lang === 'de' ? 'Gehweg als eigene Linie' : 'footway as a line of its own'
+    case 'construction':
+      return lang === 'de' ? 'im Bau' : 'under construction'
+    case 'temporary':
+      return lang === 'de' ? 'temporär' : 'temporary'
     default:
       return undefined
   }

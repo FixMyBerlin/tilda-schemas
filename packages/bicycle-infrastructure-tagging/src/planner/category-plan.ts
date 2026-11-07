@@ -5,11 +5,13 @@ import {
   planTagsForCategory,
   processBikelanes,
   type CategoryTagPlan,
+  type PlanLifecycle,
   type TagPlanEntry,
   type TagReasonCode,
   writeKeyForSide,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
+  isPlainMappingTarget,
   mappingTargetById,
   mappingTargetsForCategory,
   type MappingTarget,
@@ -88,6 +90,11 @@ export const PLAN_CONFLICT_CODES = [
   'tags_not_enough',
   /** no tags could be derived for the target; `params.target`, `params.result` */
   'no_suggestion',
+  /**
+   * the category is reached but the side keeps another lifecycle (an existing lifecycle wins);
+   * `params.lifecycle`, `params.result`
+   */
+  'lifecycle_not_reached',
 ] as const
 
 export type PlanConflictCode = (typeof PLAN_CONFLICT_CODES)[number]
@@ -237,10 +244,23 @@ export function categoryForSide(
   side: ResultSide,
   target?: string,
 ): string | undefined {
+  return resultForSide(tags, side, target)?.category
+}
+
+function resultForSide(tags: OsmTags, side: ResultSide, target?: string) {
   const ofSide = processBikelanes(tags).filter((result) => result._side === side)
   const prefix = target?.startsWith('footwayBicycleYes_') ? 'sidewalk' : 'cycleway'
   const preferred = side === 'self' ? undefined : ofSide.find((r) => r._prefix === prefix)
-  return (preferred ?? ofSide[0])?.category
+  return preferred ?? ofSide[0]
+}
+
+/** The lifecycle TILDA gives the result of `categoryForSide` (`construction`, `temporary`, ...) */
+export function lifecycleForSide(
+  tags: OsmTags,
+  side: ResultSide,
+  target?: string,
+): string | undefined {
+  return resultForSide(tags, side, target)?.lifecycle ?? undefined
 }
 
 function withSuggestions(
@@ -343,6 +363,7 @@ function planOne(
   side: ResultSide,
   fixed: Readonly<Record<string, string>>,
   ids: VariantIds,
+  lifecycle?: PlanLifecycle,
 ): CategoryChangePlan {
   const mismatch = categoryGeometryMismatch(tags, target, side)
   if (mismatch) return conflictPlan(tags, target, side, geometryConflict(tags, mismatch), ids)
@@ -351,6 +372,7 @@ function planOne(
   const base = planTagsForCategory(tags, target, {
     ...(side === 'self' ? {} : { side }),
     ...(fixedKeys.length ? { fixed: { ...fixed } } : {}),
+    ...(lifecycle ? { lifecycle } : {}),
   })
   // On a road side `highway` would retag the whole road, and the core sets the presence key
   // (`cycleway:<side>`) itself: both suggestions are for separate ways only.
@@ -371,8 +393,24 @@ function planOne(
     remove: base.remove,
     conflicts: [],
   }
-  const result = categoryForSide(applyCategoryPlan(tags, plan), side, target)
-  if (result === target) return { ...plan, aligned: true }
+  const next = applyCategoryPlan(tags, plan)
+  const result = categoryForSide(next, side, target)
+  const resultLifecycle = lifecycle && lifecycleForSide(next, side, target)
+  if (result === target && resultLifecycle === lifecycle) return { ...plan, aligned: true }
+  if (result === target && lifecycle) {
+    return {
+      ...plan,
+      aligned: false,
+      conflicts: [
+        {
+          code: 'lifecycle_not_reached',
+          key: 'lifecycle',
+          value: resultLifecycle ?? 'none',
+          params: { lifecycle, result: resultLifecycle ?? 'none' },
+        },
+      ],
+    }
+  }
 
   const hasEdits = add.length > 0 || change.length > 0 || plan.remove.length > 0
   return {
@@ -412,7 +450,14 @@ function planMappingTarget(
       ids,
     )
   }
-  return planOne(tags, mappingTarget.categoryId, side, mappingTarget.fixed, ids)
+  return planOne(
+    tags,
+    mappingTarget.categoryId,
+    side,
+    mappingTarget.fixed,
+    ids,
+    mappingTarget.lifecycle,
+  )
 }
 
 /**
@@ -450,7 +495,7 @@ export function planCategoryVariants(
   side: ResultSide,
 ): CategoryChangePlan[] {
   const targets = mappingTargetsForCategory(target)
-  const plain = targets.find((t) => Object.keys(t.fixed).length === 0)
+  const plain = targets.find(isPlainMappingTarget)
   const variants = [planOne(tags, target, side, {}, variantIds('default', plain?.id))]
   for (const mappingTarget of targets) {
     if (mappingTarget === plain) continue
@@ -468,6 +513,6 @@ export function planCategoryChange(
   target: string,
   side: ResultSide,
 ): CategoryChangePlan {
-  const plain = mappingTargetsForCategory(target).find((t) => Object.keys(t.fixed).length === 0)
+  const plain = mappingTargetsForCategory(target).find(isPlainMappingTarget)
   return planOne(tags, target, side, {}, variantIds('default', plain?.id))
 }

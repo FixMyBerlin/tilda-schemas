@@ -103,6 +103,17 @@ const LANE = /^(cyclewayOnHighway|sharedMotorVehicleLane)/
 export const EXPECTED_UNREACHABLE: UnreachableRule[] = [
   {
     reason:
+      'A lifecycle target (construction, temporary) plans like the default plan: on a footway it keeps an observed DE:240 with segregated=no',
+    code: 'tags_not_enough',
+    applies: (t, c) =>
+      t.lifecycle !== undefined &&
+      t.categoryId.startsWith('footAndCyclewaySegregated_') &&
+      c.tags.highway === 'footway' &&
+      c.tags.segregated === 'no' &&
+      c.tags[c.signKey] === 'DE:240',
+  },
+  {
+    reason:
       'A lane needs a road: a path, footway, cycleway or pedestrian area has no lanes (a protected lane can be a highway=cycleway of its own)',
     code: 'geometry_lane_needs_road',
     applies: (t, c) =>

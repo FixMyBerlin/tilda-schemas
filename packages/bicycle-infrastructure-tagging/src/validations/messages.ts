@@ -64,10 +64,13 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'cycleway:*:oneway gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg.',
     'cycleway_oneway_wrong.contraflow':
       '{key}={value} gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg.',
+    sidewalk_shared_path:
+      'Gehweg mit bicycle=designated und foot=designated: Das ist ein gemeinsamer oder getrennter Geh- und Radweg, also highway=path mit is_sidepath=yes.',
     cycleway_oneway_redundant:
       '{key}={value} ist die Richtung, in der der Radweg dieser Seite ohnehin fährt.',
     // fixes
     'fix.remove_tags': '{keys} entfernen',
+    'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
     'fix.width_part_sum': 'width={sum} setzen',
   },
@@ -124,9 +127,12 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'cycleway:*:oneway is relative to the direction of the way, but the cycle path on this side runs against the way.',
     'cycleway_oneway_wrong.contraflow':
       '{key}={value} is relative to the direction of the way, but the cycle path on this side runs against the way.',
+    sidewalk_shared_path:
+      'Sidewalk with bicycle=designated and foot=designated: this is a shared or segregated foot and cycle path, so highway=path with is_sidepath=yes.',
     cycleway_oneway_redundant:
       '{key}={value} is the direction the cycle path on this side runs in anyway.',
     'fix.remove_tags': 'Remove {keys}',
+    'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
     'fix.width_part_sum': 'Set width={sum}',
   },

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { BIKELANE_TODOS, ROAD_TODOS } from '@tilda-geo/bicycle-infrastructure'
+import { BIKELANE_TODOS, ROAD_TODOS, processBikelanes } from '@tilda-geo/bicycle-infrastructure'
 import {
   MESSAGES,
   RADNETZ_RULES,
@@ -130,6 +130,11 @@ const CASES: Record<string, RuleCase> = {
   width_part_whole: {
     trigger: { ...PATH, segregated: 'yes', width: '1.5', 'cycleway:width': '1.5' },
     quiet: { ...PATH, segregated: 'yes', width: '3', 'cycleway:width': '1.5' },
+    options: RADNETZ,
+  },
+  sidewalk_shared_path: {
+    trigger: { highway: 'footway', footway: 'sidewalk', bicycle: 'designated' },
+    quiet: { highway: 'footway', footway: 'sidewalk', bicycle: 'yes' },
     options: RADNETZ,
   },
   width_part_unsegregated: {
@@ -375,6 +380,51 @@ describe('validateTags: options', () => {
         ids(validateTags(withoutWidth, RADNETZ)).filter((id) => id.startsWith('width')),
       ).toEqual([])
     }
+  })
+
+  test('sidewalk_shared_path: way 887604839 becomes a segregated foot and cycle path', () => {
+    const tags: OsmTags = {
+      highway: 'footway',
+      footway: 'sidewalk',
+      bicycle: 'designated',
+      foot: 'designated',
+      segregated: 'yes',
+      is_sidepath: 'yes',
+      'is_sidepath:of': 'primary',
+      'cycleway:width': '1.7',
+      'cycleway:surface': 'paving_stones',
+      'footway:surface': 'paving_stones',
+      'oneway:bicycle': 'yes',
+      traffic_sign: 'none',
+    }
+    const finding = validateTags(tags, RADNETZ).find((f) => f.ruleId === 'sidewalk_shared_path')
+    expect(finding?.severity).toBe('warning')
+    expect(finding?.fixes).toHaveLength(1)
+    const { highway: _highway, footway: _footway, ...rest } = tags
+    expect(applyTagFix(tags, finding!.fixes[0]!)).toEqual({ ...rest, highway: 'path' })
+    const fixed = applyTagFix(tags, finding!.fixes[0]!)
+    expect(processBikelanes(fixed).find((r) => r._side === 'self')?.category).toStartWith(
+      'footAndCyclewaySegregated',
+    )
+    // foot and is_sidepath are added when missing
+    expect(
+      applyTagFix(
+        { highway: 'footway', footway: 'sidewalk', bicycle: 'designated' },
+        validateTags(
+          { highway: 'footway', footway: 'sidewalk', bicycle: 'designated' },
+          RADNETZ,
+        ).find((f) => f.ruleId === 'sidewalk_shared_path')!.fixes[0]!,
+      ),
+    ).toEqual({ highway: 'path', bicycle: 'designated', foot: 'designated', is_sidepath: 'yes' })
+    // not with foot=no|yes, not off the sidewalk, not in the tilda-geo profile
+    for (const quiet of [
+      { highway: 'footway', footway: 'sidewalk', bicycle: 'designated', foot: 'yes' },
+      { highway: 'footway', bicycle: 'designated' },
+      { highway: 'footway', footway: 'sidewalk', bicycle: 'permissive' },
+    ] as OsmTags[]) {
+      expect(ids(validateTags(quiet, RADNETZ))).not.toContain('sidewalk_shared_path')
+    }
+    expect(ids(validateTags(tags))).not.toContain('sidewalk_shared_path')
   })
 
   test('deprecated_cycleway_shared names the key that is shared, also on a side', () => {

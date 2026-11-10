@@ -177,10 +177,47 @@ const cyclewayOnewayRedundant: Rule = {
   },
 }
 
+/**
+ * A sidewalk tagged for bicycles and pedestrians is a foot and cycle path: `highway=path` with
+ * `is_sidepath=yes`. `bicycle=yes|permissive` stays a sidewalk where bicycles are allowed
+ * (TILDA `footwayBicycleYes`).
+ */
+const sidewalkSharedPath: Rule = {
+  id: 'sidewalk_shared_path',
+  severity: 'warning',
+  source: 'radnetz',
+  appliesTo: ['self'],
+  keys: ['highway', 'footway', 'bicycle', 'foot', 'is_sidepath'],
+  message: { code: 'sidewalk_shared_path' },
+  check({ tags }) {
+    if (tags.highway !== 'footway' || tags.footway !== 'sidewalk') return []
+    if (tags.bicycle !== 'designated') return []
+    if (tags.foot !== undefined && tags.foot !== 'designated') return []
+    const add: Record<string, string> = {}
+    if (tags.foot === undefined) add.foot = 'designated'
+    if (tags.is_sidepath === undefined) add.is_sidepath = 'yes'
+    return [
+      {
+        scope: 'self',
+        keys: ['highway', 'footway', 'bicycle'],
+        fixes: [
+          {
+            message: { code: 'fix.sidewalk_shared_path', params: {} },
+            remove: ['footway'],
+            change: { highway: { from: 'footway', to: 'path' } },
+            add,
+          },
+        ],
+      },
+    ]
+  },
+}
+
 export const RADNETZ_RULES: readonly Rule[] = [
   widthPartSum,
   widthPartWhole,
   widthPartUnsegregated,
   cyclewayOnewayWrong,
   cyclewayOnewayRedundant,
+  sidewalkSharedPath,
 ]

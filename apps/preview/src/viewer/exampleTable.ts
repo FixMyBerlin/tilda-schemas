@@ -80,7 +80,18 @@ export function parseExampleTables(markdown: string): ExampleGroup[] {
       group = { id: slug(plainHeading), label, examples: [] }
       groups.push(group)
     }
-    const linkTags = link ? new URL(link[2]!).searchParams.get('tags') : null
+    // A relative link (`?tags=…`) resolves against the site; a broken link leaves the tags out
+    let linkTags: string | null | undefined
+    if (link) {
+      try {
+        linkTags = new URL(
+          link[2]!,
+          'https://fixmyberlin.github.io/tilda-schemas/',
+        ).searchParams.get('tags')
+      } catch {
+        linkTags = undefined
+      }
+    }
     group.examples.push({
       label: link?.[1] ?? viewer,
       tags,

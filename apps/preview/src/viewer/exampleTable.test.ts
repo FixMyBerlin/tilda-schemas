@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { processBikelanes } from '@tilda-geo/bicycle-infrastructure'
-import { parseExampleTables } from './exampleTable.ts'
+import { type ExampleGroup, parseExampleTables } from './exampleTable.ts'
 import { parseTagsParam } from './tagsParam.ts'
 
 const markdown = readFileSync(
@@ -28,5 +28,30 @@ describe('examples from docs/viewer-examples.md', () => {
   it.each(examples)('$label: the package gives the expected category', (example) => {
     const categories = processBikelanes(parseTagsParam(example.tags)).map((r) => r.category)
     expect(categories).toContain(example.expected)
+  })
+})
+
+describe('viewer links in an example table', () => {
+  const tableWithLink = (link: string) =>
+    [
+      '## Group',
+      '',
+      '| Viewer | Tags | Category |',
+      '| --- | --- | --- |',
+      `| [x](${link}) | \`highway=cycleway\` | \`cycleway\` |`,
+    ].join('\n')
+
+  it('a relative link gives the tags of the link', () => {
+    const groups: ExampleGroup[] = parseExampleTables(tableWithLink('?tags=highway=cycleway'))
+    expect(groups[0]!.examples[0]!.linkTags).toBe('highway=cycleway')
+  })
+
+  it('a broken link does not throw and leaves linkTags out', () => {
+    let groups: ExampleGroup[] = []
+    expect(() => {
+      groups = parseExampleTables(tableWithLink('http://[broken'))
+    }).not.toThrow()
+    expect(groups[0]!.examples[0]).toMatchObject({ tags: 'highway=cycleway', expected: 'cycleway' })
+    expect(groups[0]!.examples[0]!.linkTags).toBeUndefined()
   })
 })

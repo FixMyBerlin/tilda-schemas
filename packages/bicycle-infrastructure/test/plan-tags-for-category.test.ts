@@ -390,3 +390,55 @@ describe('planTagsForCategory on a road side', () => {
     expect(plan).toMatchObject({ aligned: true, add: [], change: [], remove: [] })
   })
 })
+
+describe('planTagsForCategory: splitting cycleway:both', () => {
+  const keys = (plan: ReturnType<typeof planTagsForCategory>) => ({
+    add: plan.add.map((e) => `${e.key}=${e.value}`).sort(),
+    remove: [...plan.remove].sort(),
+  })
+
+  test('moves the sub-keys of cycleway:both to both sides', () => {
+    const plan = planTagsForCategory(
+      { highway: 'residential', 'cycleway:both': 'lane', 'cycleway:both:lane': 'advisory' },
+      'cyclewayOnHighway_exclusive',
+      { side: 'right' },
+    )
+    expect(plan.aligned).toBe(true)
+    expect(keys(plan)).toEqual({
+      add: [
+        'cycleway:left:lane=advisory',
+        'cycleway:left=lane',
+        'cycleway:right:lane=exclusive',
+        'cycleway:right=lane',
+      ],
+      remove: ['cycleway:both', 'cycleway:both:lane'],
+    })
+  })
+
+  test('moves the sub-keys of a bare cycleway, not the side keys', () => {
+    const plan = planTagsForCategory(
+      {
+        highway: 'residential',
+        cycleway: 'lane',
+        'cycleway:lane': 'advisory',
+        'cycleway:left:width': '1.5',
+      },
+      'cyclewayOnHighway_exclusive',
+      { side: 'right' },
+    )
+    expect(keys(plan).remove).toEqual(['cycleway', 'cycleway:lane'])
+    expect(keys(plan).add).not.toContain('cycleway:right:left:width=1.5')
+  })
+
+  test('leaves the cycleway of the road alone for a footway with bicycles allowed', () => {
+    const plan = planTagsForCategory(
+      { highway: 'residential', 'cycleway:both': 'no' },
+      'footwayBicycleYes_adjoining',
+      { side: 'right' },
+    )
+    expect(keys(plan)).toEqual({
+      add: ['sidewalk:right:bicycle=yes', 'sidewalk:right=yes'],
+      remove: [],
+    })
+  })
+})

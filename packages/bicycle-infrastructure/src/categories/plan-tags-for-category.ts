@@ -180,10 +180,16 @@ function findTransformedTags(
   return ofSide.find((t) => t._prefix === prefix) ?? ofSide[0]
 }
 
-/** The prefix of the side object a category lives on: `sidewalk` for a footway category */
+/**
+ * The prefix of the road side object a category lives on: `sidewalk` for a footway with bicycles
+ * allowed (`sidewalk:right:bicycle=yes`), `cycleway` for the rest.
+ */
+export function categorySidePrefix(categoryId: string): 'cycleway' | 'sidewalk' {
+  return SIDEWALK_CATEGORY.test(categoryId) ? 'sidewalk' : 'cycleway'
+}
+
 function sidePrefixFor(targetCategoryId: string, side: BikelaneResult['_side']) {
-  if (side === 'self') return undefined
-  return SIDEWALK_CATEGORY.test(targetCategoryId) ? 'sidewalk' : 'cycleway'
+  return side === 'self' ? undefined : categorySidePrefix(targetCategoryId)
 }
 
 /** The lifecycle TILDA reads for the side: its own, else the one of its road */
@@ -279,22 +285,36 @@ function setUpRoadSide(
   const change: TagChangeEntry[] = []
   const remove: string[] = []
 
-  const bothKey = ['cycleway:both', 'cycleway'].find((key) => tags[key] !== undefined)
+  // A footway category lives on `sidewalk:<side>`: the cycleway of the road stays as it is
+  const bothKey = SIDEWALK_CATEGORY.test(targetCategoryId)
+    ? undefined
+    : ['cycleway:both', 'cycleway'].find((key) => tags[key] !== undefined)
   if (bothKey) {
-    const value = tags[bothKey]!
-    delete tags[bothKey]
-    remove.push(bothKey)
-    for (const each of ['left', 'right']) {
-      const key = `cycleway:${each}`
-      if (tags[key] !== undefined) continue
-      tags[key] = value
-      add.push({
-        key,
-        value,
-        reason: `Split ${bothKey} into the two sides`,
-        reasonCode: 'split_both_sides',
-        reasonParams: { from: bothKey },
-      })
+    // `cycleway:both=lane` and its sub-keys (`cycleway:both:lane=advisory`) go to both sides, so
+    // the way keeps one scheme. Sub-keys of `cycleway` are those that name no side (as the LUA unnests them).
+    const moved = Object.keys(tags).filter(
+      (key) =>
+        key === bothKey ||
+        (key.startsWith(`${bothKey}:`) &&
+          !/^(left|right|both)(:|$)/.test(key.slice(bothKey.length + 1))),
+    )
+    for (const from of moved) {
+      const value = tags[from]!
+      const suffix = from.slice(bothKey.length)
+      delete tags[from]
+      remove.push(from)
+      for (const each of ['left', 'right']) {
+        const key = `cycleway:${each}${suffix}`
+        if (tags[key] !== undefined) continue
+        tags[key] = value
+        add.push({
+          key,
+          value,
+          reason: `Split ${from} into the two sides`,
+          reasonCode: 'split_both_sides',
+          reasonParams: { from },
+        })
+      }
     }
   }
 

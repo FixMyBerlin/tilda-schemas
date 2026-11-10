@@ -2,6 +2,7 @@ import {
   MAJOR_ROAD_CLASSES,
   MINOR_ROAD_CLASSES,
   TRUNK_MOTORWAY_CLASSES,
+  categorySidePrefix,
   planTagsForCategory,
   processBikelanes,
   type CategoryTagPlan,
@@ -246,7 +247,7 @@ export function categoryForSide(
 
 function resultForSide(tags: OsmTags, side: ResultSide, target?: string) {
   const ofSide = processBikelanes(tags).filter((result) => result._side === side)
-  const prefix = target?.startsWith('footwayBicycleYes_') ? 'sidewalk' : 'cycleway'
+  const prefix = categorySidePrefix(target ?? '')
   const preferred = side === 'self' ? undefined : ofSide.find((r) => r._prefix === prefix)
   return preferred ?? ofSide[0]
 }

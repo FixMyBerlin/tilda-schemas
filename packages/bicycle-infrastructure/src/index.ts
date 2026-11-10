@@ -146,6 +146,7 @@ export type { CategoryGap, CategoryGapResult } from './categories/analyze-catego
 export {
   categorySignOptions,
   listTargetCategories,
+  categorySidePrefix,
   planTagsForCategory,
   planTagVariantsForCategory,
   TAG_REASON_CODES,

@@ -50,6 +50,7 @@ export {
   mappingChoiceOptions,
   mappingKindById,
   mappingKindLabel,
+  mappingOptionRows,
   normalizeMappingChoice,
   resolveMappingChoice,
 } from './mapping-targets/mapping-targets.ts'
@@ -58,6 +59,7 @@ export type {
   MappingChoiceOptions,
   MappingKind,
   MappingLines,
+  MappingOptionRow,
   MappingPosition,
   MappingSign,
   MappingTargetGroup,

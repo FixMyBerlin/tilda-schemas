@@ -1,6 +1,5 @@
 import type { BikelaneResult, OsmTags } from '@tilda-geo/bicycle-infrastructure'
 import {
-  MAPPING_OPTION_LABELS,
   MAPPING_TARGET_GROUP_LABELS,
   TILDA_LABELS,
   applyCategoryPlan,
@@ -9,6 +8,7 @@ import {
   mappingChoiceLabel,
   mappingChoiceOptions,
   mappingKindLabel,
+  mappingOptionRows,
   normalizeMappingChoice,
   planForMappingChoice,
   renderPlanConflict,
@@ -35,71 +35,12 @@ type Props = {
 }
 
 const TEXT_OPTIONS = { categoryLabels: TILDA_LABELS.de }
-const WORDS = MAPPING_OPTION_LABELS.de
-
-type OptionRow = {
-  axis: 'position' | 'sign' | 'lines' | 'lifecycle'
-  label: string
-  /** `value` is what the choice gets; `undefined` is "not set" */
-  buttons: { value: string | undefined; label: string }[]
-}
-
-/** The rows that apply to the choice, in the order Lage, Beschilderung, Linien, Zustand */
-function optionRows(choice: MappingChoice, side: BikelaneResult['_side']): OptionRow[] {
-  const options = mappingChoiceOptions(choice, side)
-  const rows: OptionRow[] = []
-  if (options.position.length > 1) {
-    rows.push({
-      axis: 'position',
-      label: WORDS.position,
-      buttons: options.position.map((value) => ({ value, label: WORDS[value] })),
-    })
-  }
-  if (options.sign.length) {
-    rows.push({
-      axis: 'sign',
-      label: WORDS.sign,
-      buttons: [
-        { value: undefined, label: WORDS.asIs },
-        ...options.sign.map((value) => ({
-          value,
-          label:
-            value === 'signed' && options.signValue
-              ? `${WORDS.signed} (${options.signValue})`
-              : WORDS[value],
-        })),
-      ],
-    })
-  }
-  if (options.lines.length > 1) {
-    rows.push({
-      axis: 'lines',
-      label: WORDS.lines,
-      buttons: options.lines.map((value) => ({
-        // "one" is not set: the choice keeps the lines the way has
-        value: value === 'one' ? undefined : value,
-        label: WORDS[value],
-      })),
-    })
-  }
-  if (options.lifecycle.length) {
-    rows.push({
-      axis: 'lifecycle',
-      label: WORDS.lifecycle,
-      buttons: [
-        { value: undefined, label: WORDS.built },
-        ...options.lifecycle.map((value) => ({ value, label: WORDS[value] })),
-      ],
-    })
-  }
-  return rows
-}
 
 export function TargetPlan({ tags, result, choice, onChoice, onApply }: Props) {
   const side = result._side
   const normalized = choice ? normalizeMappingChoice(choice, side) : undefined
   const plan = normalized ? planForMappingChoice(tags, normalized, side) : undefined
-  const rows = normalized ? optionRows(normalized, side) : []
+  const rows = normalized ? mappingOptionRows(normalized, side, 'de') : []
   const currentKind = mappingChoiceForCategory(result.category)?.kind
 
   const setChoice = (next: MappingChoice) => {
@@ -140,7 +81,6 @@ export function TargetPlan({ tags, result, choice, onChoice, onApply }: Props) {
       {normalized && !!rows.length && (
         <div className="space-y-1.5">
           {rows.map((row) => {
-            const current = normalized[row.axis]
             return (
               <div
                 key={row.axis}
@@ -151,8 +91,8 @@ export function TargetPlan({ tags, result, choice, onChoice, onApply }: Props) {
               >
                 <span className="w-28 shrink-0 text-sm/6 text-zinc-500">{row.label}</span>
                 <div className="flex flex-wrap gap-1">
-                  {row.buttons.map((button) => {
-                    const pressed = button.value === current
+                  {row.values.map((button) => {
+                    const pressed = button.value === row.current
                     return (
                       <button
                         key={button.value ?? 'none'}

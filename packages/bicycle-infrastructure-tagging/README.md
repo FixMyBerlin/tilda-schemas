@@ -87,6 +87,8 @@ const choice = { kind: 'footAndCyclewayShared', position: 'isolated', sign: 'uns
 mappingChoiceOptions(choice, 'self')
 // { position: ['adjoining', 'isolated'], sign: ['signed', 'unsigned'], signValue: 'DE:240',
 //   lines: [], lifecycle: ['construction', 'temporary'] }
+mappingOptionRows(choice, 'self', 'de')
+// [{ axis: 'position', label: 'Lage', values: [...], current: 'isolated' }, { axis: 'sign', ... }, ...]
 mappingChoiceLabel(choice, 'de') // Gemeinsamer Geh- und Radweg, selbstständig geführt, unbeschildert
 
 const tags = { highway: 'path', traffic_sign: 'none' }
@@ -95,7 +97,7 @@ const plan = planForMappingChoice(tags, choice, 'self')
 applyCategoryPlan(tags, plan)
 ```
 
-A mapping choice is a kind of infrastructure (a TILDA category, or for paths the category without `_adjoining` / `_isolated`) plus options that do not exclude each other: the position (along a road or independent), the signs (as they are, with the sign of the category, or `traffic_sign=none`), the lines (the footway as a line of its own, only for a segregated path) and the state (under construction or temporary). `mappingChoiceOptions(choice, side)` says which options a kind has: a road side has no position and no second line, a way under construction has no sign option, only some kinds can be temporary. A choice resolves to one TILDA category, the tags the plan must contain and a lifecycle (`resolveMappingChoice`). Everything is derived from the category specs; the full table is in [docs/mapping-targets.md](../../docs/mapping-targets.md).
+A mapping choice is a kind of infrastructure (a TILDA category, or for paths the category without `_adjoining` / `_isolated`) plus options that do not exclude each other: the position (along a road or independent), the signs (as they are, with the sign of the category, or `traffic_sign=none`), the lines (the footway as a line of its own, only for a segregated path) and the state (under construction or temporary). `mappingOptionRows(choice, side, 'de')` gives the option rows of a form with labels and the current value; `mappingChoiceOptions(choice, side)` says which options a kind has: a road side has no position and no second line, a way under construction has no sign option, only some kinds can be temporary. A choice resolves to one TILDA category, the tags the plan must contain and a lifecycle (`resolveMappingChoice`). Everything is derived from the category specs; the full table is in [docs/mapping-targets.md](../../docs/mapping-targets.md).
 
 ### Required attributes
 

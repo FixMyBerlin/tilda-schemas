@@ -124,7 +124,8 @@ export function categoryMappingGroup(categoryId: string): MappingTargetGroupId |
 export type MappingTargetLanguage = 'de' | 'en'
 export type MappingPosition = 'adjoining' | 'isolated'
 export type MappingSign = 'signed' | 'unsigned'
-export type MappingLines = 'one' | 'two'
+/** `two`: the footway as a line of its own; not set is one line */
+export type MappingLines = 'two'
 
 /** What the mapper picks; options left out keep what the way has (or are not offered) */
 export interface MappingChoice {
@@ -145,13 +146,17 @@ export interface MappingKind {
   categories: string[]
 }
 
-/** The options a kind has on one side; an axis with fewer than two values is not offered */
+/**
+ * The options a kind has on one side. `position` lists every value (offered when there are two);
+ * `sign`, `lines` and `lifecycle` list the values besides "not set" (offered when not empty).
+ */
 export interface MappingChoiceOptions {
   position: MappingPosition[]
   /** `undefined` (as it is) is always possible besides these */
   sign: MappingSign[]
   /** The sign `signed` writes (`DE:241`) */
   signValue?: string
+  /** `undefined` (one line) is always possible besides these */
   lines: MappingLines[]
   /** `undefined` (built) is always possible besides these */
   lifecycle: PlanLifecycle[]
@@ -283,8 +288,7 @@ export function mappingChoiceOptions(
     unsignedPossible &&
     !SIGN_REQUIRED_CATEGORIES.has(categoryId) &&
     choice.lifecycle !== 'construction'
-  const lines: MappingLines[] =
-    TWO_LINES_KINDS.has(kind.id) && side === 'self' ? ['one', 'two'] : []
+  const lines: MappingLines[] = TWO_LINES_KINDS.has(kind.id) && side === 'self' ? ['two'] : []
   const lifecycle: PlanLifecycle[] = TEMPORARY_KINDS.has(kind.id)
     ? ['construction', 'temporary']
     : ['construction']
@@ -376,7 +380,7 @@ export function allMappingChoices(): ResolvedMappingChoice[] {
         const withLife = { ...base, ...(life ? { lifecycle: life } : {}) }
         const options = mappingChoiceOptions(withLife)
         for (const sign of [undefined, ...options.sign]) {
-          for (const lines of options.lines.length ? options.lines : [undefined]) {
+          for (const lines of [undefined, ...options.lines]) {
             const resolved = resolveMappingChoice({
               ...withLife,
               ...(sign ? { sign } : {}),
@@ -489,4 +493,78 @@ export function mappingChoiceLabel(choice: MappingChoice, lang: MappingTargetLan
   if (choice.lines === 'two') parts.push(words.two)
   if (choice.lifecycle) parts.push(words[choice.lifecycle])
   return parts.join(', ')
+}
+
+/** One row of options in a "Change to" form: the axis, its label and its buttons */
+export interface MappingOptionRow {
+  axis: 'position' | 'sign' | 'lines' | 'lifecycle'
+  label: string
+  /** `value: undefined` is "not set" (as it is, one line, built) */
+  values: {
+    value: MappingPosition | MappingSign | MappingLines | PlanLifecycle | undefined
+    label: string
+  }[]
+  /** The value of the (normalized) choice */
+  current: string | undefined
+}
+
+/**
+ * The option rows a form shows for `choice` on `side`, in the order position, signs, lines, state.
+ * Rows the kind does not offer are left out. Pick a value, then `normalizeMappingChoice` again:
+ * the rows depend on each other (no signs under construction).
+ */
+export function mappingOptionRows(
+  choice: MappingChoice,
+  side: ResultSide,
+  lang: MappingTargetLanguage,
+): MappingOptionRow[] {
+  const words = MAPPING_OPTION_LABELS[lang]
+  const normalized = normalizeMappingChoice(choice, side)
+  const options = mappingChoiceOptions(normalized, side)
+  const rows: MappingOptionRow[] = []
+  if (options.position.length > 1) {
+    rows.push({
+      axis: 'position',
+      label: words.position,
+      values: options.position.map((value) => ({ value, label: words[value] })),
+      current: normalized.position,
+    })
+  }
+  if (options.sign.length) {
+    rows.push({
+      axis: 'sign',
+      label: words.sign,
+      values: [
+        { value: undefined, label: words.asIs },
+        ...options.sign.map((value) => ({
+          value,
+          label: value === 'signed' ? `${words.signed} (${options.signValue})` : words.unsigned,
+        })),
+      ],
+      current: normalized.sign,
+    })
+  }
+  if (options.lines.length) {
+    rows.push({
+      axis: 'lines',
+      label: words.lines,
+      values: [
+        { value: undefined, label: words.one },
+        ...options.lines.map((value) => ({ value, label: words[value] })),
+      ],
+      current: normalized.lines,
+    })
+  }
+  if (options.lifecycle.length) {
+    rows.push({
+      axis: 'lifecycle',
+      label: words.lifecycle,
+      values: [
+        { value: undefined, label: words.built },
+        ...options.lifecycle.map((value) => ({ value, label: words[value] })),
+      ],
+      current: normalized.lifecycle,
+    })
+  }
+  return rows
 }

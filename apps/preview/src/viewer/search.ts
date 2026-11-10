@@ -26,7 +26,7 @@ export const viewerSearchSchema = z.object({
   kind: text,
   position: z.enum(['adjoining', 'isolated']).optional().catch(undefined),
   sign: z.enum(['signed', 'unsigned']).optional().catch(undefined),
-  lines: z.enum(['one', 'two']).optional().catch(undefined),
+  lines: z.enum(['two']).optional().catch(undefined),
   lifecycle: z.enum(['construction', 'temporary']).optional().catch(undefined),
   profile: z.enum(PROFILES).optional().catch(undefined),
 })

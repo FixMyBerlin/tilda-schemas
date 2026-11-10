@@ -14,6 +14,7 @@ import {
   mappingChoiceLabel,
   mappingChoiceOptions,
   mappingKindLabel,
+  mappingOptionRows,
   normalizeMappingChoice,
   planForMappingChoice,
   resolveMappingChoice,
@@ -71,7 +72,7 @@ describe('mapping choices', () => {
       position: ['adjoining', 'isolated'],
       sign: ['signed', 'unsigned'],
       signValue: 'DE:241',
-      lines: ['one', 'two'],
+      lines: ['two'],
       lifecycle: ['construction', 'temporary'],
     })
     // a road side runs along the road and has no second line
@@ -90,6 +91,42 @@ describe('mapping choices', () => {
       lines: [],
       lifecycle: ['construction'],
     })
+  })
+
+  it('gives the option rows with labels, depending on each other', () => {
+    const rows = (choice: Parameters<typeof mappingOptionRows>[0], side: 'self' | 'right') =>
+      mappingOptionRows(choice, side, 'de').map((row) => ({
+        axis: row.axis,
+        current: row.current,
+        values: row.values.map((value) => value.label),
+      }))
+    expect(rows({ kind: 'footAndCyclewaySegregated', sign: 'signed' }, 'self')).toEqual([
+      {
+        axis: 'position',
+        current: 'adjoining',
+        values: ['straßenbegleitend', 'selbstständig geführt'],
+      },
+      {
+        axis: 'sign',
+        current: 'signed',
+        values: ['wie vorhanden', 'beschildert (DE:241)', 'unbeschildert'],
+      },
+      {
+        axis: 'lines',
+        current: undefined,
+        values: ['eine Linie', 'zwei Linien (Gehweg als eigene Linie)'],
+      },
+      { axis: 'lifecycle', current: undefined, values: ['fertig', 'im Bau', 'temporär'] },
+    ])
+    // under construction there is no sign row, and the sign is dropped
+    expect(
+      rows(
+        { kind: 'footAndCyclewaySegregated', sign: 'signed', lifecycle: 'construction' },
+        'right',
+      ),
+    ).toEqual([
+      { axis: 'lifecycle', current: 'construction', values: ['fertig', 'im Bau', 'temporär'] },
+    ])
   })
 
   it('normalizing drops what the kind does not offer', () => {

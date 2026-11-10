@@ -136,4 +136,4 @@ The labels are generated from tilda-geo's topic docs: `bun run update-labels -- 
 
 ## License
 
-[AGPL-3.0-or-later](../../LICENSE.md), FixMyCity / FixMyBerlin.
+[ISC](LICENSE.md), FixMyCity GmbH. Where the logic comes from: [NOTICE.md](NOTICE.md).

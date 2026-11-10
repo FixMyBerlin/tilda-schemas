@@ -90,3 +90,7 @@ Releases use [changesets](https://github.com/changesets/changesets), see [`.chan
 
 - `_adjoining` / `_isolated` / `_adjoiningOrIsolated` use the raw OSM `is_sidepath` tag (same as LUA categorization). TILDA’s `_is_sidepath` CSV estimate is export-only and does not affect category.
 - `highway=construction` lifecycle is handled; the geometry crossing-length filter (>100 m) is skipped when `_length` is absent (typical for live Overpass tags).
+
+## License
+
+[ISC](LICENSE.md), FixMyCity GmbH. The logic is ported from the LUA processing of tilda-geo (AGPL-3.0) by its rights holder, see [NOTICE.md](NOTICE.md).

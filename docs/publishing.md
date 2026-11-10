@@ -40,7 +40,7 @@ Variante B). Per-schema DOIs are deferred until multiple schemas are cited indep
 
 1. FMC Zenodo account (`dev-team@fixmycity.de`) shared in Bitwarden.
 2. Enable the `FixMyBerlin/tilda-schemas` repository in Zenodo’s GitHub settings.
-3. Root [`LICENSE.md`](../LICENSE.md) and [`CITATION.cff`](../CITATION.cff) present
+3. Root [`LICENSE.md`](../LICENSE.md) (ISC for code, CC BY 4.0 for text and schemas) and [`CITATION.cff`](../CITATION.cff) present
    (**do not rename** `title` in `CITATION.cff` after the first publish).
 
 ## Cut a citable release

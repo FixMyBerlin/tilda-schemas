@@ -3,7 +3,7 @@ title: 'TILDA Schemas'
 message: 'If you use TILDA schemas in your work, please cite them using the metadata from this file (and the Zenodo DOI once published).'
 type: software
 authors:
-  - family-names: Ordans
+  - family-names: Jordans
     given-names: Tobias
     email: tobias@fixmycity.de
     affiliation: FixMyCity GmbH
@@ -22,6 +22,8 @@ keywords:
   - TILDA
   - schema
   - FixMyCity
-license: AGPL-3.0-or-later
+license:
+  - ISC
+  - CC-BY-4.0
 version: '0.1.0'
 date-released: '2026-07-27'

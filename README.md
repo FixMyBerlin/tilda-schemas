@@ -72,4 +72,4 @@ See [`CITATION.cff`](CITATION.cff). Publishing notes: [`docs/publishing.md`](doc
 
 ## License
 
-[AGPL-3.0-or-later](LICENSE.md), FixMyCity / FixMyBerlin.
+Code under [ISC](LICENSE.md), text and schemas under [CC BY 4.0](LICENSE-CC-BY-4.0.md), FixMyCity GmbH. The package logic is ported from tilda-geo (AGPL-3.0) by its rights holder, see [NOTICE.md](NOTICE.md).

@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/FixMyBerlin/tilda-schemas/issues"
   },
-  "license": "AGPL-3.0-or-later",
+  "license": "ISC",
   "author": "Tobias Jordans",
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
     "directory": "packages/bicycle-infrastructure"
   },
   "files": [
-    "dist"
+    "dist",
+    "NOTICE.md"
   ],
   "type": "module",
   "sideEffects": false,

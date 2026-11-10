@@ -6,3 +6,4 @@ description: Controlled vocabulary and fixtures for the bicycle-infrastructure c
 schema: schema/category.schema.json
 fixtures: fixtures/
 changelog: CHANGELOG.md
+license: CC-BY-4.0

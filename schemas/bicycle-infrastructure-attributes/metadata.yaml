@@ -5,3 +5,4 @@ version: '0.0.0'
 description: Draft vocabularies and fixtures for non-category bicycle-infrastructure output keys.
 schema: schema/output.schema.json
 fixtures: fixtures/
+license: CC-BY-4.0

@@ -1,5 +1,18 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.2.0
+
+### Minor Changes
+
+- 883ccb4: A sidewalk where bicycles are only allowed ("Radfahrer frei": `highway=footway` + `bicycle=yes|permissive`, or `highway=path` + `foot=designated` + `bicycle=yes`, TILDA `footwayBicycleYes`) is now the foot line in `pathRole` (`part: 'foot'`), not one line for both modes. `partKind` finds it as the foot part for merging again, and `partWidthMode` offers no part widths on it.
+- a86f0ff: `oneway:bicycle` in the editor helpers:
+
+  - `reverseTags` now flips every `oneway` value that refers to the drawing direction (`oneway:bicycle`, `cycleway:<side>:oneway`, …), not only `oneway`.
+  - On a way of its own, the oneway attribute is about `oneway:bicycle` when that tag is there, because TILDA reads it first. A tagged `oneway` next to it shows up in the new field `RequiredAttribute.unused`, and `attributeNote` says "… ist auch getaggt, wird aber nicht beachtet".
+
+- 1568c56: - On `highway=footway|path`, the oneway attribute now always writes `oneway:bicycle`. Pedestrians are never one-way, but `oneway:bicycle` says that explicitly. A plain `oneway` is still read, as TILDA does.
+  - `unexpected_oneway_direction` now has a message per case: `.left_with`, `.right_against`, `.both_with` and `.both_against`. Each says what the tagged value means for that side, what the default is, and when the tag is still right. Source: [Key:cycleway:right:oneway](https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway) and its German page.
+
 ## 0.1.1
 
 ### Patch Changes

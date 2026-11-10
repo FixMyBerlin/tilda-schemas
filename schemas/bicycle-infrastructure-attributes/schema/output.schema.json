@@ -51,6 +51,11 @@
     "_infrastructureExists": {
       "type": "boolean"
     },
+    "lifecycle": {
+      "description": "The side's own lifecycle, else the one of its road. `temporary=yes` and `cycleway|sidewalk[:<side>]:temporary=yes` give `temporary`; `highway=construction` + `construction=<highway>` and the `construction:` prefix give `construction`; `access=no` (and `bicycle|foot=no` on cycle- and footways) with a construction or closure note give `construction_no_access` or `blocked`.",
+      "type": ["string", "null"],
+      "enum": ["construction", "construction_no_access", "blocked", "temporary", null]
+    },
     "oneway": {
       "type": ["string", "null"],
       "enum": ["yes", "no", "car_not_bike", "assumed_no", "implicit_yes", null]

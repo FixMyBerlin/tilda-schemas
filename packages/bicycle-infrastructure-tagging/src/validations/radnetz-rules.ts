@@ -89,7 +89,11 @@ const widthPartWhole: Rule = {
             width: formatMeters(whole.width),
           },
         },
-        fixes: [removeTagsFix(partKeysWithSources(tags, [whole.key]))],
+        // either one is right: a path may have only the part width, without `width`
+        fixes: [
+          removeTagsFix(partKeysWithSources(tags, [whole.key])),
+          removeTagsFix(partKeysWithSources(tags, ['width'])),
+        ],
       },
     ]
   },

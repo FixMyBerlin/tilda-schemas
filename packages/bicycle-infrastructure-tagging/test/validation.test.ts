@@ -356,6 +356,27 @@ describe('validateTags: options', () => {
     }
   })
 
+  test('width_part_whole offers both fixes; part widths without width are fine', () => {
+    for (const part of ['cycleway', 'footway']) {
+      const tags = {
+        ...PATH,
+        segregated: 'yes',
+        width: '1.7',
+        'source:width': 'survey',
+        [`${part}:width`]: '1.7',
+      } as OsmTags
+      const finding = validateTags(tags, RADNETZ).find((f) => f.ruleId === 'width_part_whole')
+      expect(finding?.fixes.map((fix) => fix.remove)).toEqual([
+        [`${part}:width`],
+        ['width', 'source:width'],
+      ])
+      const { width: _width, 'source:width': _source, ...withoutWidth } = tags
+      expect(
+        ids(validateTags(withoutWidth, RADNETZ)).filter((id) => id.startsWith('width')),
+      ).toEqual([])
+    }
+  })
+
   test('deprecated_cycleway_shared names the key that is shared, also on a side', () => {
     for (const key of ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right']) {
       const tags = { ...ROAD, 'cycleway:left': 'lane', [key]: 'shared' } as OsmTags
@@ -471,7 +492,7 @@ describe('fixes', () => {
         },
         'width_part_whole',
       ).map((fix) => fix.remove),
-    ).toEqual([['cycleway:width', 'source:cycleway:width']])
+    ).toEqual([['cycleway:width', 'source:cycleway:width'], ['width']])
     expect(
       fixes(
         { ...ROAD, oneway: 'yes', 'oneway:bicycle': 'no', 'cycleway:left:oneway': 'yes' },

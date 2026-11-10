@@ -84,6 +84,11 @@ type Rule = {
   derivedFrom?: (ctx: RuleContext) => { tag: string; tilda: string } | undefined
   /** The tag TILDA reads instead of this key when both are there (`oneway:bicycle` wins over `oneway`) */
   overriddenBy?: (ctx: RuleContext) => string | undefined
+  /**
+   * A key TILDA reads first on the way itself (`oneway:bicycle` before `oneway`): when it is tagged,
+   * the row shows and writes that key, and the own key, if tagged too, only as not used
+   */
+  preferredKey?: string
   when?: (ctx: RuleContext) => boolean
   /** the rule does not apply here (another rule replaces it) */
   unless?: (ctx: RuleContext) => boolean
@@ -314,7 +319,8 @@ const COMMON = define('common', [
     guesses: ['assumed_no', 'implicit_yes'],
     // lanes on the road run with the traffic, bicycle roads are two-way: TILDA's default is reliable there
     assumed: assumedOneway,
-    overriddenBy: onewayBicycleTag,
+    // TILDA reads `oneway:bicycle` first (`derive_oneway.lua`): show that tag, `oneway` next to it is not used
+    preferredKey: 'oneway:bicycle',
     // a road side: only "both ways" is information, the direction follows from the side
     assumedOptions: ['no'],
     note: (ctx) => (ctx.side !== 'self' ? 'oneway_side' : undefined),
@@ -545,106 +551,133 @@ function summary(ctx: RuleContext, keys: string[]) {
   return tagged.map((key) => `${key.split(':').pop()}=${ctx.value(key)}`).join(', ')
 }
 
+/**
+ * The key TILDA reads first is tagged (and has no row of its own): the row is about that key,
+ * the own key, if tagged too, is not used
+ */
+function withPreferredKey(
+  rule: Rule,
+  active: Rule[],
+  ctx: RuleContext,
+): { rule: Rule; unused?: string } {
+  const preferred = rule.preferredKey
+  if (
+    !preferred ||
+    ctx.side !== 'self' ||
+    ctx.tags[preferred] === undefined ||
+    active.some((other) => other.key === preferred)
+  ) {
+    return { rule }
+  }
+  const own = ctx.tags[rule.key]
+  return {
+    rule: { ...rule, key: preferred, readKeys: undefined, alsoKeys: undefined },
+    unused: own !== undefined ? `${rule.key}=${own}` : undefined,
+  }
+}
+
 function evaluate(rules: Rule[], ctx: RuleContext): RequiredAttribute[] {
-  return rules
+  const active = rules
     .filter((rule) => !ctx.profile.skipAttributes?.includes(rule.id))
     .filter((rule) => (!rule.when || rule.when(ctx)) && !rule.unless?.(ctx))
-    .map((rule) => {
-      const ownKeys = [rule.key, ...(rule.alsoKeys ?? [])]
-      const keysFor = (key: string) =>
-        rule.sourceFor
-          ? lookupKeys(rule.sourceFor, ctx.side, ctx.prefix).map((k) => `source:${k}`)
-          : [key, ...(key === rule.key ? (rule.readKeys ?? []) : [])].flatMap((k) =>
-              lookupKeys(k, ctx.side, ctx.prefix),
-            )
-      const plain = rule.alsoKeys
-        ? summary(ctx, [rule.key, ...rule.alsoKeys])
-        : keysFor(rule.key)
-            .map((k) => ctx.tags[k])
-            .find((v) => v !== undefined)
-      const directionKeys =
-        rule.directions && plain === undefined
-          ? ['forward', 'backward'].map((d) => `${rule.key}:${d}`)
-          : []
-      const directional = directionKeys.map((key) =>
-        keysFor(key).find((k) => ctx.tags[k] !== undefined),
-      )
-      const oneDirection = directional.filter(Boolean).length === 1
-      const value =
-        plain ??
-        (directional.every(Boolean) && directionKeys.length
-          ? directional
-              .map((k, i) => `${directionKeys[i]!.split(':').pop()}=${ctx.tags[k!]}`)
-              .join(', ')
-          : undefined)
-      const lookup = [...new Set([...ownKeys, ...directionKeys].flatMap(keysFor))]
-      const tagged = [...ownKeys, ...directionKeys]
-        .map((key) => keysFor(key).find((k) => ctx.tags[k] !== undefined))
-        .filter((key, i, keys): key is string => !!key && keys.indexOf(key) === i)
-        .map((key) => ({ key, value: ctx.tags[key]! }))
-      const derived = value === undefined ? rule.derivedFrom?.(ctx) : undefined
-      const assumed = value === undefined && !derived ? rule.assumed?.(ctx) : undefined
-      const tilda = oneDirection
-        ? undefined
-        : (derived?.tilda ?? assumed ?? displayValue(rule.tilda?.(ctx)))
-      const allOptions = [
-        ...(typeof rule.options === 'function' ? rule.options(ctx) : (rule.options ?? [])),
-      ]
-      // a default: offer only the values that say something else
-      const options =
-        assumed === undefined
-          ? allOptions
-          : [...(rule.assumedOptions ?? allOptions.filter((option) => option !== assumed))]
-      const optional = typeof rule.optional === 'function' ? rule.optional(ctx) : !!rule.optional
+  return active.map((original) => {
+    const { rule, unused } = withPreferredKey(original, active, ctx)
+    const ownKeys = [rule.key, ...(rule.alsoKeys ?? [])]
+    const keysFor = (key: string) =>
+      rule.sourceFor
+        ? lookupKeys(rule.sourceFor, ctx.side, ctx.prefix).map((k) => `source:${k}`)
+        : [key, ...(key === rule.key ? (rule.readKeys ?? []) : [])].flatMap((k) =>
+            lookupKeys(k, ctx.side, ctx.prefix),
+          )
+    const plain = rule.alsoKeys
+      ? summary(ctx, [rule.key, ...rule.alsoKeys])
+      : keysFor(rule.key)
+          .map((k) => ctx.tags[k])
+          .find((v) => v !== undefined)
+    const directionKeys =
+      rule.directions && plain === undefined
+        ? ['forward', 'backward'].map((d) => `${rule.key}:${d}`)
+        : []
+    const directional = directionKeys.map((key) =>
+      keysFor(key).find((k) => ctx.tags[k] !== undefined),
+    )
+    const oneDirection = directional.filter(Boolean).length === 1
+    const value =
+      plain ??
+      (directional.every(Boolean) && directionKeys.length
+        ? directional
+            .map((k, i) => `${directionKeys[i]!.split(':').pop()}=${ctx.tags[k!]}`)
+            .join(', ')
+        : undefined)
+    const lookup = [...new Set([...ownKeys, ...directionKeys].flatMap(keysFor))]
+    const tagged = [...ownKeys, ...directionKeys]
+      .map((key) => keysFor(key).find((k) => ctx.tags[k] !== undefined))
+      .filter((key, i, keys): key is string => !!key && keys.indexOf(key) === i)
+      .map((key) => ({ key, value: ctx.tags[key]! }))
+    const derived = value === undefined ? rule.derivedFrom?.(ctx) : undefined
+    const assumed = value === undefined && !derived ? rule.assumed?.(ctx) : undefined
+    const tilda = oneDirection
+      ? undefined
+      : (derived?.tilda ?? assumed ?? displayValue(rule.tilda?.(ctx)))
+    const allOptions = [
+      ...(typeof rule.options === 'function' ? rule.options(ctx) : (rule.options ?? [])),
+    ]
+    // a default: offer only the values that say something else
+    const options =
+      assumed === undefined
+        ? allOptions
+        : [...(rule.assumedOptions ?? allOptions.filter((option) => option !== assumed))]
+    const optional = typeof rule.optional === 'function' ? rule.optional(ctx) : !!rule.optional
 
-      let state: AttributeState
-      if (value !== undefined) {
-        // TILDA does not read the directional keys, so a missing TILDA value says nothing about them
-        const dropped = rule.tilda !== undefined && tilda === undefined && plain !== undefined
-        const invalid = rule.tilda === undefined && rule.strict && !allOptions.includes(value)
-        state = dropped || invalid ? 'ignored' : 'ok'
-      } else if (derived) {
-        state = 'inherited'
-      } else if (assumed !== undefined) {
-        state = 'assumed'
-      } else if (tilda !== undefined) {
-        state = rule.guesses?.includes(tilda) ? 'guess' : 'inherited'
-      } else {
-        state = 'missing'
-      }
+    let state: AttributeState
+    if (value !== undefined) {
+      // TILDA does not read the directional keys, so a missing TILDA value says nothing about them
+      const dropped = rule.tilda !== undefined && tilda === undefined && plain !== undefined
+      const invalid = rule.tilda === undefined && rule.strict && !allOptions.includes(value)
+      state = dropped || invalid ? 'ignored' : 'ok'
+    } else if (derived) {
+      state = 'inherited'
+    } else if (assumed !== undefined) {
+      state = 'assumed'
+    } else if (tilda !== undefined) {
+      state = rule.guesses?.includes(tilda) ? 'guess' : 'inherited'
+    } else {
+      state = 'missing'
+    }
 
-      const key = rule.sourceFor
-        ? `source:${writeKeyForSide(rule.sourceFor, ctx.side, ctx.prefix)}`
-        : writeKeyForSide(rule.key, ctx.side, ctx.prefix)
-      const ruleSet = rule.ruleSet!
+    const key = rule.sourceFor
+      ? `source:${writeKeyForSide(rule.sourceFor, ctx.side, ctx.prefix)}`
+      : writeKeyForSide(rule.key, ctx.side, ctx.prefix)
+    const ruleSet = rule.ruleSet!
 
-      return {
-        id: rule.id,
-        ruleSet,
-        key,
-        value,
-        tagged,
-        lookup,
-        tilda,
-        source:
-          derived?.tag ??
-          (value !== undefined && tilda !== undefined && tilda !== value
-            ? rule.overriddenBy?.(ctx)
-            : undefined),
-        state,
-        options,
-        default: state === 'assumed' ? `${key}=${assumed}` : undefined,
-        note:
-          state === 'assumed'
-            ? typeof rule.note === 'function'
-              ? rule.note(ctx)
-              : rule.note
-            : undefined,
-        optional,
-        hint: rule.hint,
-        feeds: [...(ctx.profile.feeds[`${ruleSet}:${rule.id}`] ?? [])],
-      }
-    })
+    return {
+      id: rule.id,
+      ruleSet,
+      key,
+      value,
+      tagged,
+      lookup,
+      tilda,
+      source:
+        derived?.tag ??
+        (value !== undefined && tilda !== undefined && tilda !== value
+          ? rule.overriddenBy?.(ctx)
+          : undefined),
+      unused,
+      state,
+      options,
+      default: state === 'assumed' ? `${key}=${assumed}` : undefined,
+      note:
+        state === 'assumed'
+          ? typeof rule.note === 'function'
+            ? rule.note(ctx)
+            : rule.note
+          : undefined,
+      optional,
+      hint: rule.hint,
+      feeds: [...(ctx.profile.feeds[`${ruleSet}:${rule.id}`] ?? [])],
+    }
+  })
 }
 
 function contextFor(

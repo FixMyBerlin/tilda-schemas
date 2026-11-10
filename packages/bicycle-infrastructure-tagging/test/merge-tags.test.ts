@@ -215,6 +215,22 @@ describe('reverseTags', () => {
       surface: 'asphalt',
     })
   })
+
+  it('flips every oneway value that is relative to the way, `no` stays', () => {
+    expect(
+      reverseTags({
+        oneway: 'no',
+        'oneway:bicycle': 'yes',
+        'cycleway:left:oneway': '-1',
+        'cycleway:right:oneway': 'no',
+      }),
+    ).toEqual({
+      oneway: 'no',
+      'oneway:bicycle': '-1',
+      'cycleway:right:oneway': 'yes',
+      'cycleway:left:oneway': 'no',
+    })
+  })
 })
 
 describe('commonTags', () => {

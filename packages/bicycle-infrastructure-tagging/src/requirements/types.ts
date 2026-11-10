@@ -80,6 +80,8 @@ export type RequiredAttribute = {
   tilda: string | undefined
   /** the tag TILDA derives an untagged value from (`parking:right=lane`) */
   source?: string
+  /** a tag of this attribute that is there, but TILDA does not read it (`oneway=yes` next to `oneway:bicycle`) */
+  unused?: string
   state: AttributeState
   /** values TILDA accepts, offered as buttons; for `assumed` only the values that differ from the default */
   options: string[]

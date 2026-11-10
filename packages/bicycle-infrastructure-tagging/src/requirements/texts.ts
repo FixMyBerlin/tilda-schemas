@@ -179,6 +179,7 @@ export const ATTRIBUTE_STATE_TEXTS: Texts = {
     guess: 'TILDA nimmt {value} an; bitte tagge es',
     ignored: 'TILDA kann „{value}“ nicht verwenden: Wähle einen anderen Wert',
     normalized: 'TILDA liest es als {value}',
+    unused: '{tag} ist auch getaggt, wird aber nicht beachtet',
     missing: 'fehlt',
     not_tagged: 'ist nicht getaggt',
     check_below: 'unten prüfen',
@@ -192,6 +193,7 @@ export const ATTRIBUTE_STATE_TEXTS: Texts = {
     guess: 'TILDA assumes {value}; please tag it',
     ignored: 'TILDA cannot use “{value}”: choose another value',
     normalized: 'TILDA reads it as {value}',
+    unused: '{tag} is tagged too, but TILDA does not use it',
     missing: 'is missing',
     not_tagged: 'is not tagged',
     check_below: 'check below',
@@ -244,6 +246,20 @@ export function attributeHint(
  * say. Same rules as the TILDA section of the iD fork.
  */
 export function attributeNote(
+  attribute: Pick<
+    RequiredAttribute,
+    'state' | 'value' | 'tilda' | 'source' | 'note' | 'default' | 'hint' | 'unused'
+  >,
+  language: MessageLanguage,
+): string | undefined {
+  const note = valueNote(attribute, language)
+  if (!attribute.unused) return note
+  const unused = fillTemplate(ATTRIBUTE_STATE_TEXTS[language].unused!, { tag: attribute.unused })
+  return note ? `${note}. ${unused}` : unused
+}
+
+/** What TILDA makes of the tagged value, if that is worth saying */
+function valueNote(
   attribute: Pick<
     RequiredAttribute,
     'state' | 'value' | 'tilda' | 'source' | 'note' | 'default' | 'hint'

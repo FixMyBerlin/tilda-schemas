@@ -50,8 +50,12 @@ export function reverseTags(tags: OsmTags): OsmTags {
         .join(':')
     ] = value
   }
-  if (result.oneway === 'yes') result.oneway = '-1'
-  else if (result.oneway === '-1') result.oneway = 'yes'
+  // `oneway` values are relative to the drawing direction; `no` and other values stay
+  for (const key of Object.keys(result)) {
+    if (key !== 'oneway' && !key.startsWith('oneway:') && !/:oneway(:|$)/.test(key)) continue
+    if (result[key] === 'yes' || result[key] === '1') result[key] = '-1'
+    else if (result[key] === '-1') result[key] = 'yes'
+  }
   return result
 }
 

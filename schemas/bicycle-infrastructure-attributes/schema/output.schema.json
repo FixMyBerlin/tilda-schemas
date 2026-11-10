@@ -103,8 +103,15 @@
       ]
     },
     "surface_source": {
+      "description": "`_directional` when the surface came from a side or direction value (`surface:left|right|forward|backward`, `surface:bicycle:<side>`) instead of `surface` or `surface:bicycle`.",
       "type": ["string", "null"],
-      "enum": ["tag", "parent_highway_tag", null]
+      "enum": [
+        "tag",
+        "tag_directional",
+        "parent_highway_tag",
+        "parent_highway_tag_directional",
+        null
+      ]
     },
     "surface_confidence": {
       "type": ["string", "null"],

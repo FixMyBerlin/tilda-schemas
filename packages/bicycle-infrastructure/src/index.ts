@@ -1,5 +1,9 @@
 import { categorizeBikelane } from './categories/bikelane-categories.ts'
 import { deriveBikelaneTodos } from './derive/bikelane-todos.ts'
+import {
+  bikelaneSurfaceSource,
+  deriveBikelaneSurfaceTags,
+} from './derive/derive-bikelane-surface-tags.ts'
 import { deriveOnewayDirection } from './derive/derive-oneway.ts'
 import { deriveBikelaneSmoothness } from './derive/derive-smoothness.ts'
 import { deriveBikelaneSurface } from './derive/derive-surface.ts'
@@ -80,12 +84,14 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
       const ts = deriveTrafficSigns(t)
       result.traffic_sign = ts.traffic_sign ?? null
 
-      const surf = deriveBikelaneSurface(t, category)
+      // `surface:bicycle*` and the directional values first, then the usual derivations
+      const surfaceTags = deriveBikelaneSurfaceTags(t, category)
+      const surf = deriveBikelaneSurface(surfaceTags.tags, category)
       result.surface = surf.surface ?? null
-      result.surface_source = surf.surface_source ?? null
+      result.surface_source = bikelaneSurfaceSource(surfaceTags, surf.surface_source) ?? null
       result.surface_confidence = surf.surface_confidence ?? null
 
-      const smooth = deriveBikelaneSmoothness(t, category)
+      const smooth = deriveBikelaneSmoothness(surfaceTags.tags, category)
       result.smoothness = smooth.smoothness ?? null
       result.smoothness_source = smooth.smoothness_source ?? null
       result.smoothness_confidence = smooth.smoothness_confidence ?? null

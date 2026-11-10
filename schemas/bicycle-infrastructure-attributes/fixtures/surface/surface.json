@@ -61,5 +61,42 @@
     },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": { "surface": null }
+  },
+  {
+    "name": "surface:bicycle on a bicycle road is the surface of the bikelane (tilda-geo 7acec52af)",
+    "input": {
+      "highway": "residential",
+      "bicycle_road": "yes",
+      "traffic_sign": "DE:244.1",
+      "surface": "sett",
+      "surface:bicycle": "asphalt"
+    },
+    "select": { "side": "self" },
+    "expect": { "surface": "asphalt", "surface_source": "tag" }
+  },
+  {
+    "name": "without surface the worse side value is the surface (tag_directional)",
+    "input": {
+      "highway": "path",
+      "bicycle": "designated",
+      "foot": "designated",
+      "segregated": "no",
+      "surface:left": "asphalt",
+      "surface:right": "sett"
+    },
+    "select": { "side": "self" },
+    "expect": { "surface": "sett", "surface_source": "tag_directional" }
+  },
+  {
+    "name": "a lane without its own surface takes the side value of the road (parent_highway_tag_directional)",
+    "input": {
+      "highway": "residential",
+      "surface:right": "asphalt",
+      "surface": "sett",
+      "cycleway:right": "lane",
+      "cycleway:right:lane": "advisory"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "surface": "asphalt", "surface_source": "parent_highway_tag_directional" }
   }
 ]

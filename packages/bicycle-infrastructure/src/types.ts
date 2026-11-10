@@ -23,12 +23,20 @@ export const DISALLOWED = 'DISALLOWED_VALUE'
 
 export type ImplicitOneWayConfidence = 'high' | 'medium' | 'low' | 'not_applicable'
 
+/**
+ * How a bikelane category reads `surface:bicycle` (`BikelaneCategory.bicycleSurface` in LUA):
+ * `strip`: bicycles use a strip of a wide shared area; `whole_way`: the bikelane is a way of its own.
+ */
+export type BicycleSurface = 'strip' | 'whole_way'
+
 export interface BikelaneCategory {
   id: string
   infrastructureExists: boolean
   implicitOneWay: boolean
   implicitOneWayConfidence: ImplicitOneWayConfidence
   copySurfaceSmoothnessFromParent: boolean
+  /** How `surface:bicycle` applies, see `deriveBikelaneSurfaceTags`; undefined ignores it. */
+  bicycleSurface?: BicycleSurface
   /** Receives a decision-view of the tags; returns truthy when the category matches. */
   condition: (tags: OsmTags) => boolean | undefined
   /** Optional post-match mutation of the tags (mirrors LUA `process`). */

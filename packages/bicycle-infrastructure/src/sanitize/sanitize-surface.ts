@@ -63,4 +63,15 @@ export function sanitizeSurface(tags: OsmTags): string | undefined {
   return sanitizeForLogging(tags.surface, SURFACE_ALLOWED, SURFACE_IGNORED)
 }
 
+/**
+ * Port of `SANITIZE_TAGS.allowed_surface`: the sanitized surface for a value from another key
+ * (`surface:bicycle`, `surface:right`, …), with the way's `sett:length`.
+ * `undefined` for values outside the allowlist (and ignored ones), so callers can fall back to the next value.
+ */
+export function allowedSurface(value: string | undefined, tags: OsmTags): string | undefined {
+  if (value == null) return undefined
+  const surface = sanitizeSurface({ surface: value, 'sett:length': tags['sett:length'] })
+  return surface === DISALLOWED ? undefined : surface
+}
+
 export { DISALLOWED }

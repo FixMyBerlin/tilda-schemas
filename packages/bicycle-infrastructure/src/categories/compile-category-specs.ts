@@ -30,14 +30,14 @@ function mkCategory(
   spec: CategorySpec,
   id: string,
   condition: BikelaneCategory['condition'],
-  copyFromParent?: boolean,
 ): BikelaneCategory {
   return {
     id,
     infrastructureExists: spec.infrastructureExists,
     implicitOneWay: spec.implicitOneWay,
     implicitOneWayConfidence: spec.implicitOneWayConfidence,
-    copySurfaceSmoothnessFromParent: copyFromParent ?? spec.copySurfaceSmoothnessFromParent,
+    copySurfaceSmoothnessFromParent: spec.copySurfaceSmoothnessFromParent,
+    bicycleSurface: spec.bicycleSurface,
     condition,
     process: spec.process,
   }
@@ -62,12 +62,9 @@ function expandRefining(
     const childSpec: CategorySpec = child.implicitOneWayConfidence
       ? { ...spec, implicitOneWayConfidence: child.implicitOneWayConfidence }
       : spec
-    const copyFromParent = ['_adjoining', '_isolated', '_adjoiningOrIsolated'].includes(
-      child.idSuffix,
-    )
-      ? false
-      : undefined
-    return mkCategory(childSpec, resolveRefinedId(spec, child), condition, copyFromParent)
+    // Subcategories inherit `copySurfaceSmoothnessFromParent` and `bicycleSurface`
+    // (create_subcategories_adjoining_or_isolated.lua, tilda-geo 7acec52af).
+    return mkCategory(childSpec, resolveRefinedId(spec, child), condition)
   })
 }
 

@@ -1,11 +1,10 @@
 import { deriveTrafficSigns } from '../derive/derive-traffic-signs.ts'
 import { extractValueFromLanes } from '../helpers/extract-value-from-lanes.ts'
-import { containsSubstring } from '../helpers/strings.ts'
 /**
  * Declarative category specs — single source of truth for match rules and gap analysis.
  * OSMnexus-inspired: base `match` + nested `refining` for subcategories.
  */
-import type { ImplicitOneWayConfidence, OsmTags } from '../types.ts'
+import type { BicycleSurface, ImplicitOneWayConfidence, OsmTags } from '../types.ts'
 import {
   bicycleRoadBase,
   bicycleRoadVehicleDestination,
@@ -44,38 +43,13 @@ export interface CategorySpec {
   implicitOneWay: boolean
   implicitOneWayConfidence: ImplicitOneWayConfidence
   copySurfaceSmoothnessFromParent: boolean
+  /** How `surface:bicycle` applies, see `deriveBikelaneSurfaceTags`; undefined ignores it. */
+  bicycleSurface?: BicycleSurface
   match?: TagPredicate
   excludes?: TagPredicate[]
   refining?: RefiningChild[]
   gapDiscriminators?: GapDiscriminator[]
   process?: (tags: OsmTags) => void
-}
-
-function footAndCyclewaySharedProcess(tags: OsmTags): void {
-  if (tags.highway === 'service') {
-    tags.description = [tags.description, 'TILDA-Hinweis: Radinfrastruktur auf einem Zufahrtsweg.']
-      .filter(Boolean)
-      .join('; ')
-  }
-  if (
-    tags.highway === 'track' ||
-    containsSubstring(tags.traffic_sign, '1026-36') ||
-    containsSubstring(tags.traffic_sign, '1026-37') ||
-    containsSubstring(tags.traffic_sign, '1026-38') ||
-    containsSubstring(tags.access, 'agricultural') ||
-    containsSubstring(tags.motor_vehicle, 'agricultural') ||
-    containsSubstring(tags.vehicle, 'agricultural') ||
-    containsSubstring(tags.access, 'forestry') ||
-    containsSubstring(tags.motor_vehicle, 'forestry') ||
-    containsSubstring(tags.vehicle, 'forestry')
-  ) {
-    tags.description = [
-      tags.description,
-      'TILDA-Hinweis: Radinfrastruktur geteilt mit land- und/oder forstwirtschaftlichem Verkehr.',
-    ]
-      .filter(Boolean)
-      .join('; ')
-  }
 }
 
 function cyclewayOnHighwayBetweenLanesProcess(tags: OsmTags): void {
@@ -305,6 +279,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: true,
+    bicycleSurface: 'strip',
     // Requires sanitizeTrafficSign for DE:244 prefix and German text variants.
     match: pred.macro('bicycle_road_vehicle_destination'),
   },
@@ -314,6 +289,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: true,
+    bicycleSurface: 'strip',
     // Requires sanitizeTrafficSign for DE:244 prefix.
     match: pred.macro('bicycle_road_base'),
   },
@@ -343,6 +319,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: false,
+    bicycleSurface: 'strip',
     match: pred.and(pred.eq('highway', 'pedestrian'), pred.in('bicycle', ['yes', 'designated'])),
   },
   {
@@ -351,6 +328,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: true,
+    bicycleSurface: 'strip',
     match: pred.and(pred.eq('highway', 'cycleway'), pred.eq('cycleway', 'shared_lane')),
   },
   {
@@ -369,9 +347,9 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: true,
     implicitOneWayConfidence: 'low',
     copySurfaceSmoothnessFromParent: false,
+    bicycleSurface: 'whole_way',
     excludes: [pred.macro('is_crossing_pattern')],
     match: FOOT_AND_CYCLEWAY_SHARED_MATCH,
-    process: footAndCyclewaySharedProcess,
     refining: [...ADJOINING_OR_ISOLATED_REFINING],
     gapDiscriminators: SIDEpath_GAP,
   },
@@ -381,6 +359,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: true,
     implicitOneWayConfidence: 'low',
     copySurfaceSmoothnessFromParent: false,
+    bicycleSurface: 'whole_way',
     excludes: [pred.macro('is_crossing_pattern')],
     match: FOOT_AND_CYCLEWAY_SEGREGATED_MATCH,
     refining: [...ADJOINING_OR_ISOLATED_REFINING],
@@ -392,6 +371,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: false,
     implicitOneWayConfidence: 'low',
     copySurfaceSmoothnessFromParent: false,
+    bicycleSurface: 'whole_way',
     excludes: [pred.macro('is_crossing_pattern'), pred.eq('cycleway', 'lane')],
     match: CYCLEWAY_SEPARATED_BASE_MATCH,
     refining: [...ADJOINING_OR_ISOLATED_REFINING],
@@ -414,6 +394,7 @@ export const CATEGORY_SPECS: CategorySpec[] = [
     implicitOneWay: true,
     implicitOneWayConfidence: 'low',
     copySurfaceSmoothnessFromParent: false,
+    bicycleSurface: 'whole_way',
     // mtb:scale numeric parsing and sanitizeTrafficSign for 1022-10.
     match: pred.macro('footway_bicycle_yes'),
     refining: [...ADJOINING_OR_ISOLATED_REFINING],

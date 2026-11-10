@@ -7,10 +7,6 @@ import { containsSubstring } from '../helpers/strings.ts'
  */
 import type { OsmTags } from '../types.ts'
 
-function toSemicolonList(parts: Array<string | undefined>): string {
-  return parts.filter((p) => p != null && p !== '').join('; ')
-}
-
 /** The access tags that signal a (construction/closure) restriction, per highway type. */
 function restrictedAccessTags(tags: OsmTags): string[] {
   const restricted: string[] = []
@@ -37,10 +33,6 @@ export function transformLifecycleTags(tags: OsmTags): void {
       `${tags['access:reason'] ?? ''} ${tags.description ?? ''} ${tags.note ?? ''}`.toLowerCase()
     if (containsSubstring(text, 'construction') || containsSubstring(text, 'baustelle')) {
       tags.lifecycle = 'construction_no_access'
-      tags.description = toSemicolonList([
-        tags.description,
-        'TILDA-Hinweis: Weg gesperrt aufgrund einer Baustelle.',
-      ])
       for (const t of constructionRestricted) tags[t] = undefined
     }
   }
@@ -60,10 +52,6 @@ export function transformLifecycleTags(tags: OsmTags): void {
     const text = `${tags.description ?? ''} ${tags.note ?? ''}`.toLowerCase()
     if (blockedTerms.some((term) => containsSubstring(text, term))) {
       tags.lifecycle = 'blocked'
-      tags.description = toSemicolonList([
-        tags.description,
-        'TILDA-Hinweis: Weg gesperrt (Sperrung).',
-      ])
       for (const t of blockedRestricted) tags[t] = undefined
     }
   }

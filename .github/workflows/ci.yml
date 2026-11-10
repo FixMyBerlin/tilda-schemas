@@ -25,7 +25,7 @@ jobs:
         run: bun run format-check
 
       - name: Lint
-        run: bun run lint
+        run: bun run lint-check
 
       - name: Build package
         run: bun run build
@@ -35,6 +35,13 @@ jobs:
 
       - name: Test
         run: bun run test-run
+
+      - name: Install Playwright browser
+        working-directory: apps/preview
+        run: bunx playwright install --with-deps chromium
+
+      - name: E2E tests (preview)
+        run: bun run --cwd apps/preview test-e2e
 
       - name: Check exports (publint, attw)
         run: bun run check-exports

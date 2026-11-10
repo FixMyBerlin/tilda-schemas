@@ -208,7 +208,7 @@ The table is generated: `bun run validation-rules-doc` in `packages/bicycle-infr
 | Source      | Rules | error | warning | info |
 | ----------- | ----- | ----- | ------- | ---- |
 | `tilda-geo` | 21    | 0     | 15      | 6    |
-| `radnetz`   | 5     | 0     | 4       | 1    |
+| `radnetz`   | 5     | 1     | 3       | 1    |
 
 ### Source `tilda-geo` (the todos of the processing)
 
@@ -220,7 +220,7 @@ The table is generated: `bun run validation-rules-doc` in `packages/bicycle-infr
 | `advisory_or_exclusive`                    | warning  | left, right             | `{prefix}` `lane`                                                                 | Fehlt: Schutzstreifen (advisory) oder Radfahrstreifen (exclusive).                                                                                                  |
 | `needs_clarification_track`                | warning  | left, right             | `{prefix}` `segregated` `traffic_sign`                                            | cycleway=track reicht nicht, um die Radinfrastruktur einzuordnen. Fehlt: segregated=yes oder segregated=no, oder ein Verkehrszeichen (DE:237, DE:240, DE:241).      |
 | `mixed_cycleway_both`                      | warning  | road                    | `cycleway` `cycleway:both` `cycleway:left` `cycleway:right`                       | cycleway=* oder cycleway:both=* ist mit cycleway:left / cycleway:right gemischt.                                                                                    |
-| `deprecated_cycleway_shared`               | warning  | road                    | `cycleway`                                                                        | cycleway=shared ist veraltet und sollte ersetzt oder entfernt werden.                                                                                               |
+| `deprecated_cycleway_shared`               | warning  | road                    | `cycleway` `cycleway:both` `cycleway:left` `cycleway:right`                       | {key}=shared ist veraltet und sollte ersetzt oder entfernt werden.                                                                                                  |
 | `unexpected_highway_path`                  | warning  | self                    | `highway` `bicycle` `foot`                                                        | Erwartet wird highway=cycleway (beschildert mit DE:237 oder unbeschildert) statt highway=path.                                                                      |
 | `missing_traffic_sign_vehicle_destination` | info     | self                    | `bicycle_road` `vehicle` `motor_vehicle` `traffic_sign`                           | Fehlt: traffic_sign mit „Anlieger frei“ (DE:244.1,1020-30 oder ähnlich).                                                                                            |
 | `missing_traffic_sign_244`                 | info     | self                    | `bicycle_road` `traffic_sign`                                                     | Fehlt: traffic_sign=DE:244.1 oder ähnlich.                                                                                                                          |
@@ -240,7 +240,7 @@ The table is generated: `bun run validation-rules-doc` in `packages/bicycle-infr
 
 | Id                          | Severity | Applies to | Keys                                                                                    | Message (de)                                                                                             |
 | --------------------------- | -------- | ---------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `width_part_sum`            | warning  | self, road | `width` `cycleway:width` `footway:width`                                                | width={width} ist nicht die Summe der Teilbreiten (cycleway:width + footway:width = {sum}).              |
+| `width_part_sum`            | warning  | self       | `width` `cycleway:width` `footway:width`                                                | width={width} ist nicht die Summe der Teilbreiten (cycleway:width + footway:width = {sum}).              |
 | `width_part_whole`          | error    | self       | `width` `cycleway:width` `footway:width`                                                | Eine Teilbreite (cycleway:width oder footway:width) ist so breit wie der ganze Weg.                      |
 | `width_part_unsegregated`   | warning  | self       | `segregated` `cycleway:width` `footway:width`                                           | Teilbreiten ({keys}) an einem Weg mit segregated=no. Ohne Trennung gibt es nur width.                    |
 | `cycleway_oneway_wrong`     | warning  | road       | `cycleway:left:oneway` `cycleway:right:oneway` `cycleway:both:oneway` `cycleway:oneway` | cycleway:*:oneway gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg. |

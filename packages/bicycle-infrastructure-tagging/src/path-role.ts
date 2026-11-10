@@ -8,9 +8,11 @@ import type { OsmTags, ResultSide } from './types.ts'
  * - `oneLine`: one way for both modes (`highway=path|footway|cycleway` with foot and bicycle
  *   allowed), `segregated=yes|no`. Part widths (`cycleway:width`, `footway:width`) only exist with
  *   `segregated=yes`; with `segregated=no` there is only `width`.
- * - `twoLines`: a line that carries only one mode, so the other mode has a line of its own: a
+ * - `twoLines`: a line for one mode, so the other mode has a line of its own: a
  *   `highway=cycleway` without foot access (usually `traffic_mode:right=foot` on it) or a
  *   `highway=footway` without bicycle access. No part widths, `width` is the width of this line.
+ *   The other mode may be allowed without being designated: a sidewalk with "Radfahrer frei"
+ *   (`highway=footway` + `bicycle=yes`, TILDA `footwayBicycleYes`) is the foot line.
  */
 export type PathMappingStyle = 'centerline' | 'oneLine' | 'twoLines'
 
@@ -113,6 +115,13 @@ export function pathRole(tags: OsmTags, options: PathRoleOptions = {}): PathRole
   }
 
   if (!carriesFoot && !carriesBike) return none
+  // A sidewalk where bicycles are only allowed ("Radfahrer frei", TILDA `footwayBicycleYes`):
+  // the foot line, not one line for both
+  const footDesignated = tags.highway === 'footway' || tags.foot === 'designated'
+  const bikeOnlyAllowed = tags.bicycle === 'yes' || tags.bicycle === 'permissive'
+  if (carriesFoot && carriesBike && footDesignated && bikeOnlyAllowed) {
+    return { ...none, style: 'twoLines', carriesFoot, carriesBike, part: 'foot' }
+  }
   if (carriesFoot && carriesBike) return { ...none, style: 'oneLine', carriesFoot, carriesBike }
   return {
     ...none,

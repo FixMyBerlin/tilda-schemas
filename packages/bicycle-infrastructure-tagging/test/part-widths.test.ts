@@ -27,7 +27,10 @@ describe('partWidthMode', () => {
       'optional',
     )
     expect(partWidthMode({ highway: 'cycleway', foot: 'yes' })).toBe('optional')
-    expect(partWidthMode({ highway: 'footway', bicycle: 'yes' })).toBe('optional')
+  })
+
+  it('has no parts on a sidewalk with "Radfahrer frei"', () => {
+    expect(partWidthMode({ highway: 'footway', bicycle: 'yes' })).toBeUndefined()
   })
 
   it('has no parts on roads and single-use ways', () => {

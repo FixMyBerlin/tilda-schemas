@@ -49,11 +49,12 @@ describe('partKind', () => {
     expect(partKind({ highway: 'footway', footway: 'sidewalk' })).toBe('foot')
     expect(partKind({ highway: 'path', bicycle: 'designated' })).toBe('bike')
     expect(partKind({ highway: 'path', foot: 'designated' })).toBe('foot')
+    // a sidewalk with "Radfahrer frei": bicycles are only allowed, it is the foot part
+    expect(partKind({ highway: 'footway', bicycle: 'yes' })).toBe('foot')
+    expect(partKind({ highway: 'path', foot: 'designated', bicycle: 'yes' })).toBe('foot')
   })
 
   it('skips ways that are both already, roads and areas', () => {
-    // bicycles allowed (not only designated) is one way for both modes, see pathRole
-    expect(partKind({ highway: 'path', foot: 'designated', bicycle: 'yes' })).toBeUndefined()
     expect(partKind({ highway: 'path', bicycle: 'designated', foot: 'designated' })).toBeUndefined()
     expect(partKind({ highway: 'cycleway', foot: 'designated' })).toBeUndefined()
     expect(partKind({ highway: 'path' })).toBeUndefined()
@@ -63,6 +64,15 @@ describe('partKind', () => {
 })
 
 describe('combinedPathTags', () => {
+  it('a sidewalk with "Radfahrer frei" as the foot part: bicycle=yes does not end up on the path', () => {
+    const { tags } = combinedPathTags(
+      { highway: 'cycleway' },
+      { highway: 'footway', footway: 'sidewalk', bicycle: 'yes' },
+    )
+    expect(tags.bicycle).toBe('designated')
+    expect(tags['footway:bicycle']).toBeUndefined()
+  })
+
   it('a two-way cycleway gets no oneway:bicycle: on a way that is not one-way it says nothing', () => {
     const { tags } = combinedPathTags(
       { highway: 'cycleway', oneway: 'no' },

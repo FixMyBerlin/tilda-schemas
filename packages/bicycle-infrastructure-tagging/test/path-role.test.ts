@@ -5,7 +5,6 @@ describe('pathRole', () => {
   it('one line for both modes: highway=path|footway|cycleway with foot and bicycle allowed', () => {
     for (const tags of [
       { highway: 'path', bicycle: 'designated', foot: 'designated' },
-      { highway: 'footway', bicycle: 'yes' },
       { highway: 'cycleway', foot: 'permissive' },
     ]) {
       const role = pathRole(tags)
@@ -13,6 +12,23 @@ describe('pathRole', () => {
       expect(role.carriesFoot && role.carriesBike).toBe(true)
       expect(role.part).toBeUndefined()
     }
+  })
+
+  it('a sidewalk with "Radfahrer frei" (bicycle=yes|permissive) is the foot line', () => {
+    for (const tags of [
+      { highway: 'footway', bicycle: 'yes' },
+      { highway: 'footway', footway: 'sidewalk', bicycle: 'permissive' },
+      { highway: 'path', foot: 'designated', bicycle: 'yes' },
+    ]) {
+      expect(pathRole(tags)).toMatchObject({
+        style: 'twoLines',
+        carriesFoot: true,
+        carriesBike: true,
+        part: 'foot',
+      })
+    }
+    // designated for both stays one line
+    expect(pathRole({ highway: 'footway', bicycle: 'designated' }).style).toBe('oneLine')
   })
 
   it('two lines: a cycleway without foot access, a footway without bicycle access', () => {

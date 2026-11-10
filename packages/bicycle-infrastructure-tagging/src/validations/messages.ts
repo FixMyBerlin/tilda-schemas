@@ -38,6 +38,14 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     missing_oneway: 'Fehlt: ein ausdrückliches oneway.',
     unexpected_oneway_direction:
       '{key}={value} lässt den Radweg gegen den Verkehr seiner Seite fahren.',
+    'unexpected_oneway_direction.left_with':
+      '{key}=yes heißt: Links fahren Räder in Richtung des gezeichneten Weges, also gegen die Autos daneben. Ohne Tag gilt links -1, mit dem Verkehr dieser Seite. Ist das gemeint, entferne das Tag; fahren Räder dort in beide Richtungen, setze no. Nur wenn der Radweg wirklich links liegt und in Wegrichtung führt, bleibt yes.',
+    'unexpected_oneway_direction.right_against':
+      '{key}=-1 heißt: Rechts fahren Räder gegen die Richtung des gezeichneten Weges, also gegen die Autos daneben. Ohne Tag gilt rechts yes, mit dem Verkehr dieser Seite. Ist das gemeint, entferne das Tag; fahren Räder dort in beide Richtungen, setze no. Nur wenn der Radweg rechts wirklich gegen die Wegrichtung führt, bleibt -1.',
+    'unexpected_oneway_direction.both_with':
+      '{key}=yes heißt: Auf beiden Seiten fahren Räder in Richtung des gezeichneten Weges, links also gegen die Autos daneben. Ohne Tag gilt rechts yes und links -1, jeweils mit dem Verkehr. Ist das gemeint, entferne das Tag. Nur wenn beide Radwege wirklich in dieselbe Richtung führen, bleibt yes, mit einer Erklärung in note.',
+    'unexpected_oneway_direction.both_against':
+      '{key}=-1 heißt: Auf beiden Seiten fahren Räder gegen die Richtung des gezeichneten Weges, rechts also gegen die Autos daneben. Ohne Tag gilt rechts yes und links -1, jeweils mit dem Verkehr. Ist das gemeint, entferne das Tag. Nur wenn beide Radwege wirklich gegen die Wegrichtung führen, bleibt -1.',
     deprecated_cycleway_shared:
       '{key}=shared ist veraltet und sollte ersetzt oder entfernt werden.',
     // radnetz: widths
@@ -93,6 +101,14 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     missing_oneway: 'Missing: an explicit oneway.',
     unexpected_oneway_direction:
       '{key}={value} makes the cycle path run against the traffic of its side.',
+    'unexpected_oneway_direction.left_with':
+      '{key}=yes means: on the left, bicycles ride in the direction of the drawn way, so against the cars next to them. Without the tag the left side is -1, with the traffic of its side. If that is what you mean, remove the tag; if bicycles ride both ways there, set no. Keep yes only if the cycle path really is on the left and runs in the direction of the way.',
+    'unexpected_oneway_direction.right_against':
+      '{key}=-1 means: on the right, bicycles ride against the direction of the drawn way, so against the cars next to them. Without the tag the right side is yes, with the traffic of its side. If that is what you mean, remove the tag; if bicycles ride both ways there, set no. Keep -1 only if the cycle path on the right really runs against the direction of the way.',
+    'unexpected_oneway_direction.both_with':
+      '{key}=yes means: on both sides, bicycles ride in the direction of the drawn way, so on the left against the cars next to them. Without the tag the right side is yes and the left side -1, each with the traffic. If that is what you mean, remove the tag. Keep yes only if both cycle paths really run in the same direction, with an explanation in note.',
+    'unexpected_oneway_direction.both_against':
+      '{key}=-1 means: on both sides, bicycles ride against the direction of the drawn way, so on the right against the cars next to them. Without the tag the right side is yes and the left side -1, each with the traffic. If that is what you mean, remove the tag. Keep -1 only if both cycle paths really run against the direction of the way.',
     deprecated_cycleway_shared: '{key}=shared is deprecated and should be replaced or removed.',
     width_part_sum:
       'width={width} is not the sum of the part widths (cycleway:width + footway:width = {sum}).',

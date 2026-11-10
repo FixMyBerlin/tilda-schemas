@@ -41,6 +41,8 @@ interface TodoMeta {
   /** Keys of a finding of the road; default: `keys` resolved for the road */
   roadKeys?: (tags: OsmTags) => string[]
   params?: (tags: OsmTags, key: string | undefined) => MessageParams
+  /** A more specific message code for a finding (`<id>.<variant>`); default: the rule id */
+  messageCode?: (tags: OsmTags, key: string | undefined) => string | undefined
 }
 
 const SIDE_ONEWAY_KEY = (tags: OsmTags, row: BikelaneResult): string[] => {
@@ -195,6 +197,12 @@ const TODO_META: Record<string, TodoMeta> = {
     fromRoad: false,
     sideKeys: SIDE_ONEWAY_KEY,
     params: (tags, key) => ({ key: key ?? '', value: key ? (tags[key] ?? '') : '' }),
+    messageCode: (tags, key) => {
+      if (!key) return undefined
+      const side = key.includes(':left:') ? 'left' : key.includes(':right:') ? 'right' : 'both'
+      const direction = tags[key] === '-1' ? 'against' : 'with'
+      return `unexpected_oneway_direction.${side}_${direction}`
+    },
   },
   deprecated_cycleway_shared: {
     severity: 'warning',
@@ -250,7 +258,10 @@ function hitsOfBikelanes(id: string, meta: TodoMeta, context: RuleContext): Rule
     return {
       scope,
       keys,
-      message: { params: meta.params?.(tags, keys[0]) ?? {} },
+      message: {
+        code: meta.messageCode?.(tags, keys[0]),
+        params: meta.params?.(tags, keys[0]) ?? {},
+      },
       fixes: fixesOf(row, id),
     }
   })

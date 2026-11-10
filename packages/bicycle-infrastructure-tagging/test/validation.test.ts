@@ -242,7 +242,7 @@ describe('validateTags: scope, keys and messages', () => {
     expect(finding?.scope).toBe('left')
     expect(finding?.keys).toEqual(['cycleway:left:oneway'])
     expect(finding?.message).toEqual({
-      code: 'unexpected_oneway_direction',
+      code: 'unexpected_oneway_direction.left_with',
       params: { key: 'cycleway:left:oneway', value: 'yes' },
     })
     expect(finding?.fixes.map((fix) => fix.remove)).toEqual([['cycleway:left:oneway']])
@@ -528,4 +528,30 @@ test('width_part_sum ignores roads: there width is the carriageway', () => {
   expect(
     validateTags(road, { profile: 'radnetz-berlin' }).map((finding) => finding.ruleId),
   ).not.toContain('width_part_sum')
+})
+
+describe('unexpected_oneway_direction texts', () => {
+  test('explains what the tagged value means on its side', () => {
+    const code = (tags: Record<string, string>) =>
+      validateTags(tags).find((f) => f.ruleId === 'unexpected_oneway_direction')?.message.code
+    expect(
+      code({ highway: 'residential', 'cycleway:left': 'lane', 'cycleway:left:oneway': 'yes' }),
+    ).toBe('unexpected_oneway_direction.left_with')
+    expect(
+      code({ highway: 'residential', 'cycleway:right': 'lane', 'cycleway:right:oneway': '-1' }),
+    ).toBe('unexpected_oneway_direction.right_against')
+    expect(
+      code({ highway: 'residential', 'cycleway:both': 'lane', 'cycleway:both:oneway': 'yes' }),
+    ).toBe('unexpected_oneway_direction.both_with')
+    for (const language of ['de', 'en'] as const) {
+      for (const variant of ['left_with', 'right_against', 'both_with', 'both_against']) {
+        expect(
+          renderMessage(
+            { code: `unexpected_oneway_direction.${variant}`, params: { key: 'k' } },
+            language,
+          ),
+        ).toStartWith('k=')
+      }
+    }
+  })
 })

@@ -48,7 +48,7 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     missing_oneway:
       'Ein Weg hat kein ausdrückliches oneway, und die Fahrtrichtung lässt sich nur raten. Für Wege, bei denen das unsicher ist, wird ein oneway erwartet.',
     unexpected_oneway_direction:
-      'Ein Radstreifen oder Radweg an einer Straße ohne Einbahn ist so getaggt, dass er gegen den Verkehr seiner Seite fährt (zum Beispiel cycleway:left:oneway=yes). Meist wird „eine Richtung“ mit „Richtung des Weges“ verwechselt.',
+      'Ein Radstreifen oder Radweg an einer Straße ohne Einbahn ist so getaggt, dass er gegen den Verkehr seiner Seite fährt (zum Beispiel cycleway:left:oneway=yes). cycleway:<Seite>:oneway gilt für die Richtung des gezeichneten Weges: yes = in Wegrichtung, -1 = gegen die Wegrichtung, no = beide Richtungen. Ohne Tag fahren Räder mit dem Verkehr ihrer Seite, also rechts yes und links -1 (https://wiki.openstreetmap.org/wiki/DE:Key:cycleway:right:oneway). Meist wird „eine Richtung“ mit „Richtung des Weges“ verwechselt.',
     // radnetz
     width_part_sum:
       'Die Breite eines Geh- und Radwegs ist nicht die Summe der Teilbreiten von Radweg (cycleway:width) und Gehweg (footway:width).',
@@ -101,7 +101,7 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     missing_oneway:
       'A way has no explicit oneway and its direction can only be guessed. For ways where that is uncertain, a oneway is expected.',
     unexpected_oneway_direction:
-      'A cycle lane or cycle path on a road that is not one-way is tagged to run against the traffic of its side (for example cycleway:left:oneway=yes). Usually "one direction" was mixed up with "direction of the way".',
+      'A cycle lane or cycle path on a road that is not one-way is tagged to run against the traffic of its side (for example cycleway:left:oneway=yes). cycleway:<side>:oneway is relative to the direction of the drawn way: yes = with the way, -1 = against it, no = both directions. Without the tag, bicycles ride with the traffic of their side, so yes on the right and -1 on the left (https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway). Usually "one direction" was mixed up with "direction of the way".',
     width_part_sum:
       'The width of a foot and cycle path is not the sum of the part widths of the cycleway (cycleway:width) and the footway (footway:width).',
     width_part_whole:

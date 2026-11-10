@@ -442,7 +442,17 @@ describe('roadAttributes', () => {
     expect(onlyBicycle.key).toBe('oneway:bicycle')
     expect(onlyBicycle.state).toBe('ok')
     expect(onlyBicycle.unused).toBeUndefined()
-    // without oneway:bicycle the row is about oneway
+    // footway or path with only oneway: TILDA reads it, the row writes oneway:bicycle
+    for (const highway of ['footway', 'path']) {
+      const onlyOneway = { highway, bicycle: 'yes', oneway: 'yes' }
+      const row = byId(requiredAttributes(resultFor(onlyOneway, 'self'), onlyOneway)).oneway
+      expect(row.key).toBe('oneway:bicycle')
+      expect(row.value).toBe('yes')
+      expect(row.tagged).toEqual([{ key: 'oneway', value: 'yes' }])
+      expect(row.state).toBe('ok')
+      expect(row.unused).toBeUndefined()
+    }
+    // without oneway:bicycle a cycleway's row is about oneway
     const plain = { highway: 'cycleway', oneway: 'yes' }
     const plainOneway = byId(requiredAttributes(resultFor(plain, 'self'), plain)).oneway
     expect(plainOneway.key).toBe('oneway')

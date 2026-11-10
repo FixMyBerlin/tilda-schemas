@@ -89,6 +89,12 @@ type Rule = {
    * the row shows and writes that key, and the own key, if tagged too, only as not used
    */
   preferredKey?: string
+  /**
+   * Write `preferredKey` even when only the own key is tagged; the own key is still read. On a
+   * footway or path `oneway` can only mean bicycles (pedestrians are never one-way), but
+   * `oneway:bicycle` says so.
+   */
+  preferredKeyAlways?: (ctx: RuleContext) => boolean
   when?: (ctx: RuleContext) => boolean
   /** the rule does not apply here (another rule replaces it) */
   unless?: (ctx: RuleContext) => boolean
@@ -321,6 +327,7 @@ const COMMON = define('common', [
     assumed: assumedOneway,
     // TILDA reads `oneway:bicycle` first (`derive_oneway.lua`): show that tag, `oneway` next to it is not used
     preferredKey: 'oneway:bicycle',
+    preferredKeyAlways: (ctx) => ctx.tags.highway === 'footway' || ctx.tags.highway === 'path',
     // a road side: only "both ways" is information, the direction follows from the side
     assumedOptions: ['no'],
     note: (ctx) => (ctx.side !== 'self' ? 'oneway_side' : undefined),
@@ -564,12 +571,16 @@ function withPreferredKey(
   if (
     !preferred ||
     ctx.side !== 'self' ||
-    ctx.tags[preferred] === undefined ||
+    (ctx.tags[preferred] === undefined && !rule.preferredKeyAlways?.(ctx)) ||
     active.some((other) => other.key === preferred)
   ) {
     return { rule }
   }
   const own = ctx.tags[rule.key]
+  if (ctx.tags[preferred] === undefined) {
+    // only the own key is tagged: TILDA reads it, the row writes the preferred key
+    return { rule: { ...rule, key: preferred, readKeys: [rule.key], alsoKeys: undefined } }
+  }
   return {
     rule: { ...rule, key: preferred, readKeys: undefined, alsoKeys: undefined },
     unused: own !== undefined ? `${rule.key}=${own}` : undefined,

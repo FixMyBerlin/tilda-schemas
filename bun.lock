@@ -63,7 +63,7 @@
     },
     "packages/bicycle-infrastructure-tagging": {
       "name": "@tilda-geo/bicycle-infrastructure-tagging",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@tilda-geo/bicycle-infrastructure": "workspace:*",
       },

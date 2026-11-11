@@ -6,17 +6,20 @@ import type { OsmTags, Side } from '../types.ts'
 /**
  * `separation` values that make a lane "protected" (`cyclewayOnHighwayProtected`), as in
  * `bikelane_categories.lua`. Other allowed values (`kerb`, `greenery`, ...) do not.
+ * Ordered by use in Berlin (extract of 2026-11-09, `highway=cycleway`, separation towards the road):
+ * bollard 102, flex_post 35, vertical_panel 28, bump 25, fence 9, guard_rail 6; the others 0.
+ * Editors offer them in this order, `bollard` as the default.
  */
 export const PROTECTIVE_SEPARATION = [
   'bollard',
   'flex_post',
   'vertical_panel',
-  'studs',
   'bump',
-  'planter',
   'fence',
-  'jersey_barrier',
   'guard_rail',
+  'planter',
+  'studs',
+  'jersey_barrier',
 ] as const
 
 export const SEPARATION_ALLOWED = [

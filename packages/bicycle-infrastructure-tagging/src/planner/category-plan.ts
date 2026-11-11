@@ -56,6 +56,11 @@ export interface PlannedAdd {
   reason?: string
   /** The core's stable code for `reason`, for `category_requirement` */
   reasonCode?: TagReasonCode
+  /**
+   * Values the mapper can pick instead of `value` (the default, also the first entry), sorted by
+   * use. Show them as a selection: `separation:left` of a protected lane is `bollard`, `flex_post`, ...
+   */
+  choices?: readonly string[]
 }
 
 export interface PlannedChange {
@@ -66,6 +71,8 @@ export interface PlannedChange {
   params?: Record<string, string>
   reason?: string
   reasonCode?: TagReasonCode
+  /** Values the mapper can pick instead of `to`, see `PlannedAdd.choices` */
+  choices?: readonly string[]
 }
 
 export const PLAN_CONFLICT_CODES = [
@@ -308,10 +315,14 @@ function whyOf(entry: TagPlanEntry | CategoryTagPlan['change'][number]) {
   }
 }
 
+const choicesOf = (entry: TagPlanEntry | CategoryTagPlan['change'][number]) =>
+  entry.choices ? { choices: entry.choices } : {}
+
 const fromCoreAdd = (entry: TagPlanEntry): PlannedAdd => ({
   key: entry.key,
   value: entry.value,
   ...whyOf(entry),
+  ...choicesOf(entry),
 })
 
 const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange => ({
@@ -319,6 +330,7 @@ const fromCoreChange = (entry: CategoryTagPlan['change'][number]): PlannedChange
   from: entry.from,
   to: entry.to,
   ...whyOf(entry),
+  ...choicesOf(entry),
 })
 
 type VariantIds = { choiceId?: string }

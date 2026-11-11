@@ -77,6 +77,42 @@ describe('tilda/category_plan', () => {
     ])
   })
 
+  it('offers the kind of separation of a protected lane as a choice, bollard as the default', () => {
+    const own = planCategory(
+      { highway: 'cycleway', oneway: 'yes' },
+      'cyclewayOnHighwayProtected',
+      'self',
+    )
+    const separation = own.add.find((e) => e.key === 'separation:left')!
+    expect(separation.value).toBe('bollard')
+    expect(separation.choices?.slice(0, 4)).toEqual([
+      'bollard',
+      'flex_post',
+      'vertical_panel',
+      'bump',
+    ])
+
+    const side = planCategory(
+      { highway: 'secondary', 'cycleway:right': 'lane' },
+      'cyclewayOnHighwayProtected',
+      'right',
+    )
+    expect(side.add.find((e) => e.key === 'cycleway:right:separation:left')?.choices).toEqual(
+      separation.choices,
+    )
+
+    // every choice reaches the category
+    for (const value of separation.choices!) {
+      const tags = {
+        highway: 'cycleway',
+        oneway: 'yes',
+        is_sidepath: 'yes',
+        'separation:left': value,
+      }
+      expect(processBikelanes(tags)[0]!.category, value).toBe('cyclewayOnHighwayProtected')
+    }
+  })
+
   it('explains targets that do not fit the way', () => {
     const plan = planCategory(
       { highway: 'footway', footway: 'sidewalk' },

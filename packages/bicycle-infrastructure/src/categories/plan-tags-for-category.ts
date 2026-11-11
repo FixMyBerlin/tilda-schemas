@@ -35,6 +35,12 @@ export interface TagReason {
   reason: string
   reasonCode: TagReasonCode
   reasonParams?: Record<string, string>
+  /**
+   * Values the mapper can pick instead, when more than one reaches the target (the kind of
+   * separation of a protected lane). The planned value (`value` / `to`) is the default and the
+   * first entry; the others follow by how often they are mapped.
+   */
+  choices?: readonly string[]
 }
 
 export interface TagPlanEntry extends TagReason {
@@ -130,6 +136,8 @@ interface PlanAtom {
   reason: string
   reasonCode: TagReasonCode
   reasonParams?: Record<string, string>
+  /** See `TagReason.choices`: other values of `key` that hold the condition too */
+  choices?: readonly string[]
   /** The condition holds by other tags than `key` (a road side is a sidepath by its road) */
   holdsOn?: (tags: OsmTags) => boolean
 }
@@ -488,6 +496,7 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
         key: 'separation:left',
         accepts: (v) => v != null && (PROTECTIVE_SEPARATION as readonly string[]).includes(v),
         value: PROTECTIVE_SEPARATION[0],
+        choices: PROTECTIVE_SEPARATION,
         reason: 'Protected cycle lane: physical separation towards the road',
         reasonCode: 'protected_lane_separation',
       },
@@ -707,6 +716,7 @@ function candidateFor(
       reason: atom.reason,
       reasonCode: atom.reasonCode,
       reasonParams: atom.reasonParams,
+      choices: atom.choices,
     })
     cost += editCost(atom.key, base[atom.key], atom.value, side)
   }
@@ -715,8 +725,13 @@ function candidateFor(
 
 /** Drops `reasonParams` when it is empty, so plans stay free of `undefined` fields. */
 function reasonOf(why: TagReason): TagReason {
-  const { reason, reasonCode, reasonParams } = why
-  return reasonParams ? { reason, reasonCode, reasonParams } : { reason, reasonCode }
+  const { reason, reasonCode, reasonParams, choices } = why
+  return {
+    reason,
+    reasonCode,
+    ...(reasonParams ? { reasonParams } : {}),
+    ...(choices ? { choices } : {}),
+  }
 }
 
 function applyPlanToWayTags(

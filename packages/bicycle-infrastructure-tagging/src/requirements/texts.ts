@@ -104,10 +104,14 @@ export const ATTRIBUTE_NOTES: Texts = {
 /** When an attribute applies at all (`RequiredAttribute.hint`). */
 export const ATTRIBUTE_HINTS: Texts = {
   de: {
+    protection:
+      'Was schützt den Radfahrstreifen zur Fahrbahn hin? Eine Barriere (separation:left=bollard, flex_post, …) oder parkende Autos (traffic_mode:left=parking). Eins von beiden genügt.',
     traffic_mode_foot:
       'Nur wenn dieser getrennte Geh- und Radweg mit zwei Linien erfasst ist und dies die Radweg-Linie ist, mit dem Gehweg (eigene Linie) direkt daneben: in Zeichenrichtung rechts (traffic_mode:right=foot) oder links (traffic_mode:left=foot). Sonst nicht taggen.',
   },
   en: {
+    protection:
+      'What protects the lane from the carriageway? A barrier (separation:left=bollard, flex_post, …) or parked cars (traffic_mode:left=parking). One of them is enough.',
     traffic_mode_foot:
       'Only if this segregated foot and cycle path is mapped as two lines and this is the cycleway line, with the footway (its own line) directly next to it: on the right in the drawing direction (traffic_mode:right=foot) or on the left (traffic_mode:left=foot). Otherwise do not tag it.',
   },

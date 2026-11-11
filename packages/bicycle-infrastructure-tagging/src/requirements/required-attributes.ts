@@ -5,6 +5,7 @@ import {
   MARKING_ALLOWED,
   MINOR_ROAD_CLASSES,
   PARKING_ALLOWED,
+  PROTECTIVE_SEPARATION,
   SEPARATION_ALLOWED,
   SURFACE_ALLOWED,
   SURFACE_COLOR_ALLOWED,
@@ -96,6 +97,11 @@ type Rule = {
    */
   preferredKeyAlways?: (ctx: RuleContext) => boolean
   when?: (ctx: RuleContext) => boolean
+  /**
+   * Show the row when one of its keys is tagged, even if `when` does not hold yet: a decision the
+   * mapper already made stays visible (the separation towards parking before parking is set)
+   */
+  showWhenTagged?: boolean
   /** the rule does not apply here (another rule replaces it) */
   unless?: (ctx: RuleContext) => boolean
   optional?: boolean | ((ctx: RuleContext) => boolean)
@@ -113,6 +119,11 @@ const plainValues = (values: readonly string[]) =>
 const SURFACE_OPTIONS = plainValues(SURFACE_ALLOWED)
 const SURFACE_COLOUR_OPTIONS = [...SURFACE_COLOR_ALLOWED]
 const SEPARATION_OPTIONS = plainValues(SEPARATION_ALLOWED)
+/** Protected lane: the protective values first (by use in Berlin, `bollard` first), then the others */
+const PROTECTED_SEPARATION_OPTIONS = [
+  ...PROTECTIVE_SEPARATION,
+  ...SEPARATION_OPTIONS.filter((v) => !(PROTECTIVE_SEPARATION as readonly string[]).includes(v)),
+]
 /** TILDA has no `no` for marking: it drops the value, which means the same as untagged, so `no` is valid */
 const MARKING_OPTIONS = ['no', ...MARKING_ALLOWED]
 const TRAFFIC_MODE_OPTIONS = [...TRAFFIC_MODE_ALLOWED]
@@ -181,14 +192,6 @@ function parkingOn(side: 'left' | 'right') {
     (ctx.value(`traffic_mode:${side}`) ??
       (side === 'right' ? trafficModeFromParking((c) => c.side)(ctx)?.tilda : undefined) ??
       ctx.result?.[`traffic_mode_${side}`]) === 'parking'
-}
-
-/** `traffic_mode` is set on both sides (tagged, or taken from `parking:*`), so the delimitation can be asked */
-function trafficModesSet(ctx: RuleContext) {
-  const set = (side: 'left' | 'right') =>
-    ctx.value(`traffic_mode:${side}`) !== undefined ||
-    (side === 'right' && trafficModeFromParking((c) => c.side)(ctx) !== undefined)
-  return set('left') && set('right')
 }
 
 /** Categories whose oneway default TILDA rates as reliable (lanes run with the traffic, bicycle roads are two-way) */
@@ -427,65 +430,96 @@ const NEXT_TO_PARKING = define('nextToParking', [
     options: (ctx) => ctx.profile.bufferOptions,
     tilda: field('buffer_right'),
     when: parkingOn('right'),
+    showWhenTagged: true,
     assumed: () => 'no',
   },
 ])
 
+/** `separation:left` protects the lane (`bollard`, `flex_post`, ...), as `cyclewayOnHighwayProtected` reads it */
+function protectiveSeparationLeft(ctx: RuleContext) {
+  const value = ctx.value('separation:left')
+  return value !== undefined && (PROTECTIVE_SEPARATION as readonly string[]).includes(value)
+}
+
 /**
- * Protected lane: `traffic_mode` on both sides first. The delimitation to the carriageway (left)
- * is always needed; with parking on the right, the one to the parking (right) as well, so both
- * sides together. The buffer is only recorded towards parking. All of it is asked only once
- * `traffic_mode` is set.
+ * Protected lane. The first question is what protects it, as `cyclewayOnHighwayProtected` in
+ * `bikelane_categories.lua` reads it: a barrier (`separation:left=bollard`, `flex_post`, ...) or
+ * parked cars (`traffic_mode:left=parking`). Both rows are shown; each is optional once the other
+ * one protects, so with neither both are missing. In Berlin (2026-11) 174 protected lanes have a
+ * barrier, 63 parking and 29 both. `traffic_mode:right` is optional (it is rarely tagged, TILDA reads
+ * parking on the right from `parking:*`); the right delimitation and the buffers follow parking.
+ * Rows that wait for parking show up anyway once their key is tagged (`showWhenTagged`).
  */
 function delimitation(): Rule[] {
   return [
-    // only parking or foot next to it matter (Radinfra FAQ); TILDA reads parking on the outer side from `parking:*`
-    // no default: the mapper decides first, the delimitation below is asked afterwards
-    ...(['left', 'right'] as const).map(
-      (side) =>
-        ({
-          id: `traffic_mode_${side}`,
-          key: `traffic_mode:${side}`,
-          options: TRAFFIC_MODE_OPTIONS,
+    {
+      id: 'separation_left',
+      key: 'separation:left',
+      options: PROTECTED_SEPARATION_OPTIONS,
+      strict: true,
+      tilda: field('separation_left'),
+      optional: parkingOn('left'),
+      hint: 'protection',
+    },
+    {
+      id: 'traffic_mode_left',
+      key: 'traffic_mode:left',
+      options: TRAFFIC_MODE_OPTIONS,
+      strict: true,
+      tilda: field('traffic_mode_left'),
+      optional: protectiveSeparationLeft,
+      hint: 'protection',
+    },
+    {
+      id: 'marking_left',
+      key: 'marking:left',
+      options: MARKING_OPTIONS,
+      strict: true,
+      tilda: markingField('left'),
+    },
+    // the buffer exists only towards parking
+    {
+      id: 'buffer_left',
+      key: 'buffer:left',
+      options: (ctx: RuleContext) => ctx.profile.bufferOptions,
+      tilda: field('buffer_left'),
+      when: parkingOn('left'),
+      showWhenTagged: true,
+    },
+    {
+      id: 'traffic_mode_right',
+      key: 'traffic_mode:right',
+      options: TRAFFIC_MODE_OPTIONS,
+      strict: true,
+      tilda: field('traffic_mode_right'),
+      optional: true,
+      derivedFrom: trafficModeFromParking((ctx) => ctx.side),
+    },
+    ...(
+      [
+        {
+          id: 'separation_right',
+          key: 'separation:right',
+          options: SEPARATION_OPTIONS,
           strict: true,
-          tilda: field(`traffic_mode_${side}`),
-          derivedFrom: side === 'right' ? trafficModeFromParking((ctx) => ctx.side) : undefined,
-        }) as Rule,
-    ),
-    ...(['left', 'right'] as const).flatMap(
-      (side) =>
-        [
-          {
-            id: `separation_${side}`,
-            key: `separation:${side}`,
-            options: SEPARATION_OPTIONS,
-            strict: true,
-            tilda: field(`separation_${side}`),
-            when:
-              side === 'left'
-                ? trafficModesSet
-                : (ctx: RuleContext) => trafficModesSet(ctx) && parkingOn('right')(ctx),
-          },
-          {
-            id: `marking_${side}`,
-            key: `marking:${side}`,
-            options: MARKING_OPTIONS,
-            strict: true,
-            tilda: markingField(side),
-            when:
-              side === 'left'
-                ? trafficModesSet
-                : (ctx: RuleContext) => trafficModesSet(ctx) && parkingOn('right')(ctx),
-          },
-          // the buffer exists only towards parking
-          {
-            id: `buffer_${side}`,
-            key: `buffer:${side}`,
-            options: (ctx: RuleContext) => ctx.profile.bufferOptions,
-            tilda: field(`buffer_${side}`),
-            when: (ctx: RuleContext) => trafficModesSet(ctx) && parkingOn(side)(ctx),
-          },
-        ] as Rule[],
+        },
+        { id: 'marking_right', key: 'marking:right', options: MARKING_OPTIONS, strict: true },
+        {
+          id: 'buffer_right',
+          key: 'buffer:right',
+          options: (ctx: RuleContext) => ctx.profile.bufferOptions,
+        },
+      ] as Rule[]
+    ).map(
+      (rule): Rule => ({
+        ...rule,
+        tilda:
+          rule.id === 'marking_right'
+            ? markingField('right')
+            : field(rule.id as 'separation_right' | 'buffer_right'),
+        when: parkingOn('right'),
+        showWhenTagged: true,
+      }),
     ),
   ]
 }
@@ -539,6 +573,7 @@ const BICYCLE_ROAD = define('bicycleRoad', [
           options: (ctx: RuleContext) => ctx.profile.bufferOptions,
           tilda: field(`buffer_${side}`),
           when: lineMarking(side),
+          showWhenTagged: true,
         },
       ] as Rule[],
   ),
@@ -613,7 +648,14 @@ function withPreferredKey(
 function evaluate(rules: Rule[], ctx: RuleContext): RequiredAttribute[] {
   const active = rules
     .filter((rule) => !ctx.profile.skipAttributes?.includes(rule.id))
-    .filter((rule) => (!rule.when || rule.when(ctx)) && !rule.unless?.(ctx))
+    .filter(
+      (rule) =>
+        (!rule.when ||
+          rule.when(ctx) ||
+          (rule.showWhenTagged &&
+            lookupKeys(rule.key, ctx.side, ctx.prefix).some((k) => ctx.tags[k] !== undefined))) &&
+        !rule.unless?.(ctx),
+    )
   return active.map((original) => {
     const { rule, unused } = withPreferredKey(original, active, ctx)
     const ownKeys = [rule.key, ...(rule.alsoKeys ?? [])]

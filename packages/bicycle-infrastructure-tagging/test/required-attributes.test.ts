@@ -156,30 +156,54 @@ describe('requiredAttributes', () => {
       )
     }
 
-    it('shows the delimitation only once traffic_mode is set on both sides', () => {
-      for (const extra of <Record<string, string>[]>[
-        {},
-        { 'traffic_mode:left': 'no' },
-        { 'traffic_mode:right': 'parking' },
-      ]) {
-        const ids = idsFor(extra, false)
-        expect(ids).toEqual(expect.arrayContaining(['traffic_mode_left', 'traffic_mode_right']))
-        for (const id of [
-          'separation_left',
-          'marking_left',
-          'buffer_left',
-          'separation_right',
-          'marking_right',
-          'buffer_right',
-        ])
-          expect(ids).not.toContain(id)
-      }
+    // what protects the lane comes first: a barrier or parked cars, one of them is enough
+    it('asks what protects the lane: separation:left or traffic_mode:left, before anything else', () => {
+      const tags = { ...base }
+      const attributes = byId(
+        requiredAttributes(resultFor(tags, 'self'), tags, 'cyclewayOnHighwayProtected'),
+      )
+      const ids = Object.keys(attributes)
+      expect(ids.indexOf('separation_left')).toBeLessThan(ids.indexOf('traffic_mode_left'))
+      expect(ids.indexOf('traffic_mode_left')).toBeLessThan(ids.indexOf('traffic_mode_right'))
+      expect(attributes.separation_left).toMatchObject({
+        state: 'missing',
+        optional: false,
+        hint: 'protection',
+      })
+      expect(attributes.traffic_mode_left).toMatchObject({
+        state: 'missing',
+        optional: false,
+        hint: 'protection',
+      })
+      expect(attributes.separation_left.options.slice(0, 2)).toEqual(['bollard', 'flex_post'])
+      expect(attributes.traffic_mode_right.optional).toBe(true)
+      expect(attributes.marking_left).toBeDefined()
     })
 
-    it('asks for traffic_mode on both sides first', () => {
-      const ids = idsFor({})
-      expect(ids.indexOf('traffic_mode_right')).toBeGreaterThan(ids.indexOf('traffic_mode_left'))
-      expect(ids.indexOf('traffic_mode_right')).toBeLessThan(ids.indexOf('separation_left'))
+    it('a barrier makes traffic_mode:left optional, parking makes separation:left optional', () => {
+      const barrier = { ...base, 'separation:left': 'flex_post' }
+      const withBarrier = byId(
+        requiredAttributes(resultFor(barrier, 'self'), barrier, 'cyclewayOnHighwayProtected'),
+      )
+      expect(withBarrier.separation_left.state).toBe('ok')
+      expect(withBarrier.traffic_mode_left.optional).toBe(true)
+
+      const parking = { ...base, 'traffic_mode:left': 'parking', 'separation:left': 'kerb' }
+      const withParking = byId(
+        requiredAttributes(resultFor(parking, 'self'), parking, 'cyclewayOnHighwayProtected'),
+      )
+      // the kerb is a decision the mapper made: it shows, and is no longer required
+      expect(withParking.separation_left).toMatchObject({
+        state: 'ok',
+        value: 'kerb',
+        optional: true,
+      })
+      expect(withParking.buffer_left).toBeDefined()
+    })
+
+    it('a right delimitation that is tagged shows without parking on the right', () => {
+      expect(idsFor({ 'separation:right': 'kerb' }, false)).toContain('separation_right')
+      expect(idsFor({}, false)).not.toContain('separation_right')
     })
 
     it('without parking on the right only the left side is needed', () => {

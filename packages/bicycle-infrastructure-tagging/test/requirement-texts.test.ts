@@ -130,7 +130,7 @@ describe('requirement texts', () => {
       'oneway_side',
       'surface_colour',
     ])
-    expect([...hints]).toEqual(['traffic_mode_foot'])
+    expect([...hints].sort()).toEqual(['protection', 'traffic_mode_foot'])
     for (const language of LANGUAGES) {
       for (const note of notes) expect(ATTRIBUTE_NOTES[language][note], note).toBeTruthy()
       for (const hint of hints) expect(ATTRIBUTE_HINTS[language][hint], hint).toBeTruthy()

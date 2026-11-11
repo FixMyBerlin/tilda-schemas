@@ -101,9 +101,8 @@ describe('profiles', () => {
       profile: radnetzBerlin,
       targetCategory: 'cyclewayOnHighwayProtected',
     })
-    const separation = attributes.find((a) => a.id === 'separation_left')
-    // not asked before the traffic modes are set, so look at the rule with them set
-    expect(separation).toBeUndefined()
+    // asked first: what protects the lane
+    expect(attributes.find((a) => a.id === 'separation_left')?.state).toBe('missing')
     const modes = { ...tags, 'traffic_mode:left': 'no', 'traffic_mode:right': 'no' }
     const withModes = requiredAttributes(resultFor(modes, 'self'), modes, {
       profile: radnetzBerlin,

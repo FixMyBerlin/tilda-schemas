@@ -331,14 +331,14 @@
   },
   {
     "name": "missing_oneway: not for a track on the road, the side has a default direction",
-    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "osm": "tilda-geo 6ec40d600, bac701775",
     "input": { "highway": "secondary", "cycleway:left": "track" },
     "select": { "side": "left", "prefix": "cycleway" },
     "expect": { "todos_exclude": ["missing_oneway"] }
   },
   {
     "name": "missing_oneway: not for a shared path on the road, the side has a default direction",
-    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "osm": "tilda-geo 6ec40d600, bac701775",
     "input": {
       "highway": "secondary",
       "cycleway:both": "track",
@@ -368,7 +368,7 @@
   },
   {
     "name": "missing_oneway: oneway=-1 on a separate way is explicit",
-    "osm": "follows tilda-geo-private#34 (not merged yet)",
+    "osm": "tilda-geo 6ec40d600, bac701775",
     "input": { "highway": "cycleway", "is_sidepath": "yes", "oneway": "-1" },
     "select": { "side": "self" },
     "expect": { "todos_exclude": ["missing_oneway"] }
@@ -841,5 +841,30 @@
     },
     "select": { "side": "self" },
     "expect": { "todos_exclude": ["missing_access_tag_240"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: a check date on the lane confirms the direction",
+    "osm": "follows tilda-geo-private#34 (not merged yet), branch 5779b5419",
+    "input": {
+      "highway": "secondary",
+      "cycleway:left": "lane",
+      "cycleway:left:lane": "advisory",
+      "cycleway:left:oneway": "yes",
+      "cycleway:left:check_date:oneway": "2026-11-11"
+    },
+    "select": { "side": "left", "prefix": "cycleway" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
+  },
+  {
+    "name": "unexpected_oneway_direction: not for sidewalk:*:oneway (defaults only documented for cycleway:*)",
+    "osm": "follows tilda-geo-private#34 (not merged yet), branch 5779b5419",
+    "input": {
+      "highway": "secondary",
+      "sidewalk:both": "yes",
+      "sidewalk:both:bicycle": "yes",
+      "sidewalk:both:oneway": "yes"
+    },
+    "select": { "side": "left", "prefix": "sidewalk" },
+    "expect": { "todos_exclude": ["unexpected_oneway_direction"] }
   }
 ]

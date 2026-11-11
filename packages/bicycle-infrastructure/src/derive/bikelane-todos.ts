@@ -1,7 +1,7 @@
 /**
  * Port of topics/roads_bikelanes/bikelanes/bikelane_todo_categories.lua (tilda-geo `develop`,
- * 2026-11-04) plus `unexpected_oneway_direction` and the `missing_oneway` change of the branch
- * `claude/tilda-oneway-processing-81b448` (follows tilda-geo-private#34, not merged yet).
+ * 2026-11-11) plus `unexpected_oneway_direction` of the branch `claude/tilda-oneway-processing-81b448`
+ * (`5779b5419`, `d9430c2fe`; tilda-geo-private#34, not merged yet).
  *
  * A todo is a reason why a bikelane feature is not tagged well enough. They are derived from the
  * transformed tags of the feature and its result (category, width, surface, oneway), exactly like in LUA.
@@ -322,7 +322,7 @@ const missingOneway: BikelaneTodoDefinition = {
     if (needsClarificationTrack.condition(tags, result)) return false
     if (needsClarification.condition(tags, result)) return false
     // Lanes and tracks tagged on the road have a documented default direction per side;
-    // "Adding these defaults is unnecessary tagging" (follows tilda-geo-private#34, not merged yet).
+    // "Adding these defaults is unnecessary tagging" (tilda-geo `6ec40d600`).
     if (tags._parent != null) return false
     // We rely on the category's `implicitOneWayConfidence`, but some infrastructure is not
     // relevant enough for now:
@@ -338,10 +338,11 @@ const missingOneway: BikelaneTodoDefinition = {
  * oneway, `yes` on the left and `-1` on the right mean riding against the traffic of that side.
  * That is rarely real and mostly a mix-up of "one direction" with "direction of the way".
  * On oneway roads both directions are plausible on the left (contraflow or not), so we skip them.
- * (follows tilda-geo-private#34, not merged yet)
+ * (branch `claude/tilda-oneway-processing-81b448`, tilda-geo-private#34, not merged yet)
  */
+// Values after `normalizeOnewayTags` (`1` is `yes`).
 const AGAINST_SIDE_TRAFFIC: Record<'left' | 'right', ReadonlySet<string>> = {
-  left: new Set(['yes', '1']),
+  left: new Set(['yes']),
   right: new Set(['-1']),
 }
 
@@ -381,7 +382,13 @@ const unexpectedOnewayDirection: BikelaneTodoDefinition = {
   condition: (tags) => {
     const parent = tags._parent as OsmTags | undefined
     if (parent == null) return false
+    // The defaults are documented for `cycleway:*` only, not for `sidewalk:*`.
+    if (tags._prefix !== 'cycleway') return false
+    // Roundabouts are `oneway=yes` after `normalizeOnewayTags`.
     if (parent.oneway === 'yes' || parent.oneway === '-1') return false
+    // A check date on the lane confirms an unusual direction, like `unusual_width`:
+    // `cycleway:<side>:check_date:oneway=*` or `cycleway:<side>:check_date=*` (also `:both:`).
+    if (tags['check_date:oneway'] != null || tags.check_date != null) return false
 
     const keys = againstSideTrafficKeys(tags)
     for (const side of ['left', 'right'] as const) {

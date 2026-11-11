@@ -5,11 +5,13 @@ decision log for the sync of 2026-11-04. Rule: **LUA in tilda-geo is the referen
 TypeScript what LUA does. Workflow: [reconciliation.md](reconciliation.md).
 
 - tilda-geo `develop` at `573668593` (2026-11-04), baseline `d9cdaee67` (develop on 2026-06-12).
-- Exception, riding direction (`oneway`, `_lineReversed`, `offset`, `unexpected_oneway_direction`): the package
-  follows the branch `claude/tilda-oneway-processing-81b448` (draft PR FixMyBerlin/tilda-geo-private#34,
-  **not merged yet**), not `develop`. Code and fixtures say "follows tilda-geo-private#34 (not merged yet)". When
-  the PR changes or is dropped, adjust `derive/derive-oneway.ts`, `transform/prepare-tags.ts` (`cycleway=opposite*`),
-  `categories/predicates.ts` (`implicitOneWay`), the oneway lines of `derive/bikelane-todos.ts` and the fixtures with that text.
+- Riding direction (`oneway`, `_lineReversed`, `offset`): until 2026-11-11 the package followed the branch
+  `claude/tilda-oneway-processing-81b448` (draft PR FixMyBerlin/tilda-geo-private#34). Most of it is on `develop`
+  now as `6ec40d600` and `bac701775`, with changes, and the package follows `develop`
+  (see [Riding direction](#riding-direction-tilda-geo-private34)). Still on the branch, **not merged yet**:
+  `unexpected_oneway_direction` with its MapRoulette tag fix (`5779b5419`, `d9430c2fe`). Code and fixtures of that
+  todo say "follows tilda-geo-private#34 (not merged yet)". When the PR changes or is dropped, adjust
+  `derive/bikelane-todos.ts` and the fixtures with that text.
 - Commits listed with: `git log --since=2026-06-12 --format='%h %ad %s' --date=short develop -- processing/topics/roads_bikelanes processing/topics/helper`
 
 ## Result
@@ -85,13 +87,17 @@ traffic mode, sanitizers, transformations, todos). Newest first, as `git log` pr
 
 Commits on `develop` after `573668593` that the package followed later.
 
-| tilda-geo commit | date       | subject                                                                         | relevant? | what changed in the package / why not                                                                                                                                                                                                                                                                                                                                           |
-| ---------------- | ---------- | ------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `7acec52af`      | 2026-11-09 | Roads and bikelanes: Show surfaces per side and for bicycles                    | yes       | Bikelane surface reads `surface:bicycle`, side and direction values (`derive/derive-bikelane-surface-tags.ts`, `derive/derive-directional-surface.ts`); `surface_source` `tag_directional`, `parent_highway_tag_directional`. Hint tokens in `description` not ported: the package has no `description` output; its German hint texts are gone. Roads table and app not ported. |
-| `4ee2b6ad8`      | 2026-11-09 | Processing: Share the forward/backward to side mapping                          | no        | Parking and crossing points only.                                                                                                                                                                                                                                                                                                                                               |
-| `30d31d076`      | 2026-11-07 | Processing: Keep the side lifecycle keys in one place                           | no        | Refactoring, same output; the package already treats `cycleway` / `sidewalk` with and without a side alike.                                                                                                                                                                                                                                                                     |
-| `08b1428b5`      | 2026-11-06 | Processing: Read temporary=yes as lifecycle=temporary                           | yes       | `transformTemporary` in `transform/prepare-tags.ts`; `lifecycle` in the results.                                                                                                                                                                                                                                                                                                |
-| `4138bc51f`      | 2026-11-06 | Processing: Keep construction:cycleway=\* without a side off the road lifecycle | yes       | `transformConstructionPrefix` writes `cycleway:lifecycle`.                                                                                                                                                                                                                                                                                                                      |
+| tilda-geo commit | date       | subject                                                                                          | relevant? | what changed in the package / why not                                                                                                                                                                                                                                                                                                                                           |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d1caae60d`      | 2026-11-11 | Processing: footAndCyclewaySegregated also with the footway on the left (traffic_mode:left=foot) | yes       | Made in the package first (`aa5a038`), then in tilda-geo.                                                                                                                                                                                                                                                                                                                       |
+| `bac701775`      | 2026-11-11 | Processing: Clean oneway values once and follow oneway=-1 on every side rule                     | yes       | `normalizeOnewayTags` in `transform/prepare-tags.ts` (`1`/`true` → `yes`, roundabouts `oneway=yes`); `derive-oneway.ts` compares only with `yes`/`-1`. `oneway=-1` on `implicitOneWay`, `cycleway=opposite*` and the traffic sign was already ported from the branch. `roads.oneway`, `oneway_bicycle`, `parkings.road_oneway` and `bikelanes_presence`: no counterpart.        |
+| `6ec40d600`      | 2026-11-11 | Radinfra: Read oneway=-1 and follow the wiki direction of lanes on the road                      | yes       | See [Riding direction](#riding-direction-tilda-geo-private34): differs from the branch state the package had ported. `missing_oneway` without lanes on the road was already ported. Routing, map style, QA: no counterpart.                                                                                                                                                     |
+| `f4b434b62`      | 2026-11-10 | Processing: Note the surface and description changes in the changelog                            | no        | Changelog only; the surface changes are `7acec52af`.                                                                                                                                                                                                                                                                                                                            |
+| `7acec52af`      | 2026-11-09 | Roads and bikelanes: Show surfaces per side and for bicycles                                     | yes       | Bikelane surface reads `surface:bicycle`, side and direction values (`derive/derive-bikelane-surface-tags.ts`, `derive/derive-directional-surface.ts`); `surface_source` `tag_directional`, `parent_highway_tag_directional`. Hint tokens in `description` not ported: the package has no `description` output; its German hint texts are gone. Roads table and app not ported. |
+| `4ee2b6ad8`      | 2026-11-09 | Processing: Share the forward/backward to side mapping                                           | no        | Parking and crossing points only.                                                                                                                                                                                                                                                                                                                                               |
+| `30d31d076`      | 2026-11-07 | Processing: Keep the side lifecycle keys in one place                                            | no        | Refactoring, same output; the package already treats `cycleway` / `sidewalk` with and without a side alike.                                                                                                                                                                                                                                                                     |
+| `08b1428b5`      | 2026-11-06 | Processing: Read temporary=yes as lifecycle=temporary                                            | yes       | `transformTemporary` in `transform/prepare-tags.ts`; `lifecycle` in the results.                                                                                                                                                                                                                                                                                                |
+| `4138bc51f`      | 2026-11-06 | Processing: Keep construction:cycleway=\* without a side off the road lifecycle                  | yes       | `transformConstructionPrefix` writes `cycleway:lifecycle`.                                                                                                                                                                                                                                                                                                                      |
 
 ## `processing/CHANGELOG.md`
 
@@ -125,6 +131,26 @@ Branch commits `27e2cbe40`, `82bbf0d94`, `4fb14e1c5` (review notes in `docs/onew
 Not ported (no counterpart in the package): `bikelanes_presence` (`oneway=-1`), the routing table, `orient_line_direction_tags`
 (swaps `traffic_sign:forward|backward` and `mapillary_*`, which the package does not output), MapRoulette campaign and tag-fix plumbing, map styles.
 
+### Merged on `develop` (2026-11-11)
+
+`6ec40d600` and `bac701775` are what landed of the branch. Where they differ from the branch state above, the
+package now follows `develop`:
+
+- **`oneway` of a lane or track on the road without `cycleway:<side>:oneway`**: the category decides, like for own
+  lines (`implicitOneWay`). Lanes stay `implicit_yes`; tracks, shared paths and `shared_lane` are `assumed_no` (the
+  branch said `implicit_yes` for every side). The line direction still follows the wiki default per side.
+- **Contraflow default dropped**: on a `oneway=yes` road with `oneway:bicycle=no` an untagged left lane follows the
+  road, like on every one-way road (the branch followed the German mapping guide and made it the contraflow lane).
+  A contraflow lane needs `cycleway:left:oneway=-1` or `cycleway=opposite_lane`. Same mirrored on `oneway=-1`.
+  `defaultSideRunsAgainstWay` follows, so the tagging package suggests `yes` there when it extracts a side. The
+  Radnetz rule `cycleway_oneway_wrong` keeps the contraflow case as an explicit Berlin heuristic.
+- **Own lines (`_side=self`)** keep the drawing direction in `bikelanes`, also with `oneway=-1` or
+  `oneway:bicycle=-1` (`_lineReversed=false`); only the routing reverses them.
+- **Roundabouts** are one-way roads (`normalize_oneway_tags`): both sides follow the road, `cycleway=lane` is on
+  the right and the left side is `not_expected`.
+- **`unexpected_oneway_direction`** (branch, `5779b5419`): only `cycleway:*`, not `sidewalk:*`; a check date on the
+  lane (`cycleway:<side>:check_date:oneway`, `cycleway:<side>:check_date`) confirms the direction.
+
 ## Other decisions
 
 - **Units of `width`.** The task text said "cm/m/mm/ft/in as LUA does". LUA converts only `cm`, `m` and `km`; `mm`, `ft`, `in`, `mi` and
@@ -156,6 +182,10 @@ Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported 
    in Germany (extract of 2026-10-25) 107 ways have this, 63 of them with `shared_lane` only on the left (pictograms for the
    contraflow, mostly `cycleway:right=no`), 44 with `cycleway=shared_lane` or `cycleway:both=shared_lane` (pictograms for both
    directions on the one lane). Not changed.
+   **Superseded 2026-11-11** by `6ec40d600` (see [Merged on `develop`](#merged-on-develop-2026-11-11)): without a tag the category
+   decides now, so a `shared_lane` on a road side is `assumed_no`, and the left side of a contraflow road follows the road.
+   The package follows. Open question for tilda-geo: the argument above still holds for `shared_lane` on a side (one car lane,
+   one direction), but `implicitOneWay = false` of `sharedMotorVehicleLane` was written for the whole road.
 4. `missing_access_tag_240` fired only when neither `bicycle` nor `foot` was `designated`. Now when one of them is missing (tilda-geo `61252e31f`, with tests).
 5. `deprecated_cycleway_shared` read only `cycleway=shared`. Germany (extract of 2026-10-25) has 555 ways with `cycleway=shared`
    and 73 with a side key (`cycleway:right=shared` 29, `cycleway:left=shared` 12, `cycleway:both=shared` 33), which got no

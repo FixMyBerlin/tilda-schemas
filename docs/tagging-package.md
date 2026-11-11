@@ -23,7 +23,7 @@ Stays in the fork: `checks.ts` (key-value DB), `width_indicator.ts`, `offset_lin
 
 - `parking=no` gives no traffic mode (the fork said `no`).
 - A lane to extract is protected only by what the core rates as `cyclewayOnHighwayProtected` (its set of `separation` values and `traffic_mode`), not by any `separation` other than `no`.
-- Riding direction on a road side is `defaultSideRunsAgainstWay` of the core (follows tilda-geo-private#34, not merged yet). The left side of a one-way road runs with the road (`yes`, the fork's extraction said `-1`); the contraflow lane of a one-way road with `oneway:bicycle=no` is `-1` (the fork gave no direction); on a `oneway=-1` road both sides run against the way.
+- Riding direction on a road side is `defaultSideRunsAgainstWay` of the core (tilda-geo `6ec40d600`, the wiki default). The left side of a one-way road runs with the road (`yes`, the fork's extraction said `-1`), also with `oneway:bicycle=no`: a contraflow lane needs an explicit `cycleway:left:oneway=-1`; on a `oneway=-1` road both sides run against the way; a roundabout is a one-way road.
 - Widths are read with `parseWidth` of the core: `width=150cm` is 1.5 m in extract and merge (the fork read 150 m), values the LUA cannot read are skipped.
 - `pathRole` decides what a foot and cycle path is. A mode counts when it is `designated`, `yes` or `permissive`; a `highway=path` carries only what is tagged, unless the category says `footAndCycleway*`.
 - Option lists (surface, separation, marking, traffic mode, surface colour) come from the sanitizers of the core.

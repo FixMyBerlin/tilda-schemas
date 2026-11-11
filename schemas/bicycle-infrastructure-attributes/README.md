@@ -41,5 +41,5 @@ Each file under `fixtures/` is a JSON array of cases:
   the tags (`selfBikelaneHasUnusualWidth`, `width`); `expect` has `todos` (the exact list) and/or
   `todos_include` / `todos_exclude`.
 - Cases marked `follows tilda-geo-private#34 (not merged yet)` follow the tilda-geo branch
-  `claude/tilda-oneway-processing-81b448` for `oneway`, `_lineReversed`, `offset` and
-  `unexpected_oneway_direction`. Everything else follows tilda-geo `develop` of 2026-11-04.
+  `claude/tilda-oneway-processing-81b448` for `unexpected_oneway_direction`. Everything else follows
+  tilda-geo `develop` of 2026-11-11 (riding direction: `6ec40d600`, `bac701775`).

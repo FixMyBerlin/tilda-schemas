@@ -61,11 +61,11 @@
       "enum": ["yes", "no", "car_not_bike", "assumed_no", "implicit_yes", null]
     },
     "_lineReversed": {
-      "description": "Whether the published line runs against the OSM way (`_line_reversed` in LUA). One-way lines point in the riding direction, `car_not_bike` lines in the motor direction, two-way lines keep the side convention (left against the way, right and self with it). Follows tilda-geo-private#34 (not merged yet).",
+      "description": "Whether the published line of a lane or track tagged on the road runs against the OSM way (`_line_reversed` in LUA). It points in the riding direction: `cycleway:<side>:oneway=yes` with the way, `-1` against it; without the tag both sides of a one-way road follow the road, on other roads the right side runs with the way and the left side against it. Lines of the way itself keep its drawing direction (false).",
       "type": "boolean"
     },
     "offset": {
-      "description": "Sideways offset in meters of a left|right lane, signed relative to the published line (+ left / - right of its direction). Half the road width. Follows tilda-geo-private#34 (not merged yet).",
+      "description": "Sideways offset in meters of a left|right lane, signed relative to the published line (+ left / - right of its direction). Half the road width.",
       "type": ["number", "null"]
     },
     "surface": {

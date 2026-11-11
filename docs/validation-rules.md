@@ -78,7 +78,7 @@ The spec asked for one optional fix per finding; `fixes` is a list because iD of
 
 A rule of the `radnetz` source never repeats a todo of tilda-geo (a test checks that the ids differ, and the behaviour is tested):
 
-- `cyclewayOnewayFindings` also reports `cycleway:left:oneway=yes` on a road that is not oneway (reason `two_way_road`). That is the todo `unexpected_oneway_direction`. The rule `cycleway_oneway_wrong` reports only the contraflow case (a one-way road with `oneway:bicycle=no`), which the todo skips. The function `cyclewayOnewayFindings` still returns both reasons, for tools that use it directly.
+- `cyclewayOnewayFindings` also reports `cycleway:left:oneway=yes` on a road that is not oneway (reason `two_way_road`). That is the todo `unexpected_oneway_direction`. The rule `cycleway_oneway_wrong` reports only the contraflow case (a one-way road with `oneway:bicycle=no`), which the todo skips. That case is a Berlin heuristic: the processing reads `cycleway:left:oneway=yes` there as the wiki default (with the road), but such a lane is usually the contraflow lane. The function `cyclewayOnewayFindings` still returns both reasons, for tools that use it directly.
 - Part widths on a way with `segregated=no` are one finding: `width_part_unsegregated`, or the error `width_part_whole` when a part is as wide as the whole way. `width_part_sum` stays quiet there.
 - `unusual_width` exists for the way itself, the lanes and the road in the LUA. It is listed once per way: the road does not repeat it when the own line has it.
 

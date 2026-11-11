@@ -19,7 +19,7 @@ npm install @tilda-geo/bicycle-infrastructure
 3. Returns **1..N features** (centerline `self` plus transformed `left`/`right` sides), each with:
    - **`category`** — `Radinfrastrukturkategorie` (primary focus; see [`schemas/bicycle-infrastructure-category`](../../schemas/bicycle-infrastructure-category/))
    - plus surface, smoothness, oneway, separation / buffer / marking, traffic_mode, traffic_sign, surface_color, width
-   - `_lineReversed` and `offset` (riding direction of the published line, follows tilda-geo-private#34, not merged yet)
+   - `_lineReversed` and `offset` (riding direction of the published line of a lane on the road)
    - `todos` (what is missing or wrong in the tagging) and `todoTagFixes`
 
 Disallowed sanitizer values become `null`, matching TILDA’s GeoJSON export.

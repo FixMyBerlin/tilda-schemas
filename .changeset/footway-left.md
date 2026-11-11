@@ -10,4 +10,4 @@ In the tagging package:
 - When the footway is tagged on the left, the requirements row `traffic_mode_foot` is about `traffic_mode:left`.
 - `planForMappingChoice` (two lines) keeps the footway on the left and does not add `traffic_mode:right=foot`.
 
-This needs the same change in tilda-geo (`bikelane_categories.lua`).
+tilda-geo has the same change (`d1caae60d`).

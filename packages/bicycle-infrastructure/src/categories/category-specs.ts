@@ -325,7 +325,10 @@ export const CATEGORY_SPECS: CategorySpec[] = [
   {
     id: 'sharedMotorVehicleLane',
     infrastructureExists: true,
-    implicitOneWay: false,
+    // `implicit_yes`: each row is one side of the road (`cycleway=shared_lane` without a side also gives
+    // a left and a right row), so it is the motor vehicle lane of that side and runs in one direction
+    // (tilda-geo `0927094ca`).
+    implicitOneWay: true,
     implicitOneWayConfidence: 'high',
     copySurfaceSmoothnessFromParent: true,
     bicycleSurface: 'strip',

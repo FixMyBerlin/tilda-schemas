@@ -137,7 +137,7 @@ Not ported (no counterpart in the package): `bikelanes_presence` (`oneway=-1`), 
 package now follows `develop`:
 
 - **`oneway` of a lane or track on the road without `cycleway:<side>:oneway`**: the category decides, like for own
-  lines (`implicitOneWay`). Lanes stay `implicit_yes`; tracks, shared paths and `shared_lane` are `assumed_no` (the
+  lines (`implicitOneWay`). Lanes and `shared_lane` stay `implicit_yes`; tracks and shared paths are `assumed_no` (the
   branch said `implicit_yes` for every side). The line direction still follows the wiki default per side.
 - **Contraflow default dropped**: on a `oneway=yes` road with `oneway:bicycle=no` an untagged left lane follows the
   road, like on every one-way road (the branch followed the German mapping guide and made it the contraflow lane).
@@ -182,10 +182,12 @@ Settled 2026-11-05. Fixed in tilda-geo on `develop` (not pushed yet) and ported 
    in Germany (extract of 2026-10-25) 107 ways have this, 63 of them with `shared_lane` only on the left (pictograms for the
    contraflow, mostly `cycleway:right=no`), 44 with `cycleway=shared_lane` or `cycleway:both=shared_lane` (pictograms for both
    directions on the one lane). Not changed.
-   **Superseded 2026-11-11** by `6ec40d600` (see [Merged on `develop`](#merged-on-develop-2026-11-11)): without a tag the category
-   decides now, so a `shared_lane` on a road side is `assumed_no`, and the left side of a contraflow road follows the road.
-   The package follows. Open question for tilda-geo: the argument above still holds for `shared_lane` on a side (one car lane,
-   one direction), but `implicitOneWay = false` of `sharedMotorVehicleLane` was written for the whole road.
+   **Corrected 2026-11-11.** The `implicit_yes` for every side came from a rule of the PR branch that never reached `develop`; on
+   `develop` a `shared_lane` was `assumed_no` before and after `6ec40d600`, because the category decides and
+   `sharedMotorVehicleLane` had `implicitOneWay = false`. tilda-geo `0927094ca` (on `develop`, not pushed yet)
+   sets `implicitOneWay = true`: every row of this category is one side of the road, also for `cycleway=shared_lane` without a
+   side. The package has the same flag. The left side of a contraflow road follows the road (see
+   [Merged on `develop`](#merged-on-develop-2026-11-11)).
 4. `missing_access_tag_240` fired only when neither `bicycle` nor `foot` was `designated`. Now when one of them is missing (tilda-geo `61252e31f`, with tests).
 5. `deprecated_cycleway_shared` read only `cycleway=shared`. Germany (extract of 2026-10-25) has 555 ways with `cycleway=shared`
    and 73 with a side key (`cycleway:right=shared` 29, `cycleway:left=shared` 12, `cycleway:both=shared` 33), which got no

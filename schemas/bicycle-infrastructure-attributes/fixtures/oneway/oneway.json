@@ -456,13 +456,13 @@
     ]
   },
   {
-    "name": "shared lane tagged on the road: the category decides (assumed_no), the line follows the side",
-    "osm": "tilda-geo 6ec40d600, bac701775",
+    "name": "shared lane tagged on the road: the car lane of that side, implicit_yes",
+    "osm": "tilda-geo 0927094ca",
     "input": { "highway": "residential", "cycleway:right": "shared_lane" },
     "select": { "side": "right", "prefix": "cycleway" },
     "expect": {
       "category": "sharedMotorVehicleLane",
-      "oneway": "assumed_no",
+      "oneway": "implicit_yes",
       "_lineReversed": false
     }
   },
@@ -492,5 +492,31 @@
     },
     "select": { "side": "left", "prefix": "cycleway" },
     "expect": { "oneway": "yes", "_lineReversed": false }
+  },
+  {
+    "name": "shared lane without a side: both sides are implicit_yes",
+    "osm": "tilda-geo 0927094ca",
+    "input": { "highway": "residential", "cycleway": "shared_lane" },
+    "expectFeatures": [
+      {
+        "select": { "side": "left", "prefix": "cycleway" },
+        "expect": { "category": "sharedMotorVehicleLane", "oneway": "implicit_yes" }
+      },
+      {
+        "select": { "side": "right", "prefix": "cycleway" },
+        "expect": { "category": "sharedMotorVehicleLane", "oneway": "implicit_yes" }
+      }
+    ]
+  },
+  {
+    "name": "shared lane with cycleway:right:oneway=no stays no",
+    "osm": "tilda-geo 0927094ca",
+    "input": {
+      "highway": "residential",
+      "cycleway:right": "shared_lane",
+      "cycleway:right:oneway": "no"
+    },
+    "select": { "side": "right", "prefix": "cycleway" },
+    "expect": { "category": "sharedMotorVehicleLane", "oneway": "no" }
   }
 ]

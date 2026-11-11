@@ -41,7 +41,7 @@
     },
     "packages/bicycle-infrastructure": {
       "name": "@tilda-geo/bicycle-infrastructure",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",
         "@types/bun": "latest",
@@ -63,7 +63,7 @@
     },
     "packages/bicycle-infrastructure-tagging": {
       "name": "@tilda-geo/bicycle-infrastructure-tagging",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@tilda-geo/bicycle-infrastructure": "workspace:*",
       },

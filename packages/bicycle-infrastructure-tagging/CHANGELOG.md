@@ -1,5 +1,52 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.3.0
+
+### Minor Changes
+
+- 811846e: Radnetz rules for one-way roads with contraflow cycling (`oneway=yes` + `oneway:bicycle=no`):
+
+  - `cycleway_oneway_wrong` asks whether `cycleway:left:oneway=yes` (or `:both:`, or without a side) is really meant, and offers `-1` for the left side as its only fix. A real `yes` is confirmed with the editor's OK, stored outside of OSM. The fixes "remove" and "set `no`" are gone: under the wiki default both kept the wrong direction or changed the meaning.
+  - New `cycleway_oneway_contraflow_missing`: bicycle infrastructure on the left (`lane`, `track`, `shared_lane`, `share_busway`) without any direction. Without a tag the direction of the one-way applies, but there the left lane is usually the contraflow lane. Fixes: `-1` or `no`.
+
+- aa5a038: `footAndCyclewaySegregated` now also accepts a cycleway with the footway on its left: `traffic_mode:left=foot` with no separation on the left. Before, only `traffic_mode:right=foot` counted. Ways are drawn in the riding direction, so a one-way cycleway cannot be reversed to put the footway on its right.
+
+  In the tagging package:
+
+  - When the footway is tagged on the left, the requirements row `traffic_mode_foot` is about `traffic_mode:left`.
+  - `planForMappingChoice` (two lines) keeps the footway on the left and does not add `traffic_mode:right=foot`.
+
+  tilda-geo has the same change (`d1caae60d`).
+
+- ee76387: The riding direction follows tilda-geo `develop` (`6ec40d600`, `bac701775`) instead of the branch of tilda-geo-private#34:
+
+  - `1` and `true` are read as `yes` for `oneway`, `oneway:bicycle` and `cycleway|sidewalk:<side>:oneway` (`normalizeOnewayTags`). A roundabout is a one-way road: both sides follow it, the left side is `not_expected`.
+  - A lane or track tagged on the road without `cycleway:<side>:oneway`: the category decides its `oneway`. Lanes and `shared_lane` are `implicit_yes` (`sharedMotorVehicleLane` has `implicitOneWay` now, tilda-geo `0927094ca`); tracks and shared paths are `assumed_no`. The line direction still follows the side.
+  - On a one-way road with `oneway:bicycle=no` an untagged left lane follows the road. A contraflow lane needs `cycleway:left:oneway=-1` (or `cycleway=opposite_lane`). `defaultSideRunsAgainstWay` follows, so extracting such a side writes `oneway=yes`.
+  - `_lineReversed` is `false` for lines of the way itself, also with `oneway=-1`.
+  - `unexpected_oneway_direction` (still on the branch) skips `sidewalk:*` and lanes with a check date (`cycleway:<side>:check_date:oneway`, `cycleway:<side>:check_date`).
+
+  In the tagging package the Radnetz rule `cycleway_oneway_wrong` keeps reporting `cycleway:left:oneway=yes` on a one-way road with `oneway:bicycle=no`, now as an explicit heuristic.
+
+- dfd4939: A plan entry can carry `choices`: values the mapper can pick instead of the planned one. The separation of a protected cycle lane (`separation:left`, also `cycleway:<side>:separation:left`) uses it: `bollard` stays the default, then `flex_post`, `vertical_panel`, `bump`, `fence`, `guard_rail`, `planter`, `studs` and `jersey_barrier`, ordered by use in Berlin. Every choice reaches `cyclewayOnHighwayProtected`. `PROTECTIVE_SEPARATION` has the same order now.
+
+  In the tagging package `PlannedAdd` and `PlannedChange` pass `choices` on, so an editor can show a selection instead of writing `bollard` without asking.
+
+- b0e9825: Protected cycle lane: the requirements ask first what protects the lane, as `cyclewayOnHighwayProtected` reads it: a barrier (`separation:left`, protective values first, `bollard` as the first one) or parked cars (`traffic_mode:left=parking`). Both rows are always shown with the hint `protection`; each is optional once the other one protects. `traffic_mode:right` is optional, and the delimitation no longer waits for `traffic_mode` on both sides. The right separation and marking and the buffers still follow parking, but a row whose key is tagged always shows (`showWhenTagged`), so a decision like `separation:left=kerb` next to parking stays visible.
+- 3952d19: New rule `sidewalk_shared_path` (source `radnetz`, warning). It fires on a sidewalk (`highway=footway` + `footway=sidewalk`) with `bicycle=designated` and `foot=designated` or no `foot` tag, because that is a foot and cycle path.
+
+  The fix sets `highway=path` and removes `footway=sidewalk`. It also adds `foot=designated` and `is_sidepath=yes` when they are missing. All other tags stay.
+
+  `bicycle=yes|permissive` stays a sidewalk where bicycles are allowed.
+
+### Patch Changes
+
+- 2d7b14e: `width_part_whole` now offers two fixes: remove the part width (as before), or remove `width` and `source:width`. A path with only part widths is fine. TILDA takes its width from the part widths, and no rule complains.
+- Updated dependencies [aa5a038]
+- Updated dependencies [ee76387]
+- Updated dependencies [dfd4939]
+  - @tilda-geo/bicycle-infrastructure@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

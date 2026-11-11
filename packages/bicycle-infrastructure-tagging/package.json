@@ -1,6 +1,6 @@
 {
   "name": "@tilda-geo/bicycle-infrastructure-tagging",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Tagging helpers for editors of bicycle infrastructure in OSM: plan tag changes to a TILDA category, required attributes, widths, extracting and merging foot and cycle paths. Pure functions on plain OSM tags, built on @tilda-geo/bicycle-infrastructure.",
   "keywords": [
     "bicycle",

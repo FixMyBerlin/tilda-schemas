@@ -1,5 +1,32 @@
 # @tilda-geo/bicycle-infrastructure
 
+## 0.3.0
+
+### Minor Changes
+
+- aa5a038: `footAndCyclewaySegregated` now also accepts a cycleway with the footway on its left: `traffic_mode:left=foot` with no separation on the left. Before, only `traffic_mode:right=foot` counted. Ways are drawn in the riding direction, so a one-way cycleway cannot be reversed to put the footway on its right.
+
+  In the tagging package:
+
+  - When the footway is tagged on the left, the requirements row `traffic_mode_foot` is about `traffic_mode:left`.
+  - `planForMappingChoice` (two lines) keeps the footway on the left and does not add `traffic_mode:right=foot`.
+
+  tilda-geo has the same change (`d1caae60d`).
+
+- ee76387: The riding direction follows tilda-geo `develop` (`6ec40d600`, `bac701775`) instead of the branch of tilda-geo-private#34:
+
+  - `1` and `true` are read as `yes` for `oneway`, `oneway:bicycle` and `cycleway|sidewalk:<side>:oneway` (`normalizeOnewayTags`). A roundabout is a one-way road: both sides follow it, the left side is `not_expected`.
+  - A lane or track tagged on the road without `cycleway:<side>:oneway`: the category decides its `oneway`. Lanes and `shared_lane` are `implicit_yes` (`sharedMotorVehicleLane` has `implicitOneWay` now, tilda-geo `0927094ca`); tracks and shared paths are `assumed_no`. The line direction still follows the side.
+  - On a one-way road with `oneway:bicycle=no` an untagged left lane follows the road. A contraflow lane needs `cycleway:left:oneway=-1` (or `cycleway=opposite_lane`). `defaultSideRunsAgainstWay` follows, so extracting such a side writes `oneway=yes`.
+  - `_lineReversed` is `false` for lines of the way itself, also with `oneway=-1`.
+  - `unexpected_oneway_direction` (still on the branch) skips `sidewalk:*` and lanes with a check date (`cycleway:<side>:check_date:oneway`, `cycleway:<side>:check_date`).
+
+  In the tagging package the Radnetz rule `cycleway_oneway_wrong` keeps reporting `cycleway:left:oneway=yes` on a one-way road with `oneway:bicycle=no`, now as an explicit heuristic.
+
+- dfd4939: A plan entry can carry `choices`: values the mapper can pick instead of the planned one. The separation of a protected cycle lane (`separation:left`, also `cycleway:<side>:separation:left`) uses it: `bollard` stays the default, then `flex_post`, `vertical_panel`, `bump`, `fence`, `guard_rail`, `planter`, `studs` and `jersey_barrier`, ordered by use in Berlin. Every choice reaches `cyclewayOnHighwayProtected`. `PROTECTIVE_SEPARATION` has the same order now.
+
+  In the tagging package `PlannedAdd` and `PlannedChange` pass `choices` on, so an editor can show a selection instead of writing `bollard` without asking.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@tilda-geo/bicycle-infrastructure",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TypeScript port of TILDA's LUA bicycle-infrastructure processing (category + surface/protection/oneway derivations). Runs on plain OSM tag objects (e.g. live Overpass data).",
   "keywords": [
     "bicycle",

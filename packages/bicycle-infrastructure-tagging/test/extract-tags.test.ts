@@ -216,7 +216,7 @@ describe('planExtraction', () => {
     })
   })
 
-  it('A: no sign → cycleway, no use_sidepath; the contraflow lane runs against the one-way road', () => {
+  it('A: no sign → cycleway, no use_sidepath; an untagged left track of a one-way road runs with it', () => {
     const road = {
       highway: 'residential',
       oneway: 'yes',
@@ -224,8 +224,9 @@ describe('planExtraction', () => {
       'cycleway:left': 'track',
     }
     const plan = planExtraction(road, 'cycleway', 'left', recommend)
-    // follows the processing (tilda-geo-private#34): the left lane of a one-way road with oneway:bicycle=no
-    expect(plan.wayTags).toEqual({ highway: 'cycleway', is_sidepath: 'yes', oneway: '-1' })
+    // follows the processing (tilda-geo 6ec40d600): also with oneway:bicycle=no the wiki default is
+    // the road direction; a contraflow track needs cycleway:left:oneway=-1
+    expect(plan.wayTags).toEqual({ highway: 'cycleway', is_sidepath: 'yes', oneway: 'yes' })
     expect(plan.roadTags).toEqual({
       highway: 'residential',
       oneway: 'yes',

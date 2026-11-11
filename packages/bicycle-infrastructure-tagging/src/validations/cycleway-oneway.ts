@@ -36,12 +36,26 @@ export function cyclewayOnewayFindings(tags: OsmTags): CyclewayOnewayFinding[] {
   // a road drawn against its one-way direction: too rare to guess
   if (!tags.highway || tags.oneway === '-1') return []
 
-  const oneWayRoad = tags.oneway === 'yes'
+  const contraflowRoad = tags.oneway === 'yes' && tags['oneway:bicycle'] === 'no'
   const findings: CyclewayOnewayFinding[] = []
 
   for (const [key, sides] of Object.entries(ONEWAY_KEYS)) {
     const value = tags[key]
     if (value !== 'yes' && value !== '-1') continue
+
+    // A one-way road that bicycles may ride against: the processing reads `yes` on the left as
+    // "with the road" (wiki default), but on such roads a lane on the left is usually the
+    // contraflow lane, which is `-1`. A heuristic for the Radnetz check, not the processing rule.
+    if (value === 'yes' && contraflowRoad && sides.includes('left')) {
+      findings.push({
+        rule: 'cycleway_oneway_wrong',
+        key,
+        value,
+        kind: 'wrong',
+        reason: 'contraflow',
+      })
+      continue
+    }
 
     // sides where the tag says another direction than the default
     const differs = sides.filter((side) => sideOnewayDefault(tags, side) !== value)
@@ -53,7 +67,7 @@ export function cyclewayOnewayFindings(tags: OsmTags): CyclewayOnewayFinding[] {
           key,
           value,
           kind: 'wrong',
-          reason: oneWayRoad ? 'contraflow' : 'two_way_road',
+          reason: 'two_way_road',
         })
       } else {
         findings.push({

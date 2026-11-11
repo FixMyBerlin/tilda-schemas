@@ -276,13 +276,16 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(right.default).toBe('cycleway:right:oneway=yes')
   })
 
-  it('sideOnewayDefault: both sides of a one-way road run with the road, except the contraflow side', () => {
+  it('sideOnewayDefault: both sides of a one-way road run with the road, also with oneway:bicycle=no', () => {
     expect(sideOnewayDefault({ highway: 'residential' }, 'left')).toBe('-1')
     expect(sideOnewayDefault({ highway: 'residential' }, 'right')).toBe('yes')
     expect(sideOnewayDefault({ highway: 'residential', oneway: 'yes' }, 'left')).toBe('yes')
     expect(
       sideOnewayDefault({ highway: 'residential', oneway: 'yes', 'oneway:bicycle': 'no' }, 'left'),
-    ).toBe('-1')
+    ).toBe('yes')
+    expect(sideOnewayDefault({ highway: 'residential', junction: 'roundabout' }, 'left')).toBe(
+      'yes',
+    )
   })
 
   it('a separate cycleway still asks for oneway', () => {

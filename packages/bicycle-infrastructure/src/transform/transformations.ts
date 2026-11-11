@@ -99,7 +99,7 @@ export function getTransformedObjects(
       center.traffic_sign = center.traffic_sign ?? center['traffic_sign:forward']
     }
     // `oneway=-1` flows against the way, so its sign is the `:backward` one
-    // (follows tilda-geo-private#34, not merged yet).
+    // (tilda-geo `bac701775`).
     if (center.oneway === '-1' && tags['oneway:bicycle'] !== 'no') {
       center.traffic_sign = center.traffic_sign ?? center['traffic_sign:backward']
     }

@@ -33,7 +33,7 @@ ESM only. `@tilda-geo/bicycle-infrastructure` is a dependency.
 
 Messages are codes with parameters (`geometry_lane_needs_road`, `cycleway_oneway_wrong`). The texts (de, en) come as data too: the validation rules ([validation-rules.md](../../docs/validation-rules.md)), the planner (`PLAN_MESSAGES`), the required attributes, reminders and states (`ATTRIBUTE_LABELS`, `attributeNote`, ...). See [tagging-package.md](../../docs/tagging-package.md#texts).
 
-Riding direction follows tilda-geo-private#34 (not merged yet), as the core package does.
+Riding direction is the one of the core package (tilda-geo `6ec40d600`).
 
 ## Usage
 

@@ -108,8 +108,7 @@ export function crossing(tags: OsmTags): boolean | undefined {
 
 /**
  * `not_expected`: on a oneway road the side against the flow has no infrastructure by default.
- * `oneway=-1` flows against the way, so there it is the right side (follows tilda-geo-private#34,
- * not merged yet).
+ * `oneway=-1` flows against the way, so there it is the right side (tilda-geo `bac701775`).
  */
 export function implicitOneWay(tags: OsmTags): boolean | undefined {
   let result = tags._prefix === 'cycleway' && tags._infix === ''

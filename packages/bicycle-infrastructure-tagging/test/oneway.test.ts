@@ -8,8 +8,8 @@ import {
   type OsmTags,
 } from '../src/index.ts'
 
-// The riding direction on a road side is the one the processing derives (tilda-geo-private#34,
-// not merged yet): sideOnewayDefault, the extraction plan and the validation must agree with it.
+// The riding direction on a road side is the one the processing derives (tilda-geo `6ec40d600`):
+// sideOnewayDefault, the extraction plan and the validation must agree with it.
 const roads: Record<string, OsmTags> = {
   'two-way road': { highway: 'residential' },
   'one-way road': { highway: 'residential', oneway: 'yes' },
@@ -32,7 +32,8 @@ describe('riding direction on a road side', () => {
       it(`${name}, ${side} track: default, processing and extraction agree`, () => {
         const tags = { ...road, [`cycleway:${side}`]: 'track' }
         const result = processBikelanes(tags).find((r) => r._side === side)!
-        expect(result.oneway).toBe('implicit_yes')
+        // a track without a tag: the category decides (both directions), the line follows the side
+        expect(result.oneway).toBe('assumed_no')
         const expected = result._lineReversed ? '-1' : 'yes'
 
         expect(sideOnewayDefault(road, side)).toBe(expected)

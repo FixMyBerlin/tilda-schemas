@@ -140,9 +140,9 @@ function signTags(sign: string | undefined, recommend: SignRecommend | undefined
  * direction, so the side's tags (`separation:left`, `traffic_sign:forward`, ...) stay valid as
  * they are, and a later merge with a sidewalk usually finds both in the same direction.
  * An explicit `cycleway:<side>:oneway` wins. Else the direction is the one the processing derives
- * (`defaultSideRunsAgainstWay`, follows tilda-geo-private#34, not merged yet): with the traffic on
- * that side, so `yes` on the right and `-1` on the left of a two-way road, `yes` on both sides of
- * a one-way road, and `-1` on the left of a one-way road that bicycles may ride against.
+ * (`defaultSideRunsAgainstWay`, tilda-geo `6ec40d600`): with the traffic on that side, so `yes` on
+ * the right and `-1` on the left of a two-way road, and `yes` on both sides of a one-way road, also
+ * when bicycles may ride against it (a contraflow lane needs an explicit `-1`).
  */
 export function cyclewayOneway(
   road: OsmTags,

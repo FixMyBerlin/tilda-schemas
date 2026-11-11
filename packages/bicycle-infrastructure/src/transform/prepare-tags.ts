@@ -83,7 +83,7 @@ function transformTemporary(tags: OsmTags): void {
 /**
  * Where the contraflow lane|track of a oneway road lies and which `cycleway:<side>:oneway` says
  * "against the road direction". `oneway=-1` flows against the way, so both are mirrored.
- * Mirrored `oneway=-1` and the explicit side direction follow tilda-geo-private#34 (not merged yet).
+ * Mirrored `oneway=-1` and the explicit side direction as in tilda-geo `bac701775`.
  */
 const CONTRAFLOW: Record<
   string,
@@ -156,9 +156,41 @@ export function transformCyclewayBothPostfix(tags: OsmTags): void {
   }
 }
 
-/** Apply all pre-transforms in the same order as roads_bikelanes.lua. */
+// `1` and `true` mean `yes`: https://wiki.openstreetmap.org/wiki/Key:oneway
+const ONEWAY_YES_ALIASES = new Set(['1', 'true'])
+// A roundabout implies `oneway=yes`: https://wiki.openstreetmap.org/wiki/Tag:junction=roundabout
+const ONEWAY_JUNCTIONS = new Set(['roundabout', 'circular'])
+const ONEWAY_KEYS = (() => {
+  const keys = ['oneway', 'oneway:bicycle']
+  for (const prefix of ['cycleway', 'sidewalk']) {
+    for (const infix of ['', ':left', ':right', ':both']) keys.push(`${prefix}${infix}:oneway`)
+  }
+  // `construction:*` tags become the main tags later (`transformConstructionPrefix`).
+  return [...keys, ...keys.map((key) => `construction:${key}`)]
+})()
+
+/**
+ * normalize_oneway_tags.lua — so that later steps only compare with `yes`, `-1` and `no`:
+ * `1`/`true` become `yes`, and a roundabout without `oneway` gets `oneway=yes`.
+ */
+export function normalizeOnewayTags(tags: OsmTags): void {
+  for (const key of ONEWAY_KEYS) {
+    const value = tags[key]
+    if (value !== undefined && ONEWAY_YES_ALIASES.has(value)) tags[key] = 'yes'
+  }
+  if (
+    tags.oneway === undefined &&
+    tags.junction !== undefined &&
+    ONEWAY_JUNCTIONS.has(tags.junction)
+  ) {
+    tags.oneway = 'yes'
+  }
+}
+
+/** Apply all pre-transforms in the same order as roads_bikelanes_ways.lua. */
 export function prepareTags(tags: OsmTags): void {
   transformLifecycleTags(tags)
+  normalizeOnewayTags(tags)
   transformCyclewayOppositeSchema(tags)
   transformConstructionPrefix(tags)
   transformCyclewayBothPostfix(tags)

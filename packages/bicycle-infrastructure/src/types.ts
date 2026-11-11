@@ -56,8 +56,8 @@ export interface BikelaneResult {
   lifecycle?: string | null
   oneway?: string
   /**
-   * Whether the published line runs against the OSM way (`_line_reversed` in LUA).
-   * follows tilda-geo-private#34 (not merged yet).
+   * Whether the published line of a lane or track tagged on the road runs against the OSM way
+   * (`_line_reversed` in LUA, tilda-geo `6ec40d600`). Lines of the way itself keep its direction.
    */
   _lineReversed?: boolean
   /** Sideways offset in meters of left|right lanes, signed relative to the published line. */

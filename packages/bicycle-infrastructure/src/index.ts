@@ -55,7 +55,7 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
     }
 
     if (category.infrastructureExists) {
-      // follows tilda-geo-private#34 (not merged yet): riding direction and line direction.
+      // Riding direction and line direction (tilda-geo `6ec40d600`, `bac701775`).
       const direction = deriveOnewayDirection(t, category)
       result.oneway = direction.oneway
       result._lineReversed = direction.lineReversed
@@ -138,7 +138,7 @@ export {
   DIRECTIONAL_PARKING_INFERENCE_CATEGORIES,
   PARKING_ALLOWED,
 } from './derive/derive-traffic-mode.ts'
-// follows tilda-geo-private#34 (not merged yet)
+// The side default of the processing (tilda-geo `6ec40d600`), for editors
 export { defaultSideRunsAgainstWay } from './derive/derive-oneway.ts'
 export { categorizeBikelane, CATEGORY_DEFINITIONS } from './categories/bikelane-categories.ts'
 export { analyzeCategoryGaps } from './categories/analyze-category-gaps.ts'

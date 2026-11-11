@@ -1,6 +1,6 @@
 /**
  * Ported from tilda-geo `transform_cycleway_opposite_schema.test.lua` of the branch
- * `claude/tilda-oneway-processing-81b448` (follows tilda-geo-private#34, not merged yet).
+ * `claude/tilda-oneway-processing-81b448`, merged as tilda-geo `6ec40d600` and `bac701775`.
  */
 import { describe, expect, test } from 'bun:test'
 import type { OsmTags } from '../src/index.ts'

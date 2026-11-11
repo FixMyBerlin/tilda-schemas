@@ -1,11 +1,11 @@
 /**
- * Port of topics/roads_bikelanes/bikelanes/derive_oneway.lua as in the tilda-geo branch
- * `claude/tilda-oneway-processing-81b448` (follows tilda-geo-private#34, not merged yet).
- * It replaces the `develop` version, which has no `-1`, no line direction and no side defaults.
+ * Port of topics/roads_bikelanes/bikelanes/derive_oneway.lua and
+ * topics/roads_bikelanes/bikelanes/helper/side_line_reversed.lua (tilda-geo `6ec40d600`, `bac701775`).
  *
  * OSM `oneway` values are relative to the drawing direction of the way:
- * `yes` (or `1`) flows with the way, `-1` against it, `no` in both directions.
+ * `yes` flows with the way, `-1` against it, `no` in both directions.
  * https://wiki.openstreetmap.org/wiki/Key:oneway
+ * The tags are expected after `normalizeOnewayTags` (`1`/`true` are `yes`, roundabouts `oneway=yes`).
  */
 import type { BikelaneCategory, OsmTags } from '../types.ts'
 
@@ -14,66 +14,58 @@ export type Oneway = 'yes' | 'no' | 'car_not_bike' | 'assumed_no' | 'implicit_ye
 export interface OnewayDirection {
   oneway: Oneway
   /**
-   * Whether the published line runs against the OSM way (`_line_reversed` in LUA).
-   * One-way lines point in the riding direction, `car_not_bike` lines in the motor direction.
-   * Two-way lines keep the side convention: left runs against the way, right and self with it.
+   * Whether the published line of a lane or track tagged on the road runs against the OSM way
+   * (`_line_reversed` in LUA). Lines of the way itself (`_side=self`) keep the drawing direction.
    */
   lineReversed: boolean
 }
 
-const WITH_WAY = new Set(['yes', '1'])
-const AGAINST_WAY = new Set(['-1'])
+const isOneway = (value: string | undefined) => value === 'yes' || value === '-1'
 
-const isWithWay = (value: string | undefined) => value != null && WITH_WAY.has(value)
-const isAgainstWay = (value: string | undefined) => value != null && AGAINST_WAY.has(value)
+const ONEWAY_JUNCTIONS = new Set(['roundabout', 'circular'])
 
 /**
- * Direction of a left|right lane that has no `cycleway:<side>:oneway` (right-hand traffic).
- * https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway#Implicit_values
- * - Two-way road: right flows with the way, left against it.
- * - Parent `oneway=yes`: both sides flow with the way.
- * - Parent `oneway=yes` + `oneway:bicycle=no`: the left lane is the contraflow lane. The German
- *   mapping guide tags it without `cycleway:left:oneway=-1`:
- *   https://wiki.openstreetmap.org/wiki/DE:Bicycle/Radverkehrsanlagen_kartieren#Einbahnstraße_mit_Erlaubnis_für_Radfahrende_in_Gegenrichtung
- * - Parent `oneway=-1`: not documented; we mirror the `oneway=yes` rules.
+ * A road whose traffic flows in one direction (is_oneway_road.lua). Also reads raw tags
+ * (`1`, `true`, a roundabout without `oneway`), because editors call it before `normalizeOnewayTags`.
  */
-function sideDefaultAgainstWay(tags: OsmTags): boolean {
-  return defaultSideRunsAgainstWay((tags._parent ?? {}) as OsmTags, tags._side as 'left' | 'right')
+function isOnewayRoad(road: OsmTags): boolean {
+  const oneway = road.oneway
+  if (oneway === 'yes' || oneway === '1' || oneway === 'true' || oneway === '-1') return true
+  return oneway === undefined && road.junction !== undefined && ONEWAY_JUNCTIONS.has(road.junction)
 }
 
 /**
- * Whether bicycles ride against the drawing direction of the road on the `left`|`right` lane of
- * `road` when the lane has no `cycleway:<side>:oneway` (the rules above, right-hand traffic).
+ * Whether bicycles ride against the drawing direction of `road` on its `left`|`right` lane when the
+ * lane has no `cycleway:<side>:oneway`, the wiki default (right-hand traffic):
+ * https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway#Implicit_values
+ * - One-way road: both sides follow the road, so against the way only on `oneway=-1`.
+ *   `oneway:bicycle=no` changes nothing: a contraflow lane needs `cycleway:left:oneway=-1`.
+ * - Other roads: the right side runs with the way, the left side against it.
  * Exported so editors suggest the same direction the processing derives.
  */
 export function defaultSideRunsAgainstWay(road: OsmTags, side: 'left' | 'right'): boolean {
-  const contraflowAllowed = road['oneway:bicycle'] === 'no'
-  if (isWithWay(road.oneway)) {
-    return contraflowAllowed && side === 'left'
-  }
-  if (isAgainstWay(road.oneway)) {
-    return !(contraflowAllowed && side === 'right')
-  }
+  if (isOnewayRoad(road)) return road.oneway === '-1'
   return side === 'left'
 }
 
+/**
+ * derive_oneway.lua. Without a tag the category decides (`implicitOneWay`), also for lanes and
+ * tracks tagged on the road: lanes are `implicit_yes`, tracks and shared foot and cycle paths
+ * `assumed_no`. This differs from the wiki default per side on purpose (tracks outside settlements
+ * are often two-way without `oneway=no`); the line direction still follows the wiki default.
+ */
 function onewayValue(tags: OsmTags, category: BikelaneCategory): Oneway {
   const oneway = tags.oneway
   const onewayBicycle = tags['oneway:bicycle']
-  const isSide = tags._side === 'left' || tags._side === 'right'
 
-  if (isWithWay(onewayBicycle) || isAgainstWay(onewayBicycle)) {
+  if (isOneway(onewayBicycle)) {
     return 'yes'
   } else if (onewayBicycle === 'no') {
-    return isWithWay(oneway) || isAgainstWay(oneway) ? 'car_not_bike' : 'no'
+    return isOneway(oneway) ? 'car_not_bike' : 'no'
   }
 
-  if (isWithWay(oneway) || isAgainstWay(oneway)) return 'yes'
+  if (isOneway(oneway)) return 'yes'
   if (oneway === 'no') return 'no'
-
-  // The wiki default for lanes and tracks tagged on the road is one direction per side;
-  // two-way needs an explicit `cycleway:<side>:oneway=no`.
-  if (isSide) return 'implicit_yes'
 
   if (tags.highway === 'service' || tags.highway === 'track') return 'assumed_no'
 
@@ -83,30 +75,26 @@ function onewayValue(tags: OsmTags, category: BikelaneCategory): Oneway {
 }
 
 /**
- * The TILDA `oneway` value and whether the published line runs against the OSM way.
- * `tags` are the transformed tags: for `_side` left|right `oneway` is `cycleway:<side>:oneway`.
+ * side_line_reversed.lua. One-way lines point in the riding direction; `no` or any other value
+ * keeps the side rule of two-way roads. `tags` are the transformed tags: for `_side` left|right
+ * `oneway` is `cycleway:<side>:oneway`.
  */
+function sideLineReversed(tags: OsmTags): boolean {
+  const side = tags._side
+  if (side !== 'left' && side !== 'right') return false
+
+  const direction = tags['oneway:bicycle'] ?? tags.oneway
+  if (direction === '-1') return true
+  if (direction === 'yes') return false
+
+  const parent = (tags._parent ?? {}) as OsmTags
+  if (direction === undefined && isOnewayRoad(parent)) return parent.oneway === '-1'
+  return side === 'left'
+}
+
+/** The TILDA `oneway` value and whether the published line runs against the OSM way. */
 export function deriveOnewayDirection(tags: OsmTags, category: BikelaneCategory): OnewayDirection {
-  const oneway = onewayValue(tags, category)
-
-  if (tags._side !== 'left' && tags._side !== 'right') {
-    // `oneway:bicycle=yes` on a `oneway=-1` road follows the road direction.
-    return {
-      oneway,
-      lineReversed: isAgainstWay(tags.oneway) || isAgainstWay(tags['oneway:bicycle']),
-    }
-  }
-
-  if (oneway !== 'yes' && oneway !== 'implicit_yes') {
-    return { oneway, lineReversed: tags._side === 'left' }
-  }
-
-  if (isAgainstWay(tags['oneway:bicycle']) || isAgainstWay(tags.oneway)) {
-    return { oneway, lineReversed: true }
-  } else if (isWithWay(tags.oneway)) {
-    return { oneway, lineReversed: false }
-  }
-  return { oneway, lineReversed: sideDefaultAgainstWay(tags) }
+  return { oneway: onewayValue(tags, category), lineReversed: sideLineReversed(tags) }
 }
 
 /** Only the TILDA `oneway` value, see `deriveOnewayDirection`. */

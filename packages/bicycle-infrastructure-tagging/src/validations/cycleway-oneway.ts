@@ -91,3 +91,22 @@ export function cyclewayOnewayFindings(tags: OsmTags): CyclewayOnewayFinding[] {
   }
   return findings
 }
+
+/** Values of `cycleway:left` (or `:both`, or `cycleway`) that are bicycle infrastructure on the road */
+const ON_ROAD_INFRASTRUCTURE = new Set(['lane', 'track', 'shared_lane', 'share_busway'])
+
+/**
+ * A one-way road that bicycles may ride against (`oneway=yes` + `oneway:bicycle=no`) with bicycle
+ * infrastructure on the left and no direction for it (`cycleway:left:oneway`, `cycleway:both:oneway`,
+ * `cycleway:oneway`). The wiki default is the direction of the road, but on such a road the left lane
+ * is usually the contraflow lane (`-1`). Returns the key that holds the infrastructure, or `undefined`.
+ */
+export function contraflowLeftWithoutDirection(tags: OsmTags): string | undefined {
+  if (!tags.highway || tags['oneway:bicycle'] !== 'no') return undefined
+  if (tags.oneway !== 'yes' && tags.oneway !== '1') return undefined
+  const key = ['cycleway:left', 'cycleway:both', 'cycleway'].find((k) => tags[k] !== undefined)
+  if (!key || !ON_ROAD_INFRASTRUCTURE.has(tags[key]!)) return undefined
+  const directionKeys = ['cycleway:left:oneway', 'cycleway:both:oneway', 'cycleway:oneway']
+  if (directionKeys.some((k) => tags[k] !== undefined)) return undefined
+  return key
+}

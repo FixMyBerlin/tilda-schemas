@@ -153,6 +153,17 @@ const CASES: Record<string, RuleCase> = {
     quiet: { ...ROAD, oneway: 'yes', 'cycleway:left': 'track', 'cycleway:left:oneway': 'yes' },
     options: RADNETZ,
   },
+  cycleway_oneway_contraflow_missing: {
+    trigger: { ...ROAD, oneway: 'yes', 'oneway:bicycle': 'no', 'cycleway:left': 'lane' },
+    quiet: {
+      ...ROAD,
+      oneway: 'yes',
+      'oneway:bicycle': 'no',
+      'cycleway:left': 'lane',
+      'cycleway:left:oneway': '-1',
+    },
+    options: RADNETZ,
+  },
   cycleway_oneway_redundant: {
     trigger: { ...ROAD, 'cycleway:right': 'track', 'cycleway:right:oneway': 'yes' },
     quiet: { ...ROAD, 'cycleway:right': 'track' },
@@ -485,6 +496,27 @@ describe('validateTags: overlap with tilda-geo', () => {
     ])
   })
 
+  test('contraflow: a key for both sides becomes -1 on the left, an untagged left lane is asked', () => {
+    const road = { ...ROAD, oneway: 'yes', 'oneway:bicycle': 'no', 'cycleway:both': 'lane' }
+    const both = { ...road, 'cycleway:both:oneway': 'yes' }
+    const fix = validateTags(both, RADNETZ).find((f) => f.ruleId === 'cycleway_oneway_wrong')!
+      .fixes[0]!
+    const next = applyTagFix(both, fix)
+    expect(next['cycleway:both:oneway']).toBeUndefined()
+    expect(next['cycleway:left:oneway']).toBe('-1')
+    expect(ids(validateTags(next, RADNETZ)).filter((id) => id.includes('oneway'))).toEqual([])
+
+    expect(ids(validateTags(road, RADNETZ))).toContain('cycleway_oneway_contraflow_missing')
+    // without contraflow cycling the road direction is right, nothing to ask
+    expect(
+      ids(validateTags({ ...road, 'oneway:bicycle': undefined } as OsmTags, RADNETZ)),
+    ).not.toContain('cycleway_oneway_contraflow_missing')
+    // a separately mapped cycleway carries its own oneway
+    expect(ids(validateTags({ ...road, 'cycleway:both': 'separate' }, RADNETZ))).not.toContain(
+      'cycleway_oneway_contraflow_missing',
+    )
+  })
+
   test('part widths of a way without separation are one finding, not three', () => {
     const tags = { ...PATH, segregated: 'no', width: '3', 'cycleway:width': '1.5' }
     expect(ids(validateTags(tags, RADNETZ)).filter((id) => id.startsWith('width_part'))).toEqual([
@@ -508,7 +540,6 @@ describe('fixes', () => {
           const again = validateTags(next, options).filter(
             (f) => f.ruleId === finding.ruleId && f.keys.join() === finding.keys.join(),
           )
-          // `cycleway_oneway_wrong` -> `no` keeps the tag, but with another meaning
           expect(again, `${id}: ${fix.message.code}`).toEqual([])
         }
       }
@@ -548,7 +579,7 @@ describe('fixes', () => {
         { ...ROAD, oneway: 'yes', 'oneway:bicycle': 'no', 'cycleway:left:oneway': 'yes' },
         'cycleway_oneway_wrong',
       ).map((fix) => fix.message.code),
-    ).toEqual(['fix.remove_tags', 'fix.set_tag'])
+    ).toEqual(['fix.set_tag'])
   })
 
   test('applyTagFix returns new tags and leaves the old ones alone', () => {

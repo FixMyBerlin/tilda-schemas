@@ -61,9 +61,11 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Teilbreiten ({keys}) an einem Weg mit segregated=no. Ohne Trennung gibt es nur width.',
     // radnetz: oneway
     cycleway_oneway_wrong:
-      'cycleway:*:oneway gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg.',
+      'Einbahnstraße mit Radverkehr in Gegenrichtung: Fährt man links wirklich in Richtung der Einbahnstraße (cycleway:left:oneway=yes)? Meist ist es der Gegenrichtungsstreifen, also -1.',
     'cycleway_oneway_wrong.contraflow':
-      '{key}={value} gilt für die Richtung des Weges, der Radweg auf dieser Seite fährt aber gegen den Weg.',
+      '{key}={value}: Radverkehr links in Richtung der Einbahnstraße. Ist das wirklich so? Wird links entgegen der Einbahnstraße gefahren, ist es cycleway:left:oneway=-1. Fährt man links tatsächlich in Richtung der Einbahnstraße (selten), mit OK bestätigen.',
+    cycleway_oneway_contraflow_missing:
+      'Einbahnstraße mit Radverkehr in Gegenrichtung (oneway:bicycle=no), links {key}={value} ohne Richtung. Ohne Angabe gilt die Richtung der Einbahnstraße. In welche Richtung wird links gefahren? Entgegen der Einbahnstraße: cycleway:left:oneway=-1.',
     sidewalk_shared_path:
       'Gehweg mit bicycle=designated und foot=designated: Das ist ein gemeinsamer oder getrennter Geh- und Radweg, also highway=path mit is_sidepath=yes.',
     cycleway_oneway_redundant:
@@ -72,6 +74,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'fix.remove_tags': '{keys} entfernen',
     'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
+    'fix.contraflow_left': '{key} entfernen und cycleway:left:oneway=-1 setzen',
     'fix.width_part_sum': 'width={sum} setzen',
   },
   en: {
@@ -124,9 +127,11 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     width_part_unsegregated:
       'Part widths ({keys}) on a way with segregated=no. Without a separation there is only width.',
     cycleway_oneway_wrong:
-      'cycleway:*:oneway is relative to the direction of the way, but the cycle path on this side runs against the way.',
+      'One-way road with contraflow cycling: do bicycles on the left really ride with the one-way (cycleway:left:oneway=yes)? Mostly it is the contraflow lane, so -1.',
     'cycleway_oneway_wrong.contraflow':
-      '{key}={value} is relative to the direction of the way, but the cycle path on this side runs against the way.',
+      '{key}={value}: bicycles on the left ride in the direction of the one-way road. Is that right? If they ride against the one-way on the left, it is cycleway:left:oneway=-1. If they really ride with the one-way on the left (rare), confirm with OK.',
+    cycleway_oneway_contraflow_missing:
+      'One-way road with contraflow cycling (oneway:bicycle=no), {key}={value} on the left without a direction. Without one, the direction of the one-way applies. Which way do bicycles ride on the left? Against the one-way: cycleway:left:oneway=-1.',
     sidewalk_shared_path:
       'Sidewalk with bicycle=designated and foot=designated: this is a shared or segregated foot and cycle path, so highway=path with is_sidepath=yes.',
     cycleway_oneway_redundant:
@@ -134,6 +139,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'fix.remove_tags': 'Remove {keys}',
     'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
+    'fix.contraflow_left': 'Remove {key} and set cycleway:left:oneway=-1',
     'fix.width_part_sum': 'Set width={sum}',
   },
 }

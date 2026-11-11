@@ -6,7 +6,7 @@ import {
   partWidthMismatch,
   partWidthWholeWay,
 } from '../widths/part-widths.ts'
-import { cyclewayOnewayFindings } from './cycleway-oneway.ts'
+import { contraflowLeftWithoutDirection, cyclewayOnewayFindings } from './cycleway-oneway.ts'
 import { removeTagsFix, setTagFix } from './fix.ts'
 import type { Rule, RuleHit } from './types.ts'
 
@@ -150,9 +150,50 @@ const cyclewayOnewayWrong: Rule = {
             code: `cycleway_oneway_wrong.${finding.reason}`,
             params: { key: finding.key, value: finding.value },
           },
-          fixes: [removeTagsFix([finding.key]), setTagFix(tags, finding.key, 'no')],
+          fixes: [contraflowFix(tags, finding.key)],
         }),
       )
+  },
+}
+
+/**
+ * `-1` for the left side. A key for both sides (`cycleway:both:oneway=yes`) goes away and the left
+ * side gets its own `-1`; the right side then has the default (with the road), which `yes` said too.
+ * A real `yes` on the left (riding with the one-way on the left) is confirmed in the editor (OK),
+ * not with a tag.
+ */
+function contraflowFix(tags: OsmTags, key: string) {
+  if (key === 'cycleway:left:oneway') return setTagFix(tags, key, '-1')
+  return {
+    message: { code: 'fix.contraflow_left', params: { key } },
+    remove: [key],
+    add: { 'cycleway:left:oneway': '-1' },
+  }
+}
+
+const cyclewayOnewayContraflowMissing: Rule = {
+  id: 'cycleway_oneway_contraflow_missing',
+  severity: 'warning',
+  source: 'radnetz',
+  appliesTo: ['road'],
+  keys: ['cycleway:left:oneway', 'cycleway:left', 'cycleway:both', 'cycleway', 'oneway:bicycle'],
+  message: { code: 'cycleway_oneway_contraflow_missing' },
+  check({ tags }) {
+    const key = contraflowLeftWithoutDirection(tags)
+    if (!key) return []
+    return [
+      {
+        scope: 'road',
+        keys: ['cycleway:left:oneway'],
+        message: { code: 'cycleway_oneway_contraflow_missing', params: { key, value: tags[key]! } },
+        // A real direction with the road on the left is rare and confirmed with OK in the editor;
+        // `cycleway:left:oneway=yes` would only bring up `cycleway_oneway_wrong`.
+        fixes: [
+          setTagFix(tags, 'cycleway:left:oneway', '-1'),
+          setTagFix(tags, 'cycleway:left:oneway', 'no'),
+        ],
+      },
+    ]
   },
 }
 
@@ -218,6 +259,7 @@ export const RADNETZ_RULES: readonly Rule[] = [
   widthPartWhole,
   widthPartUnsegregated,
   cyclewayOnewayWrong,
+  cyclewayOnewayContraflowMissing,
   cyclewayOnewayRedundant,
   sidewalkSharedPath,
 ]

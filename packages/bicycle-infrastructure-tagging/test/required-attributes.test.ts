@@ -560,6 +560,20 @@ describe('roadAttributes', () => {
     expect(attributes.traffic_mode_foot.hint).toBe('traffic_mode_foot')
   })
 
+  it('cycleway line with the footway tagged on its left: the row is about traffic_mode:left', () => {
+    const tags = {
+      highway: 'cycleway',
+      is_sidepath: 'yes',
+      oneway: 'yes',
+      traffic_sign: 'none',
+      'traffic_mode:left': 'foot',
+    }
+    const row = byId(requiredAttributes(resultFor(tags, 'self'), tags)).traffic_mode_foot
+    expect(row.key).toBe('traffic_mode:left')
+    expect(row.value).toBe('foot')
+    expect(row.state).toBe('ok')
+  })
+
   it('one way for both modes: segregated asked, no traffic_mode', () => {
     const tags = {
       highway: 'path',

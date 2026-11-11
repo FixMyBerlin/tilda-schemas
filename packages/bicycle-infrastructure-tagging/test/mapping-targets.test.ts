@@ -182,6 +182,18 @@ describe('mapping choices', () => {
     for (const resolved of allMappingChoices()) expect(doc).toContain(`| \`${resolved.id}\``)
   })
 
+  it('two lines: keeps a footway that is tagged on the left of the cycleway', () => {
+    const tags = { highway: 'cycleway', is_sidepath: 'yes', 'traffic_mode:left': 'foot' }
+    const plan = planForMappingChoice(
+      tags,
+      { kind: 'footAndCyclewaySegregated', position: 'adjoining', lines: 'two' },
+      'self',
+    )
+    expect(plan.add.map((e) => e.key)).not.toContain('traffic_mode:right')
+    expect(applyCategoryPlan(tags, plan)['traffic_mode:left']).toBe('foot')
+    expect(plan.aligned).toBe(true)
+  })
+
   it('plans construction and temporary on a road side and on a way of its own', () => {
     const keys = (plan: { add: { key: string; value: string }[]; remove: string[] }) => [
       ...plan.add.map((e) => `${e.key}=${e.value}`),

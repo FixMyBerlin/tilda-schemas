@@ -449,11 +449,21 @@ export function planForMappingChoice(
       { choiceId: mappingChoiceId(choice) },
     )
   }
+  // two lines: the footway may already be tagged on the left of the cycleway; TILDA reads both sides
+  const fixed = { ...resolved.fixed }
+  if (
+    fixed['traffic_mode:right'] === 'foot' &&
+    tags['traffic_mode:left'] === 'foot' &&
+    tags['traffic_mode:right'] !== 'foot'
+  ) {
+    delete fixed['traffic_mode:right']
+    fixed['traffic_mode:left'] = 'foot'
+  }
   return planOne(
     tags,
     resolved.categoryId,
     side,
-    resolved.fixed,
+    fixed,
     { choiceId: resolved.id },
     resolved.lifecycle,
   )

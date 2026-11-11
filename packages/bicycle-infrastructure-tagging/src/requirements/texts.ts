@@ -36,7 +36,7 @@ export const ATTRIBUTE_LABELS: Texts = {
     separation_right: 'Trennung rechts',
     traffic_mode_left: 'Verkehr daneben, links',
     traffic_mode_right: 'Verkehr daneben, rechts',
-    traffic_mode_foot: 'Gehweg rechts daneben (eigene Linie)',
+    traffic_mode_foot: 'Gehweg direkt daneben (eigene Linie)',
     buffer_left: 'Sicherheitstrennstreifen links',
     buffer_right: 'Sicherheitstrennstreifen rechts',
     marking_left: 'Markierung links',
@@ -63,7 +63,7 @@ export const ATTRIBUTE_LABELS: Texts = {
     separation_right: 'Separation, right',
     traffic_mode_left: 'Traffic next to it, left',
     traffic_mode_right: 'Traffic next to it, right',
-    traffic_mode_foot: 'Footway right next to it (its own line)',
+    traffic_mode_foot: 'Footway directly next to it (its own line)',
     buffer_left: 'Buffer, left',
     buffer_right: 'Buffer, right',
     marking_left: 'Marking, left',
@@ -105,11 +105,11 @@ export const ATTRIBUTE_NOTES: Texts = {
 export const ATTRIBUTE_HINTS: Texts = {
   de: {
     traffic_mode_foot:
-      'Nur wenn dieser getrennte Geh- und Radweg mit zwei Linien erfasst ist und dies die Radweg-Linie ist, mit dem Gehweg (eigene Linie) direkt rechts daneben. Sonst nicht taggen.',
+      'Nur wenn dieser getrennte Geh- und Radweg mit zwei Linien erfasst ist und dies die Radweg-Linie ist, mit dem Gehweg (eigene Linie) direkt daneben: in Zeichenrichtung rechts (traffic_mode:right=foot) oder links (traffic_mode:left=foot). Sonst nicht taggen.',
   },
   en: {
     traffic_mode_foot:
-      'Only if this segregated foot and cycle path is mapped as two lines and this is the cycleway line, with the footway (its own line) directly on its right. Otherwise do not tag it.',
+      'Only if this segregated foot and cycle path is mapped as two lines and this is the cycleway line, with the footway (its own line) directly next to it: on the right in the drawing direction (traffic_mode:right=foot) or on the left (traffic_mode:left=foot). Otherwise do not tag it.',
   },
 }
 

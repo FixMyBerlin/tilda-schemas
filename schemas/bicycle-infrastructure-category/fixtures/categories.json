@@ -469,5 +469,51 @@
     },
     "select": { "side": "self" },
     "expect": { "category": "cyclewayOnHighwayBetweenLanes" }
+  },
+  {
+    "name": "two lines: footway right of the cycleway (traffic_mode:right=foot) is segregated",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "traffic_sign": "none",
+      "traffic_mode:right": "foot"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoining" }
+  },
+  {
+    "name": "two lines: footway left of the cycleway (traffic_mode:left=foot) is segregated too",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "traffic_sign": "none",
+      "traffic_mode:left": "foot"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoining" }
+  },
+  {
+    "name": "two lines: a separation on the footway side makes it a cycleway",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "traffic_sign": "none",
+      "traffic_mode:left": "foot",
+      "separation:left": "kerb"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "cycleway_adjoining" }
+  },
+  {
+    "name": "two lines: a separation on the other side does not matter",
+    "input": {
+      "highway": "cycleway",
+      "is_sidepath": "yes",
+      "traffic_sign": "none",
+      "traffic_mode:left": "foot",
+      "separation:right": "kerb"
+    },
+    "select": { "side": "self" },
+    "expect": { "category": "footAndCyclewaySegregated_adjoining" }
   }
 ]

@@ -1,5 +1,13 @@
 # Changelog — bicycle-infrastructure-category
 
+## Unreleased
+
+- `footAndCyclewaySegregated` also accepts the footway on the left of the cycleway (`traffic_mode:left=foot`,
+  no separation on the left), not only on the right. Ways are drawn in the riding direction, so a one-way
+  cycleway cannot be reversed to put the footway on its right. Needs the same change in tilda-geo
+  (`bikelane_categories.lua`). In Berlin (OSM data of 2026-11-09) 16 ways change from `cycleway_*` to
+  `footAndCyclewaySegregated_*`, all with `traffic_mode:left=foot`.
+
 ## 0.2.0 — 2026-11-04
 
 Synced with tilda-geo `develop` of 2026-11-04. No category value is added or removed.

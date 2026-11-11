@@ -429,13 +429,18 @@ export const CATEGORY_MACROS = {
   unsigned_cycleway: unsignedCycleway,
 } as const
 
-/** separation_right / traffic_mode_right branch not expressible as simple tag equality. */
+/**
+ * A cycleway with the footway next to it (`traffic_mode:<side>=foot`) and no separation on that side.
+ * The footway may be on either side: ways are drawn in the riding direction, so a one-way
+ * cycleway cannot be reversed to put it on the right.
+ */
 function footAndCyclewaySegregatedSeparation(tags: OsmTags): boolean | undefined {
-  const separationRight = tags.separation_right
-  let separationCondition = true
-  if (separationRight != null) separationCondition = separationRight === 'no'
-  const trafficModeCondition = tags.traffic_mode_right === 'foot'
-  if (tags.highway === 'cycleway' && trafficModeCondition && separationCondition) return true
+  if (tags.highway !== 'cycleway') return undefined
+  const footNextToIt = (side: 'left' | 'right') => {
+    const separation = tags[`separation_${side}`]
+    return tags[`traffic_mode_${side}`] === 'foot' && (separation == null || separation === 'no')
+  }
+  if (footNextToIt('right') || footNextToIt('left')) return true
   return undefined
 }
 

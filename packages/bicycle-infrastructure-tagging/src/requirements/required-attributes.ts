@@ -235,6 +235,15 @@ const SOURCE_WIDTH: Rule = {
   when: widthEdited('width'),
 }
 
+/** The footway of a cycleway mapped as two lines is tagged on its left (and not on its right) */
+function footwayOnTheLeft(ctx: RuleContext) {
+  return (
+    ctx.side === 'self' &&
+    ctx.tags['traffic_mode:left'] === 'foot' &&
+    ctx.tags['traffic_mode:right'] !== 'foot'
+  )
+}
+
 /** The way carries both modes on one line, and the parts are separate (`segregated=yes`). */
 function isSegregatedWay(ctx: RuleContext) {
   if (ctx.side !== 'self' || ctx.profile.partWidths === false) return false
@@ -357,7 +366,8 @@ const SEPARATE_WAY = define('separateWay', [
     when: (ctx) => ctx.category.startsWith('footAndCycleway') && !isCyclewayPartAlone(ctx),
   },
   // the cycleway part of a segregated foot and cycle path mapped as two lines: the footway is the
-  // other line, right of it (TILDA reads `traffic_mode:right=foot` as "Getrennter Geh- und Radweg")
+  // other line, usually right of it (TILDA reads `traffic_mode:right|left=foot` as "Getrennter Geh-
+  // und Radweg"); the row is about the left side when the footway is tagged there
   {
     id: 'traffic_mode_foot',
     key: 'traffic_mode:right',
@@ -366,6 +376,19 @@ const SEPARATE_WAY = define('separateWay', [
     optional: true,
     hint: 'traffic_mode_foot',
     when: (ctx) => ctx.category.startsWith('footAndCyclewaySegregated') && isCyclewayPartAlone(ctx),
+    unless: footwayOnTheLeft,
+  },
+  {
+    id: 'traffic_mode_foot',
+    key: 'traffic_mode:left',
+    options: ['foot'],
+    strict: true,
+    optional: true,
+    hint: 'traffic_mode_foot',
+    when: (ctx) =>
+      ctx.category.startsWith('footAndCyclewaySegregated') &&
+      isCyclewayPartAlone(ctx) &&
+      footwayOnTheLeft(ctx),
   },
 ])
 

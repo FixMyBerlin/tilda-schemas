@@ -194,7 +194,10 @@ const TEMPORARY_KINDS = new Set([
 /** A Fahrradstraße exists only by its sign: no sign option */
 const SIGN_REQUIRED_CATEGORIES = new Set(['bicycleRoad', 'bicycleRoad_vehicleDestination'])
 
-/** The footway as a line of its own: LUA reads `highway=cycleway` + `traffic_mode:right=foot` as segregated */
+/**
+ * The footway as a line of its own: LUA reads `highway=cycleway` + `traffic_mode:right=foot` (or `:left`)
+ * as segregated. Right is the default; `planForMappingChoice` keeps a footway tagged on the left.
+ */
 const TWO_LINES_KINDS = new Set(['footAndCyclewaySegregated'])
 const TWO_LINES_TAGS = { highway: 'cycleway', 'traffic_mode:right': 'foot' }
 

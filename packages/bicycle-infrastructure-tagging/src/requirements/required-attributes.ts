@@ -316,11 +316,11 @@ const COMMON = define('common', [
     note: 'surface_colour',
     unless: isSegregatedWay,
   },
-  // footway and cycleway apart: TILDA reads the colour of the cycleway part (`cycleway:surface:colour`), else `surface:colour`
+  // footway and cycleway apart: only the cycleway part matters, so ask for `cycleway:surface:colour`
+  // (`surface:colour` would be the colour of the footway part or of the whole way)
   {
     id: 'surface_colour',
     key: 'cycleway:surface:colour',
-    readKeys: ['surface:colour'],
     options: SURFACE_COLOUR_OPTIONS,
     strict: true,
     tilda: field('surface_color'),

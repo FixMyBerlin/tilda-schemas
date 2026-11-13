@@ -243,7 +243,7 @@ describe('requiredAttributes', () => {
 })
 
 describe('defaults (WORKDOC feature 32)', () => {
-  it('surface:colour on a segregated way: cycleway:surface:colour counts (way 951489119)', () => {
+  it('surface:colour on a segregated way: only cycleway:surface:colour counts (way 951489119)', () => {
     const tags = {
       bicycle: 'designated',
       foot: 'designated',
@@ -263,9 +263,10 @@ describe('defaults (WORKDOC feature 32)', () => {
 
     const { 'cycleway:surface:colour': _, ...rest } = tags
     const plainTags = { ...rest, 'surface:colour': 'green' }
+    // a plain `surface:colour` is not the cycleway part: it is still asked for
     expect(
       byId(requiredAttributes(resultFor(plainTags, 'self'), plainTags)).surface_colour.state,
-    ).toBe('ok')
+    ).toBe('assumed')
 
     const missing = byId(requiredAttributes(resultFor(rest, 'self'), rest)).surface_colour
     expect(missing.state).toBe('assumed')

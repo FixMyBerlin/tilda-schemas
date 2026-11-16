@@ -516,7 +516,16 @@ describe('roadAttributes', () => {
       expect(attributes.oneway.state).toBe('assumed')
       expect(attributes.oneway.tilda).toBe('yes')
       expect(attributes.oneway.note).toBe('oneway_junction')
-      expect(attributes.oneway_bicycle.state).toBe('assumed')
+      // bicycles ride with the roundabout: no check to confirm, also with an explicit oneway=yes
+      expect(attributes.oneway_bicycle).toBeUndefined()
+      expect(
+        byId(roadAttributes({ highway: 'residential', junction, oneway: 'yes' })).oneway_bicycle,
+      ).toBeUndefined()
+      // the rare tagged exception still shows
+      expect(
+        byId(roadAttributes({ highway: 'residential', junction, 'oneway:bicycle': 'no' }))
+          .oneway_bicycle.state,
+      ).toBe('ok')
       const twoWay = byId(roadAttributes({ highway: 'residential', junction, oneway: 'no' }))
       expect(twoWay.oneway.state).toBe('ok')
       expect(twoWay.oneway.value).toBe('no')

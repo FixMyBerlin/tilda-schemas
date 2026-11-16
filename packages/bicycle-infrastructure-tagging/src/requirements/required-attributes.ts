@@ -533,7 +533,10 @@ function onewayJunction(ctx: RuleContext) {
   return ctx.tags.junction !== undefined && ONEWAY_JUNCTIONS.has(ctx.tags.junction)
 }
 
-/** One-way roads: only `oneway:bicycle=no` says something; without the tag bicycles follow the one-way */
+/**
+ * One-way roads: only `oneway:bicycle=no` says something; without the tag bicycles follow the one-way.
+ * Not on roundabouts: bicycles ride with the roundabout there, so it shows only when it is tagged.
+ */
 const ONEWAY_BICYCLE: Rule = {
   id: 'oneway_bicycle',
   key: 'oneway:bicycle',
@@ -541,8 +544,8 @@ const ONEWAY_BICYCLE: Rule = {
   strict: true,
   assumed: () => 'yes',
   note: 'oneway_bicycle',
-  when: (ctx) =>
-    ctx.value('oneway') === 'yes' || (ctx.value('oneway') === undefined && onewayJunction(ctx)),
+  when: (ctx) => ctx.value('oneway') === 'yes' && !onewayJunction(ctx),
+  showWhenTagged: true,
 }
 
 /** Bicycle roads: the white marking on both sides; with a line, the buffer to it (Radinfra FAQ) */

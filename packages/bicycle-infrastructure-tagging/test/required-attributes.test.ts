@@ -510,6 +510,20 @@ describe('roadAttributes', () => {
     expect(attributes.oneway.tilda).toBe('no')
   })
 
+  it('roundabout without oneway: one-way is assumed, oneway=no overrides it', () => {
+    for (const junction of ['roundabout', 'circular']) {
+      const attributes = byId(roadAttributes({ highway: 'residential', junction }))
+      expect(attributes.oneway.state).toBe('assumed')
+      expect(attributes.oneway.tilda).toBe('yes')
+      expect(attributes.oneway.note).toBe('oneway_junction')
+      expect(attributes.oneway_bicycle.state).toBe('assumed')
+      const twoWay = byId(roadAttributes({ highway: 'residential', junction, oneway: 'no' }))
+      expect(twoWay.oneway.state).toBe('ok')
+      expect(twoWay.oneway.value).toBe('no')
+      expect(twoWay.oneway_bicycle).toBeUndefined()
+    }
+  })
+
   it('one-way road: oneway:bicycle and dual_carriageway, cycleway presence from any side key', () => {
     const attributes = byId(
       roadAttributes({ highway: 'residential', oneway: 'yes', 'cycleway:left': 'no' }),

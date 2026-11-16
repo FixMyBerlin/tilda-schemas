@@ -85,6 +85,8 @@ export const ATTRIBUTE_NOTES: Texts = {
     oneway_side:
       'Nicht getaggt = Radverkehr fährt mit dem Verkehr auf dieser Seite. Nur „no“ taggen, wenn er hier in beide Richtungen fahren darf.',
     oneway_road: 'Nicht getaggt = Straße mit Gegenverkehr.',
+    oneway_junction:
+      'Nicht getaggt = Einbahnstraße, weil Kreisverkehr. Nur „no“ taggen, wenn hier Gegenverkehr ist.',
     dual_carriageway:
       'Nicht getaggt = keine getrennte Richtungsfahrbahn. „yes“ taggen, wenn die Gegenrichtung eine eigene Linie ist.',
   },
@@ -96,6 +98,8 @@ export const ATTRIBUTE_NOTES: Texts = {
     oneway_side:
       'Not tagged = bicycles ride with the traffic on this side. Tag “no” only if they may ride both ways here.',
     oneway_road: 'Not tagged = two-way road.',
+    oneway_junction:
+      'Not tagged = one-way, because it is a roundabout. Tag “no” only if there is two-way traffic here.',
     dual_carriageway:
       'Not tagged = no dual carriageway. Tag “yes” if the other direction is a separate way.',
   },

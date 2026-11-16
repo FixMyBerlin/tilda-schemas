@@ -62,6 +62,7 @@ function isOneway(tags: OsmTags) {
   if (tags.oneway === 'no') return false
   return (
     tags.junction === 'roundabout' ||
+    tags.junction === 'circular' ||
     tags.highway === 'motorway' ||
     tags.highway === 'motorway_link'
   )

@@ -526,6 +526,13 @@ function delimitation(): Rule[] {
 
 const PROTECTION = define('protection', delimitation())
 
+// A roundabout (also `junction=circular`) without `oneway` is a one-way road (normalize_oneway_tags.lua)
+const ONEWAY_JUNCTIONS = new Set(['roundabout', 'circular'])
+
+function onewayJunction(ctx: RuleContext) {
+  return ctx.tags.junction !== undefined && ONEWAY_JUNCTIONS.has(ctx.tags.junction)
+}
+
 /** One-way roads: only `oneway:bicycle=no` says something; without the tag bicycles follow the one-way */
 const ONEWAY_BICYCLE: Rule = {
   id: 'oneway_bicycle',
@@ -534,7 +541,8 @@ const ONEWAY_BICYCLE: Rule = {
   strict: true,
   assumed: () => 'yes',
   note: 'oneway_bicycle',
-  when: (ctx) => ctx.value('oneway') === 'yes',
+  when: (ctx) =>
+    ctx.value('oneway') === 'yes' || (ctx.value('oneway') === undefined && onewayJunction(ctx)),
 }
 
 /** Bicycle roads: the white marking on both sides; with a line, the buffer to it (Radinfra FAQ) */
@@ -825,13 +833,13 @@ export function isRoad(tags: OsmTags) {
 }
 
 const ROAD = define('road', [
-  // a road without `oneway` is two-way (infraVelo drops `oneway=no` anyway)
+  // a road without `oneway` is two-way (infraVelo drops `oneway=no` anyway), a roundabout one-way
   {
     id: 'oneway',
     key: 'oneway',
     options: ['yes', 'no', '-1'],
-    assumed: () => 'no',
-    note: 'oneway_road',
+    assumed: (ctx) => (onewayJunction(ctx) ? 'yes' : 'no'),
+    note: (ctx) => (onewayJunction(ctx) ? 'oneway_junction' : 'oneway_road'),
     overriddenBy: onewayBicycleTag,
   },
   ONEWAY_BICYCLE,

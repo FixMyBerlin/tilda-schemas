@@ -35,6 +35,7 @@ function corpus(): OsmTags[] {
     { highway: 'footway', bicycle: 'yes' },
     { highway: 'residential' },
     { highway: 'residential', oneway: 'yes' },
+    { highway: 'residential', junction: 'roundabout' },
     { highway: 'residential', oneway: 'yes', 'oneway:bicycle': 'no' },
     { highway: 'residential', bicycle_road: 'yes' },
     { highway: 'residential', bicycle_road: 'yes', oneway: 'yes' },
@@ -126,6 +127,7 @@ describe('requirement texts', () => {
     expect([...notes].sort()).toEqual([
       'dual_carriageway',
       'oneway_bicycle',
+      'oneway_junction',
       'oneway_road',
       'oneway_side',
       'surface_colour',

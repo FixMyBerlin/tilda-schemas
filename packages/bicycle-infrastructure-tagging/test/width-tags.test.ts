@@ -22,6 +22,13 @@ describe('width/width_tags', () => {
       explicit: false,
     })
     expect(roadWidthFromTags({})).toEqual({ meters: 10, explicit: false })
+    for (const junction of ['roundabout', 'circular']) {
+      expect(roadWidthFromTags({ highway: 'primary', junction })).toEqual({
+        meters: 12,
+        explicit: false,
+      })
+      expect(roadWidthFromTags({ highway: 'primary', junction, oneway: 'no' }).meters).toBe(18)
+    }
   })
 
   it('knows which part of the street a width key describes', () => {

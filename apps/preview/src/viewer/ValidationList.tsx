@@ -47,7 +47,8 @@ export function ValidationList({ tags, profile, onApply }: Props) {
               data-testid={triggered ? 'rule-triggered' : 'rule'}
               data-rule={rule.id}
               className={clsx(
-                'rounded-lg p-3 ring-1',
+                // wrap-break-word: long URLs in rule texts must not widen the page on a phone
+                'rounded-lg p-3 ring-1 wrap-break-word',
                 triggered ? 'bg-white ring-zinc-950/15' : 'bg-zinc-50 opacity-60 ring-zinc-950/5',
               )}
             >

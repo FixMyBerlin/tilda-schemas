@@ -510,17 +510,29 @@ describe('roadAttributes', () => {
     expect(attributes.oneway.tilda).toBe('no')
   })
 
-  it('roundabout without oneway: one-way is assumed, oneway=no overrides it', () => {
+  it('roundabout implies oneway=yes: no check, TILDA reads it from junction', () => {
+    const attributes = byId(roadAttributes({ highway: 'residential', junction: 'roundabout' }))
+    expect(attributes.oneway.state).toBe('inherited')
+    expect(attributes.oneway.tilda).toBe('yes')
+    expect(attributes.oneway.source).toBe('junction=roundabout')
+  })
+
+  it('circular junction requires oneway: TILDA guesses yes and asks for the tag', () => {
+    const attributes = byId(roadAttributes({ highway: 'residential', junction: 'circular' }))
+    expect(attributes.oneway.state).toBe('guess')
+    expect(attributes.oneway.tilda).toBe('yes')
+    expect(attributes.oneway.options).toEqual(['yes', 'no', '-1'])
+  })
+
+  it('roundabout and circular junction: oneway=no overrides, no oneway:bicycle unless tagged', () => {
     for (const junction of ['roundabout', 'circular']) {
-      const attributes = byId(roadAttributes({ highway: 'residential', junction }))
-      expect(attributes.oneway.state).toBe('assumed')
-      expect(attributes.oneway.tilda).toBe('yes')
-      expect(attributes.oneway.note).toBe('oneway_junction')
-      // bicycles ride with the roundabout: no check to confirm, also with an explicit oneway=yes
-      expect(attributes.oneway_bicycle).toBeUndefined()
+      // bicycles ride with the roundabout: nothing to confirm, also with an explicit oneway=yes
       expect(
-        byId(roadAttributes({ highway: 'residential', junction, oneway: 'yes' })).oneway_bicycle,
+        byId(roadAttributes({ highway: 'residential', junction })).oneway_bicycle,
       ).toBeUndefined()
+      const oneway = byId(roadAttributes({ highway: 'residential', junction, oneway: 'yes' }))
+      expect(oneway.oneway.state).toBe('ok')
+      expect(oneway.oneway_bicycle).toBeUndefined()
       // the rare tagged exception still shows
       expect(
         byId(roadAttributes({ highway: 'residential', junction, 'oneway:bicycle': 'no' }))

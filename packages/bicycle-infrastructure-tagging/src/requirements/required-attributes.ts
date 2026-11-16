@@ -526,7 +526,10 @@ function delimitation(): Rule[] {
 
 const PROTECTION = define('protection', delimitation())
 
-// A roundabout (also `junction=circular`) without `oneway` is a one-way road (normalize_oneway_tags.lua)
+// TILDA reads both as one-way without `oneway` (normalize_oneway_tags.lua). The wiki differs:
+// `junction=roundabout` implies `oneway=yes`, `junction=circular` requires `oneway` to be tagged.
+// https://wiki.openstreetmap.org/wiki/Tag:junction=roundabout
+// https://wiki.openstreetmap.org/wiki/Tag:junction=circular
 const ONEWAY_JUNCTIONS = new Set(['roundabout', 'circular'])
 
 function onewayJunction(ctx: RuleContext) {
@@ -836,13 +839,18 @@ export function isRoad(tags: OsmTags) {
 }
 
 const ROAD = define('road', [
-  // a road without `oneway` is two-way (infraVelo drops `oneway=no` anyway), a roundabout one-way
+  // a road without `oneway` is two-way (infraVelo drops `oneway=no` anyway); a roundabout is
+  // one-way without a tag; on a circular junction TILDA guesses one-way, but the tag is asked for
   {
     id: 'oneway',
     key: 'oneway',
     options: ['yes', 'no', '-1'],
-    assumed: (ctx) => (onewayJunction(ctx) ? 'yes' : 'no'),
-    note: (ctx) => (onewayJunction(ctx) ? 'oneway_junction' : 'oneway_road'),
+    derivedFrom: (ctx) =>
+      ctx.tags.junction === 'roundabout' ? { tag: 'junction=roundabout', tilda: 'yes' } : undefined,
+    assumed: (ctx) => (onewayJunction(ctx) ? undefined : 'no'),
+    note: 'oneway_road',
+    tilda: (ctx) => ctx.value('oneway') ?? (ctx.tags.junction === 'circular' ? 'yes' : undefined),
+    guesses: ['yes'],
     overriddenBy: onewayBicycleTag,
   },
   ONEWAY_BICYCLE,

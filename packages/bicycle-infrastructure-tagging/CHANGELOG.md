@@ -1,5 +1,11 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.3.1
+
+### Patch Changes
+
+- 1c1cb52: Segregated foot and cycle path with part values (Radnetz profile): the requirement `surface_colour` only counts `cycleway:surface:colour`. A plain `surface:colour` no longer satisfies it, because only the cycleway part is of interest.
+
 ## 0.3.0
 
 ### Minor Changes

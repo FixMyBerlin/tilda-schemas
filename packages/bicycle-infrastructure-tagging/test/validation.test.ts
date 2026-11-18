@@ -165,8 +165,9 @@ const CASES: Record<string, RuleCase> = {
     options: RADNETZ,
   },
   cycleway_oneway_redundant: {
-    trigger: { ...ROAD, 'cycleway:right': 'track', 'cycleway:right:oneway': 'yes' },
-    quiet: { ...ROAD, 'cycleway:right': 'track' },
+    trigger: { ...ROAD, 'cycleway:right': 'lane', 'cycleway:right:oneway': 'yes' },
+    // a track may say "one direction"
+    quiet: { ...ROAD, 'cycleway:right': 'track', 'cycleway:right:oneway': 'yes' },
     options: RADNETZ,
   },
 }
@@ -515,6 +516,93 @@ describe('validateTags: overlap with tilda-geo', () => {
     expect(ids(validateTags({ ...road, 'cycleway:both': 'separate' }, RADNETZ))).not.toContain(
       'cycleway_oneway_contraflow_missing',
     )
+  })
+
+  describe('cycleway:both:oneway=yes (Berlin: "one direction" read as "direction of the way")', () => {
+    const oneway = (tags: OsmTags) =>
+      validateTags(tags, RADNETZ).filter((f) => f.ruleId.includes('oneway'))
+    const fixed = (tags: OsmTags, index = 0) => applyTagFix(tags, oneway(tags)[0]!.fixes[index]!)
+
+    test('two-way road, lanes: the fix removes the key, then nothing is left to find', () => {
+      const tags = { ...ROAD, 'cycleway:both': 'lane', 'cycleway:both:oneway': 'yes' }
+      const findings = oneway(tags)
+      expect(findings.map((f) => f.ruleId)).toEqual(['unexpected_oneway_direction'])
+      expect(findings[0]!.fixes.map((fix) => fix.remove)).toEqual([['cycleway:both:oneway']])
+      const next = fixed(tags)
+      expect(next['cycleway:both:oneway']).toBeUndefined()
+      expect(oneway(next)).toEqual([])
+    })
+
+    test('two-way road, tracks: the first fix splits the key into left -1 and right yes', () => {
+      const tags = { ...ROAD, 'cycleway:both': 'track', 'cycleway:both:oneway': 'yes' }
+      const next = fixed(tags)
+      expect(next['cycleway:both:oneway']).toBeUndefined()
+      expect(next['cycleway:left:oneway']).toBe('-1')
+      expect(next['cycleway:right:oneway']).toBe('yes')
+      // explicit on tracks is fine
+      expect(oneway(next)).toEqual([])
+    })
+
+    test('lanes with the default direction tagged: redundant; tracks keep it', () => {
+      const lanes = {
+        ...ROAD,
+        'cycleway:both': 'lane',
+        'cycleway:left:oneway': '-1',
+        'cycleway:right:oneway': 'yes',
+      }
+      expect(oneway(lanes).map((f) => [f.ruleId, f.keys])).toEqual([
+        ['cycleway_oneway_redundant', ['cycleway:left:oneway']],
+        ['cycleway_oneway_redundant', ['cycleway:right:oneway']],
+      ])
+      expect(oneway({ ...lanes, 'cycleway:both': 'track' })).toEqual([])
+      const onewayRoad = {
+        ...ROAD,
+        oneway: 'yes',
+        'cycleway:both': 'lane',
+        'cycleway:both:oneway': 'yes',
+      }
+      expect(oneway(onewayRoad).map((f) => f.ruleId)).toEqual(['cycleway_oneway_redundant'])
+      expect(oneway({ ...onewayRoad, 'cycleway:both': 'track' })).toEqual([])
+    })
+
+    test('oneway=-1 road: yes runs against the traffic; lanes lose it, tracks get -1', () => {
+      const lanes = {
+        ...ROAD,
+        oneway: '-1',
+        'cycleway:both': 'lane',
+        'cycleway:both:oneway': 'yes',
+      }
+      const findings = oneway(lanes)
+      expect(findings.map((f) => [f.ruleId, f.message.code])).toEqual([
+        ['cycleway_oneway_wrong', 'cycleway_oneway_wrong.reverse_road'],
+      ])
+      expect(oneway(fixed(lanes))).toEqual([])
+
+      const tracks = { ...lanes, 'cycleway:both': 'track' }
+      const next = fixed(tracks)
+      expect(next['cycleway:both:oneway']).toBe('-1')
+      expect(oneway(next)).toEqual([])
+      // -1 on lanes repeats the default
+      expect(oneway({ ...lanes, 'cycleway:both:oneway': '-1' }).map((f) => f.ruleId)).toEqual([
+        'cycleway_oneway_redundant',
+      ])
+    })
+
+    test('oneway=-1 with contraflow cycling: the contraflow lane is on the right (yes)', () => {
+      const road = { ...ROAD, oneway: '-1', 'oneway:bicycle': 'no', 'cycleway:right': 'lane' }
+      const missing = oneway(road)
+      expect(missing.map((f) => [f.ruleId, f.message.code])).toEqual([
+        ['cycleway_oneway_contraflow_missing', 'cycleway_oneway_contraflow_missing.right'],
+      ])
+      expect(applyTagFix(road, missing[0]!.fixes[0]!)['cycleway:right:oneway']).toBe('yes')
+      expect(oneway({ ...road, 'cycleway:right:oneway': 'yes' })).toEqual([])
+
+      const withRoad = { ...road, 'cycleway:right:oneway': '-1' }
+      expect(oneway(withRoad).map((f) => f.message.code)).toEqual([
+        'cycleway_oneway_wrong.contraflow_right',
+      ])
+      expect(fixed(withRoad)['cycleway:right:oneway']).toBe('yes')
+    })
   })
 
   test('part widths of a way without separation are one finding, not three', () => {

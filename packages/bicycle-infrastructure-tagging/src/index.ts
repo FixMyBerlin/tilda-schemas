@@ -144,6 +144,7 @@ export {
   cyclewayOneway,
   extractOptions,
   planExtraction,
+  resolveSharedOneway,
   setDirectionalValue,
   sidepathOffsetMeters,
   sideTags,

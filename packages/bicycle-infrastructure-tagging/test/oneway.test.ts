@@ -113,7 +113,7 @@ describe('cyclewayOnewayFindings', () => {
     expect(cyclewayOnewayFindings({ ...road, 'cycleway:left:oneway': '-1' })).toEqual([])
   })
 
-  it('contraflow: yes on the contraflow side is wrong, a road drawn against its direction is skipped', () => {
+  it('contraflow: yes on the contraflow side is wrong; on oneway=-1 yes is against the traffic', () => {
     expect(
       cyclewayOnewayFindings({
         highway: 'residential',
@@ -128,6 +128,72 @@ describe('cyclewayOnewayFindings', () => {
         oneway: '-1',
         'cycleway:left:oneway': 'yes',
       }),
+    ).toEqual([expect.objectContaining({ kind: 'wrong', reason: 'reverse_road' })])
+    // the contraflow lane of a oneway=-1 road is on the right, yes
+    expect(
+      cyclewayOnewayFindings({
+        highway: 'residential',
+        oneway: '-1',
+        'oneway:bicycle': 'no',
+        'cycleway:right:oneway': 'yes',
+      }),
     ).toEqual([])
+  })
+})
+
+describe('extraction of cycleway:both:oneway=yes (Berlin)', () => {
+  const plan = (road: OsmTags, side: 'left' | 'right') =>
+    planExtraction(road, 'cycleway', side, { recommend: undefined })
+
+  it('two-way road: the left track runs against the way, the right one with it', () => {
+    const road = { highway: 'residential', 'cycleway:both': 'track', 'cycleway:both:oneway': 'yes' }
+    const left = plan(road, 'left')
+    expect(left.wayTags.oneway).toBe('-1')
+    expect(left.roadTags).toEqual({
+      highway: 'residential',
+      'cycleway:left': 'separate',
+      'cycleway:right': 'track',
+      'cycleway:right:oneway': 'yes',
+    })
+    const right = plan(road, 'right')
+    expect(right.wayTags.oneway).toBe('yes')
+    expect(right.roadTags['cycleway:left:oneway']).toBe('-1')
+    expect(right.roadTags['cycleway:both:oneway']).toBeUndefined()
+  })
+
+  it('a side with its own key keeps it', () => {
+    const road = {
+      highway: 'residential',
+      'cycleway:both': 'track',
+      'cycleway:both:oneway': 'yes',
+      'cycleway:left:oneway': 'no',
+    }
+    expect(plan(road, 'left').wayTags.oneway).toBe('no')
+    expect(plan(road, 'right').wayTags.oneway).toBe('yes')
+  })
+
+  it('oneway=-1 road: both sides run against the way; the contraflow lane keeps yes', () => {
+    const road = {
+      highway: 'residential',
+      oneway: '-1',
+      'cycleway:both': 'track',
+      'cycleway:both:oneway': 'yes',
+    }
+    expect(plan(road, 'left').wayTags.oneway).toBe('-1')
+    expect(plan(road, 'right').wayTags.oneway).toBe('-1')
+    const contraflow = { ...road, 'oneway:bicycle': 'no' }
+    expect(plan(contraflow, 'left').wayTags.oneway).toBe('-1')
+    expect(plan(contraflow, 'right').wayTags.oneway).toBe('yes')
+  })
+
+  it('oneway=yes road: yes is the default on both sides and stays', () => {
+    const road = {
+      highway: 'residential',
+      oneway: 'yes',
+      'cycleway:both': 'track',
+      'cycleway:both:oneway': 'yes',
+    }
+    expect(plan(road, 'left').wayTags.oneway).toBe('yes')
+    expect(plan(road, 'left').roadTags['cycleway:right:oneway']).toBe('yes')
   })
 })

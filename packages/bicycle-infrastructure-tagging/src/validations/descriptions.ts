@@ -57,13 +57,13 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     width_part_unsegregated:
       'Ein Weg mit segregated=no hat Teilbreiten (cycleway:width, footway:width). Ohne Trennung gibt es nur eine Breite für den ganzen Weg.',
     cycleway_oneway_wrong:
-      'An einer Einbahnstraße mit Radverkehr in Gegenrichtung (oneway:bicycle=no) steht cycleway:left:oneway=yes (oder :both:/ohne Seite): Radverkehr links in Richtung der Einbahnstraße. Das ist selten; meist ist links der Gegenrichtungsstreifen gemeint, also -1. Ein echtes yes wird im Editor mit OK bestätigt.',
+      'Richtung eines Radwegs an einer Einbahnstraße. (1) Mit Radverkehr in Gegenrichtung (oneway:bicycle=no) steht auf der Seite des Gegenrichtungsstreifens die Richtung der Einbahnstraße (bei oneway=yes cycleway:left:oneway=yes, bei oneway=-1 cycleway:right:oneway=-1; auch :both:/ohne Seite). Das ist selten; meist ist der Gegenrichtungsstreifen gemeint. Ein echter Fall wird im Editor mit OK bestätigt. (2) An einer Straße mit oneway=-1 steht cycleway:…:oneway=yes: Ohne Tag fahren dort beide Seiten -1, mit dem Verkehr.',
     cycleway_oneway_contraflow_missing:
-      'An einer Einbahnstraße mit Radverkehr in Gegenrichtung (oneway:bicycle=no) gibt es links Radinfrastruktur (lane, track, shared_lane, share_busway) ohne cycleway:left:oneway. Ohne Angabe gilt die Richtung der Einbahnstraße; meist ist links aber der Gegenrichtungsstreifen (-1).',
+      'An einer Einbahnstraße mit Radverkehr in Gegenrichtung (oneway:bicycle=no) gibt es auf der Seite des Gegenrichtungsstreifens Radinfrastruktur (lane, track, shared_lane, share_busway) ohne Richtung. Ohne Angabe gilt die Richtung der Einbahnstraße; meist ist es aber der Gegenrichtungsstreifen: bei oneway=yes cycleway:left:oneway=-1, bei oneway=-1 cycleway:right:oneway=yes.',
     sidewalk_shared_path:
       'Ein Gehweg (highway=footway, footway=sidewalk) ist für Rad- und Fußverkehr bestimmt (bicycle=designated, foot=designated oder nicht getaggt). Ein Geh- und Radweg wird als highway=path mit is_sidepath=yes getaggt. bicycle=yes (Radfahrer frei) bleibt ein Gehweg.',
     cycleway_oneway_redundant:
-      'cycleway:…:oneway nennt die Richtung, in der der Radweg dieser Seite ohnehin fährt. Das Tag ist überflüssig.',
+      'cycleway:…:oneway nennt die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Das Tag ist überflüssig. Bei Radwegen im Seitenraum (track) bleibt es: dort sagt es auch, dass der Radweg nicht in beide Richtungen befahren wird.',
   },
   en: {
     crossing_too_long:
@@ -113,13 +113,13 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
     width_part_unsegregated:
       'A way with segregated=no has part widths (cycleway:width, footway:width). Without a separation there is only one width for the whole way.',
     cycleway_oneway_wrong:
-      'On a one-way road with contraflow cycling (oneway:bicycle=no), cycleway:left:oneway=yes (or :both:/without a side) is tagged: bicycles on the left ride with the one-way. That is rare; mostly the left side is the contraflow lane, so -1. A real yes is confirmed in the editor with OK.',
+      'Direction of a cycle lane on a one-way road. (1) With contraflow cycling (oneway:bicycle=no) the side of the contraflow lane is tagged with the direction of the one-way (on oneway=yes cycleway:left:oneway=yes, on oneway=-1 cycleway:right:oneway=-1; also :both:/without a side). That is rare; mostly the contraflow lane is meant. A real case is confirmed in the editor with OK. (2) On a road with oneway=-1, cycleway:…:oneway=yes is tagged: without the tag both sides are -1 there, with the traffic.',
     cycleway_oneway_contraflow_missing:
-      'On a one-way road with contraflow cycling (oneway:bicycle=no) there is bicycle infrastructure on the left (lane, track, shared_lane, share_busway) without cycleway:left:oneway. Without it the direction of the one-way applies; mostly the left side is the contraflow lane (-1).',
+      'On a one-way road with contraflow cycling (oneway:bicycle=no) there is bicycle infrastructure on the side of the contraflow lane (lane, track, shared_lane, share_busway) without a direction. Without it the direction of the one-way applies; mostly it is the contraflow lane: on oneway=yes cycleway:left:oneway=-1, on oneway=-1 cycleway:right:oneway=yes.',
     sidewalk_shared_path:
       'A sidewalk (highway=footway, footway=sidewalk) is designated for bicycles and pedestrians (bicycle=designated, foot=designated or not tagged). A foot and cycle path is tagged highway=path with is_sidepath=yes. bicycle=yes (bicycles allowed) stays a sidewalk.',
     cycleway_oneway_redundant:
-      'cycleway:…:oneway names the direction the cycle path on this side runs in anyway. The tag is not needed.',
+      'cycleway:…:oneway names the direction the bike lane on this side runs in anyway. The tag is not needed. Cycle tracks (track) keep it: there it also says that the track is not used in both directions.',
   },
 }
 

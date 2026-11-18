@@ -43,12 +43,41 @@ interface TodoMeta {
   params?: (tags: OsmTags, key: string | undefined) => MessageParams
   /** A more specific message code for a finding (`<id>.<variant>`); default: the rule id */
   messageCode?: (tags: OsmTags, key: string | undefined) => string | undefined
+  /** The fixes of a finding of a lane or side; default: the fix the todo proposes (`todoFixes`) */
+  fixes?: (tags: OsmTags, key: string | undefined, todoFixes: TagFix[]) => TagFix[]
 }
 
 const SIDE_ONEWAY_KEY = (tags: OsmTags, row: BikelaneResult): string[] => {
   if (row._side !== 'left' && row._side !== 'right') return []
   const key = effectiveSideKey(tags, row._side, row._prefix ?? 'cycleway', 'oneway')
   return key ? [key] : []
+}
+
+const TRACK_VALUES = new Set(['track', 'opposite_track'])
+
+/**
+ * `cycleway:both:oneway` (or `cycleway:oneway`) against the traffic of a side, on a two-way road:
+ * the usual meaning is "one direction, with the traffic of each side". For a track the direction
+ * may stay tagged (it says "not both directions", the processing assumes both without a tag), so
+ * the first fix there splits the key into the two defaults; lanes only lose the key.
+ */
+function splitSharedOnewayFixes(tags: OsmTags, key: string | undefined, todoFixes: TagFix[]) {
+  if (key !== 'cycleway:both:oneway' && key !== 'cycleway:oneway') return todoFixes
+  const sides = (['left', 'right'] as const).filter(
+    (side) => tags[`cycleway:${side}:oneway`] === undefined,
+  )
+  const track = sides.some((side) =>
+    TRACK_VALUES.has(tags[`cycleway:${side}`] ?? tags['cycleway:both'] ?? tags.cycleway ?? ''),
+  )
+  if (!track) return todoFixes
+  const add: Record<string, string> = {}
+  for (const side of sides) add[`cycleway:${side}:oneway`] = side === 'left' ? '-1' : 'yes'
+  const split: TagFix = {
+    message: { code: 'fix.split_oneway', params: { key } },
+    remove: [key],
+    add,
+  }
+  return [split, ...todoFixes]
 }
 
 const MIXED_CYCLEWAY_KEYS = ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right']
@@ -203,6 +232,7 @@ const TODO_META: Record<string, TodoMeta> = {
       const direction = tags[key] === '-1' ? 'against' : 'with'
       return `unexpected_oneway_direction.${side}_${direction}`
     },
+    fixes: splitSharedOnewayFixes,
   },
   deprecated_cycleway_shared: {
     severity: 'warning',
@@ -262,7 +292,7 @@ function hitsOfBikelanes(id: string, meta: TodoMeta, context: RuleContext): Rule
         code: meta.messageCode?.(tags, keys[0]),
         params: meta.params?.(tags, keys[0]) ?? {},
       },
-      fixes: fixesOf(row, id),
+      fixes: meta.fixes ? meta.fixes(tags, keys[0], fixesOf(row, id)) : fixesOf(row, id),
     }
   })
   return mergeSides(hits)

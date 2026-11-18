@@ -6,6 +6,7 @@ import {
   processBikelanes,
 } from '@tilda-geo/bicycle-infrastructure'
 import type { OsmTags } from '../types.ts'
+import { misreadSharedOneway } from '../validations/cycleway-oneway.ts'
 import { roadWidthFromTags } from '../widths/width-tags.ts'
 import { combinedPathTags, type JoinSigns, type SignRecommend } from './merge-tags.ts'
 
@@ -139,7 +140,8 @@ function signTags(sign: string | undefined, recommend: SignRecommend | undefined
  * The `oneway` value of the new way's bike traffic. The new way is always drawn in the road's
  * direction, so the side's tags (`separation:left`, `traffic_sign:forward`, ...) stay valid as
  * they are, and a later merge with a sidewalk usually finds both in the same direction.
- * An explicit `cycleway:<side>:oneway` wins. Else the direction is the one the processing derives
+ * An explicit `cycleway:<side>:oneway` wins (`planExtraction` first resolves a misread
+ * `cycleway:both:oneway=yes`, see `resolveSharedOneway`). Else the direction is the one the processing derives
  * (`defaultSideRunsAgainstWay`, tilda-geo `6ec40d600`): with the traffic on that side, so `yes` on
  * the right and `-1` on the left of a two-way road, and `yes` on both sides of a one-way road, also
  * when bicycles may ride against it (a contraflow lane needs an explicit `-1`).
@@ -151,6 +153,31 @@ export function cyclewayOneway(
 ): 'yes' | '-1' | 'no' {
   if (sideOneway === 'yes' || sideOneway === '-1' || sideOneway === 'no') return sideOneway
   return defaultSideRunsAgainstWay(road, side) ? '-1' : 'yes'
+}
+
+/**
+ * `cycleway:both:oneway=yes` (or `cycleway:oneway=yes`) where it most likely means "one direction,
+ * with the traffic of each side" (`misreadSharedOneway`, common in Berlin) becomes the direction of
+ * each side: an explicit value on a track (it says "not both directions") or where it is not the
+ * default, nothing on a lane with the default. Other roads are returned as they are.
+ */
+export function resolveSharedOneway(road: OsmTags): OsmTags {
+  const sides = (['left', 'right'] as const).filter(
+    (side) => misreadSharedOneway(road, side) !== undefined,
+  )
+  if (!sides.length) return road
+  const result: OsmTags = { ...road }
+  const key =
+    road['cycleway:both:oneway'] !== undefined ? 'cycleway:both:oneway' : 'cycleway:oneway'
+  delete result[key]
+  for (const side of ['left', 'right'] as const) {
+    const sideKey = `cycleway:${side}:oneway`
+    if (road[sideKey] !== undefined) continue
+    const value = misreadSharedOneway(road, side) ?? 'yes'
+    const track = TRACK_VALUES.has(cyclewayValue(road, side) ?? '')
+    if (track || value !== cyclewayOneway(road, side, undefined)) result[sideKey] = value
+  }
+  return result
 }
 
 export type ExtractionPlan = {
@@ -369,12 +396,15 @@ export type ExtractionOptions = {
 }
 
 export function planExtraction(
-  road: OsmTags,
+  taggedRoad: OsmTags,
   variant: ExtractVariant,
   side: Side,
   options: ExtractionOptions = {},
 ): ExtractionPlan {
   const { recommend, joinSigns } = options
+  // `cycleway:both:oneway=yes` against the traffic of a side: the new way and the side that stays
+  // get the direction it most likely means
+  const road = resolveSharedOneway(taggedRoad)
   const cycleway = sideTags(road, 'cycleway', side)
   const sidewalk = sideTags(road, 'sidewalk', side)
   let wayTags: OsmTags

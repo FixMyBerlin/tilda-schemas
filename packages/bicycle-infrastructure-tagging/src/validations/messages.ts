@@ -43,7 +43,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'unexpected_oneway_direction.right_against':
       '{key}=-1 heißt: Rechts fahren Räder gegen die Richtung des gezeichneten Weges, also gegen die Autos daneben. Ohne Tag gilt rechts yes, mit dem Verkehr dieser Seite. Ist das gemeint, entferne das Tag; fahren Räder dort in beide Richtungen, setze no. Nur wenn der Radweg rechts wirklich gegen die Wegrichtung führt, bleibt -1.',
     'unexpected_oneway_direction.both_with':
-      '{key}=yes heißt: Auf beiden Seiten fahren Räder in Richtung des gezeichneten Weges, links also gegen die Autos daneben. Ohne Tag gilt rechts yes und links -1, jeweils mit dem Verkehr. Ist das gemeint, entferne das Tag. Nur wenn beide Radwege wirklich in dieselbe Richtung führen, bleibt yes, mit einer Erklärung in note.',
+      '{key}=yes heißt: Auf beiden Seiten fahren Räder in Richtung des gezeichneten Weges, links also gegen die Autos daneben. Ohne Tag gilt rechts yes und links -1, jeweils mit dem Verkehr. Ist das gemeint, entferne das Tag bei Radfahrstreifen; bei Radwegen im Seitenraum (track) ersetze es durch cycleway:left:oneway=-1 und cycleway:right:oneway=yes. Nur wenn beide Radwege wirklich in dieselbe Richtung führen, bleibt yes, mit einer Erklärung in note.',
     'unexpected_oneway_direction.both_against':
       '{key}=-1 heißt: Auf beiden Seiten fahren Räder gegen die Richtung des gezeichneten Weges, rechts also gegen die Autos daneben. Ohne Tag gilt rechts yes und links -1, jeweils mit dem Verkehr. Ist das gemeint, entferne das Tag. Nur wenn beide Radwege wirklich gegen die Wegrichtung führen, bleibt -1.',
     deprecated_cycleway_shared:
@@ -66,15 +66,24 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       '{key}={value}: Radverkehr links in Richtung der Einbahnstraße. Ist das wirklich so? Wird links entgegen der Einbahnstraße gefahren, ist es cycleway:left:oneway=-1. Fährt man links tatsächlich in Richtung der Einbahnstraße (selten), mit OK bestätigen.',
     cycleway_oneway_contraflow_missing:
       'Einbahnstraße mit Radverkehr in Gegenrichtung (oneway:bicycle=no), links {key}={value} ohne Richtung. Ohne Angabe gilt die Richtung der Einbahnstraße. In welche Richtung wird links gefahren? Entgegen der Einbahnstraße: cycleway:left:oneway=-1.',
+    'cycleway_oneway_wrong.contraflow_right':
+      '{key}={value}: Radverkehr rechts in Richtung der Einbahnstraße (oneway=-1, die Straße ist gegen ihre Fahrtrichtung gezeichnet). Ist das wirklich so? Wird rechts entgegen der Einbahnstraße gefahren, ist es cycleway:right:oneway=yes. Fährt man rechts tatsächlich in Richtung der Einbahnstraße (selten), mit OK bestätigen.',
+    'cycleway_oneway_wrong.reverse_road':
+      '{key}=yes an einer Straße mit oneway=-1 heißt: Räder fahren in Richtung des gezeichneten Weges, also gegen die Einbahnstraße und die Autos daneben. Ohne Tag gilt auf beiden Seiten -1, mit dem Verkehr. Ist das gemeint, entferne das Tag. Ein echter Gegenrichtungsradweg braucht oneway:bicycle=no an der Straße.',
+    'cycleway_oneway_contraflow_missing.right':
+      'Einbahnstraße mit oneway=-1 und Radverkehr in Gegenrichtung (oneway:bicycle=no), rechts {key}={value} ohne Richtung. Ohne Angabe gilt die Richtung der Einbahnstraße. In welche Richtung wird rechts gefahren? Entgegen der Einbahnstraße: cycleway:right:oneway=yes.',
     sidewalk_shared_path:
       'Gehweg mit bicycle=designated und foot=designated: Das ist ein gemeinsamer oder getrennter Geh- und Radweg, also highway=path mit is_sidepath=yes.',
     cycleway_oneway_redundant:
-      '{key}={value} ist die Richtung, in der der Radweg dieser Seite ohnehin fährt.',
+      '{key}={value} ist die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Bei Streifen auf der Fahrbahn ist das Tag überflüssig.',
     // fixes
     'fix.remove_tags': '{keys} entfernen',
     'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
     'fix.contraflow_left': '{key} entfernen und cycleway:left:oneway=-1 setzen',
+    'fix.contraflow_right': '{key} entfernen und cycleway:right:oneway=yes setzen',
+    'fix.split_oneway':
+      '{key} durch cycleway:left:oneway=-1 und cycleway:right:oneway=yes ersetzen',
     'fix.width_part_sum': 'width={sum} setzen',
   },
   en: {
@@ -112,7 +121,7 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'unexpected_oneway_direction.right_against':
       '{key}=-1 means: on the right, bicycles ride against the direction of the drawn way, so against the cars next to them. Without the tag the right side is yes, with the traffic of its side. If that is what you mean, remove the tag; if bicycles ride both ways there, set no. Keep -1 only if the cycle path on the right really runs against the direction of the way.',
     'unexpected_oneway_direction.both_with':
-      '{key}=yes means: on both sides, bicycles ride in the direction of the drawn way, so on the left against the cars next to them. Without the tag the right side is yes and the left side -1, each with the traffic. If that is what you mean, remove the tag. Keep yes only if both cycle paths really run in the same direction, with an explanation in note.',
+      '{key}=yes means: on both sides, bicycles ride in the direction of the drawn way, so on the left against the cars next to them. Without the tag the right side is yes and the left side -1, each with the traffic. If that is what you mean, remove the tag on bike lanes; on cycle tracks (track) replace it with cycleway:left:oneway=-1 and cycleway:right:oneway=yes. Keep yes only if both cycle paths really run in the same direction, with an explanation in note.',
     'unexpected_oneway_direction.both_against':
       '{key}=-1 means: on both sides, bicycles ride against the direction of the drawn way, so on the right against the cars next to them. Without the tag the right side is yes and the left side -1, each with the traffic. If that is what you mean, remove the tag. Keep -1 only if both cycle paths really run against the direction of the way.',
     deprecated_cycleway_shared: '{key}=shared is deprecated and should be replaced or removed.',
@@ -132,14 +141,22 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       '{key}={value}: bicycles on the left ride in the direction of the one-way road. Is that right? If they ride against the one-way on the left, it is cycleway:left:oneway=-1. If they really ride with the one-way on the left (rare), confirm with OK.',
     cycleway_oneway_contraflow_missing:
       'One-way road with contraflow cycling (oneway:bicycle=no), {key}={value} on the left without a direction. Without one, the direction of the one-way applies. Which way do bicycles ride on the left? Against the one-way: cycleway:left:oneway=-1.',
+    'cycleway_oneway_wrong.contraflow_right':
+      '{key}={value}: bicycles on the right ride in the direction of the one-way road (oneway=-1, the road is drawn against its direction). Is that right? If they ride against the one-way on the right, it is cycleway:right:oneway=yes. If they really ride with the one-way on the right (rare), confirm with OK.',
+    'cycleway_oneway_wrong.reverse_road':
+      '{key}=yes on a road with oneway=-1 means: bicycles ride in the direction of the drawn way, so against the one-way and the cars next to them. Without the tag both sides are -1, with the traffic. If that is what you mean, remove the tag. A real contraflow cycle path needs oneway:bicycle=no on the road.',
+    'cycleway_oneway_contraflow_missing.right':
+      'One-way road with oneway=-1 and contraflow cycling (oneway:bicycle=no), {key}={value} on the right without a direction. Without one, the direction of the one-way applies. Which way do bicycles ride on the right? Against the one-way: cycleway:right:oneway=yes.',
     sidewalk_shared_path:
       'Sidewalk with bicycle=designated and foot=designated: this is a shared or segregated foot and cycle path, so highway=path with is_sidepath=yes.',
     cycleway_oneway_redundant:
-      '{key}={value} is the direction the cycle path on this side runs in anyway.',
+      '{key}={value} is the direction the bike lane on this side runs in anyway. For lanes on the road the tag is not needed.',
     'fix.remove_tags': 'Remove {keys}',
     'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
     'fix.contraflow_left': 'Remove {key} and set cycleway:left:oneway=-1',
+    'fix.contraflow_right': 'Remove {key} and set cycleway:right:oneway=yes',
+    'fix.split_oneway': 'Replace {key} with cycleway:left:oneway=-1 and cycleway:right:oneway=yes',
     'fix.width_part_sum': 'Set width={sum}',
   },
 }

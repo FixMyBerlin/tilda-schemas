@@ -10,6 +10,7 @@
  *   bun run release --dry-run  show what would happen, changes nothing
  *
  * npm asks for 2FA, which needs a terminal. An agent starts this in a terminal tab.
+ * Without an npm session it starts `npm login` first.
  * A publish that stopped halfway is safe to re-run: versions on npm are skipped.
  */
 
@@ -99,9 +100,14 @@ run('git', ['fetch', '--quiet', 'origin', 'main'])
 if (read('git', ['rev-list', '--count', 'HEAD..origin/main']).out !== '0') {
   fail('main is behind origin/main. Pull first.')
 }
-if (!read('npm', ['whoami']).ok) fail('Not logged in to npm. Run: npm login')
 if (!dryRun && !process.stdin.isTTY) {
   fail('npm needs a terminal for 2FA. Start this in a terminal: bun run release')
+}
+if (!read('npm', ['whoami']).ok) {
+  if (!process.stdin.isTTY) fail('Not logged in to npm. Run: npm login')
+  console.log('Not logged in to npm. Starting npm login.')
+  run('npm', ['login'])
+  if (!read('npm', ['whoami']).ok) fail('Still not logged in to npm.')
 }
 
 const pending = pendingChangesets()

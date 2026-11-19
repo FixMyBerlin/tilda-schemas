@@ -12,7 +12,7 @@ import { planExtraction } from './helpers.ts'
 // signsToTags results of the traffic sign converter (see test/spec/traffic_sign)
 const recommend: SignRecommend = (value) =>
   (
-    ({
+    {
       'DE:237': { bicycle: 'designated', highway: ['cycleway'], traffic_sign: 'DE:237' },
       'DE:240': {
         bicycle: 'designated',
@@ -34,7 +34,7 @@ const recommend: SignRecommend = (value) =>
         highway: ['footway'],
         traffic_sign: 'DE:239,1022-10',
       },
-    }) as Record<string, Record<string, string | string[]>>
+    } as Record<string, Record<string, string | string[]>>
   )[value] ?? {}
 
 const option = (o: { variant: string; side: string; protectedLane: boolean }) =>

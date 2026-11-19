@@ -245,14 +245,12 @@ const cyclewayOnewayRedundant: Rule = {
   check({ tags }) {
     return cyclewayOnewayFindings(tags)
       .filter((finding) => finding.rule === 'cycleway_oneway_redundant')
-      .map(
-        (finding): RuleHit => ({
-          scope: 'road',
-          keys: [finding.key],
-          message: { params: { key: finding.key, value: finding.value } },
-          fixes: [removeTagsFix([finding.key])],
-        }),
-      )
+      .map((finding): RuleHit => ({
+        scope: 'road',
+        keys: [finding.key],
+        message: { params: { key: finding.key, value: finding.value } },
+        fixes: [removeTagsFix([finding.key])],
+      }))
   },
 }
 

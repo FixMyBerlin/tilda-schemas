@@ -510,17 +510,15 @@ function delimitation(): Rule[] {
           options: (ctx: RuleContext) => ctx.profile.bufferOptions,
         },
       ] as Rule[]
-    ).map(
-      (rule): Rule => ({
-        ...rule,
-        tilda:
-          rule.id === 'marking_right'
-            ? markingField('right')
-            : field(rule.id as 'separation_right' | 'buffer_right'),
-        when: parkingOn('right'),
-        showWhenTagged: true,
-      }),
-    ),
+    ).map((rule): Rule => ({
+      ...rule,
+      tilda:
+        rule.id === 'marking_right'
+          ? markingField('right')
+          : field(rule.id as 'separation_right' | 'buffer_right'),
+      when: parkingOn('right'),
+      showWhenTagged: true,
+    })),
   ]
 }
 

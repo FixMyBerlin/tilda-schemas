@@ -14,7 +14,7 @@ import type { Tags } from './helpers.ts'
 
 const recommend: SignRecommend = (value) =>
   (
-    ({
+    {
       'DE:237': { bicycle: 'designated', highway: ['cycleway'], traffic_sign: 'DE:237' },
       'DE:239': { foot: 'designated', highway: ['footway'], traffic_sign: 'DE:239' },
       'DE:240': {
@@ -31,7 +31,7 @@ const recommend: SignRecommend = (value) =>
         segregated: 'yes',
         traffic_sign: 'DE:241-30',
       },
-    }) as Record<string, Record<string, string | string[]>>
+    } as Record<string, Record<string, string | string[]>>
   )[value] ?? {}
 
 const way = (

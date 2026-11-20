@@ -1,5 +1,12 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.7.1
+
+### Patch Changes
+
+- Updated dependencies [4c6aec2]
+  - @tilda-geo/bicycle-infrastructure@0.5.0
+
 ## 0.7.0
 
 ### Minor Changes

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
   extractOptions,
+  onewayKey,
   setDirectionalValue,
   sidepathOffsetMeters,
   sideTags,
@@ -212,7 +213,38 @@ describe('planExtraction', () => {
       foot: 'designated',
       segregated: 'yes',
       traffic_sign: 'DE:241-30',
-      oneway: 'yes',
+      oneway: 'no',
+      'oneway:bicycle': 'yes',
+    })
+  })
+
+  it('A: a track segregated from the sidewalk becomes a segregated foot and cycle path', () => {
+    const road = {
+      highway: 'tertiary',
+      'cycleway:right': 'track',
+      'cycleway:right:segregated': 'yes',
+      'cycleway:right:surface': 'paving_stones',
+      'cycleway:right:width': '1',
+      'sidewalk:right': 'yes',
+    }
+    const plan = planExtraction(road, 'cycleway', 'right', recommend)
+    expect(plan.wayTags).toEqual({
+      highway: 'path',
+      bicycle: 'designated',
+      foot: 'designated',
+      segregated: 'yes',
+      is_sidepath: 'yes',
+      'cycleway:surface': 'paving_stones',
+      'cycleway:width': '1',
+      oneway: 'no',
+      'oneway:bicycle': 'yes',
+    })
+    expect(onewayKey(plan.wayTags)).toBe('oneway:bicycle')
+    // the sidewalk stays on the road: the editor merges a separate one into the new way
+    expect(plan.roadTags).toEqual({
+      highway: 'tertiary',
+      'cycleway:right': 'separate',
+      'sidewalk:right': 'yes',
     })
   })
 

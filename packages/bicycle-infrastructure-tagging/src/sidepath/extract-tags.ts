@@ -7,6 +7,7 @@ import {
   highwayClass,
   isUnderConstruction,
 } from '@tilda-geo/bicycle-infrastructure'
+import { onewayKey } from '../requirements/required-attributes.ts'
 import type { OsmTags } from '../types.ts'
 import { misreadSharedOneway } from '../validations/cycleway-oneway.ts'
 import { roadWidthFromTags } from '../widths/width-tags.ts'
@@ -420,7 +421,11 @@ export function planExtraction(
   /** riding direction of the bicycles on the new way */
   let bikeOneway = cyclewayOneway(road, side, undefined)
 
-  if (variant === 'cycleway') {
+  // a track that is segregated from the sidewalk (`cycleway:<side>:segregated=yes`): the new way is
+  // a segregated foot and cycle path; the editor merges an existing sidewalk into it
+  const segregatedTrack = variant === 'cycleway' && cycleway.segregated === 'yes'
+
+  if (variant === 'cycleway' && !segregatedTrack) {
     const sign = signTags(cycleway.traffic_sign, recommend)
     signDesignated = sign.bicycle === 'designated'
     bikeOneway = cyclewayOneway(road, side, cycleway.oneway)
@@ -431,7 +436,14 @@ export function planExtraction(
     const rest = { ...cycleway }
     delete rest.oneway
     copySideTags(wayTags, rest)
-    wayTags.oneway = bikeOneway
+    // the key for the direction as the oneway row asks for it: on a way with foot traffic
+    // `oneway` would also apply to pedestrians (like `combinedPathTags`)
+    if (onewayKey(wayTags) === 'oneway:bicycle') {
+      wayTags.oneway = 'no'
+      if (bikeOneway !== 'no') wayTags['oneway:bicycle'] = bikeOneway
+    } else {
+      wayTags.oneway = bikeOneway
+    }
   } else if (variant === 'sidewalk') {
     const sign = signTags(sidewalk.traffic_sign, recommend)
     signDesignated = sign.bicycle === 'designated'
@@ -444,12 +456,15 @@ export function planExtraction(
     }
     copySideTags(wayTags, sidewalk)
   } else {
-    // the same path as merging a separate cycleway and footway (WORKDOC feature 28)
+    // the same path as merging a separate cycleway and footway (WORKDOC feature 28); a segregated
+    // track alone is the bike part of it
+    const foot = segregatedTrack ? {} : sidewalk
     bikeOneway = cyclewayOneway(road, side, cycleway.oneway)
     const bike: OsmTags = { ...cycleway, is_sidepath: 'yes' }
+    delete bike.segregated
     bike.oneway = bikeOneway
-    wayTags = combinedPathTags(bike, sidewalk, { recommend, joinSigns }).tags
-    signDesignated = [cycleway.traffic_sign, sidewalk.traffic_sign].some(
+    wayTags = combinedPathTags(bike, foot, { recommend, joinSigns }).tags
+    signDesignated = [cycleway.traffic_sign, foot.traffic_sign].some(
       (value) => signTags(value, recommend).bicycle === 'designated',
     )
   }

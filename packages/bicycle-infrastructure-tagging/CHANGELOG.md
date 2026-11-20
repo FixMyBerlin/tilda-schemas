@@ -1,5 +1,12 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.7.0
+
+### Minor Changes
+
+- b6f2153: `mergeSelection` refuses a cycleway and a footway where only one is under construction (`different_lifecycle`): they stay two lines. `planExtraction` takes `segregatedTrack: 'twoLines'` for a segregated track whose sidewalk stays a way of its own: the new way is the cycleway line (`traffic_mode:<side>=foot` towards the sidewalk) instead of a foot and cycle path, e.g. under construction next to an open sidewalk.
+- 0109207: Extracting a cycle track that is segregated from the sidewalk (`cycleway:<side>:segregated=yes`) gives a segregated foot and cycle path (`highway=path`, `bicycle=designated`, `foot=designated`, `segregated=yes`, part keys as `cycleway:*`), the same tags as `combinedPathTags`; the editor can merge an existing sidewalk into it. The new way's direction uses the key `onewayKey` asks for: on a way with foot traffic `oneway=no` + `oneway:bicycle`, as the oneway row expects, instead of `oneway`.
+
 ## 0.6.0
 
 ### Minor Changes

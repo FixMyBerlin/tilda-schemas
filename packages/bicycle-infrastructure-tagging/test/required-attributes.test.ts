@@ -480,11 +480,27 @@ describe('roadAttributes', () => {
       expect(row.state).toBe('ok')
       expect(row.unused).toBeUndefined()
     }
-    // without oneway:bicycle a cycleway's row is about oneway
-    const plain = { highway: 'cycleway', oneway: 'yes' }
-    const plainOneway = byId(requiredAttributes(resultFor(plain, 'self'), plain)).oneway
-    expect(plainOneway.key).toBe('oneway')
-    expect(plainOneway.unused).toBeUndefined()
+    // a cycleway that pedestrians use too: the row writes oneway:bicycle
+    for (const extra of <Record<string, string>[]>[
+      { foot: 'designated' },
+      { foot: 'yes' },
+      { segregated: 'yes' },
+    ]) {
+      const shared = { highway: 'cycleway', oneway: 'yes', ...extra }
+      const row = byId(requiredAttributes(resultFor(shared, 'self'), shared)).oneway
+      expect(row.key).toBe('oneway:bicycle')
+      expect(row.tagged).toEqual([{ key: 'oneway', value: 'yes' }])
+      expect(row.state).toBe('ok')
+    }
+    // without oneway:bicycle a cycleway without foot traffic keeps oneway
+    for (const plain of <Record<string, string>[]>[
+      { highway: 'cycleway', oneway: 'yes' },
+      { highway: 'cycleway', oneway: 'yes', foot: 'no' },
+    ]) {
+      const row = byId(requiredAttributes(resultFor(plain, 'self'), plain)).oneway
+      expect(row.key).toBe('oneway')
+      expect(row.unused).toBeUndefined()
+    }
   })
 
   it('Radinfra FAQ: bicycle roads always need the marking, the buffer only with a line', () => {

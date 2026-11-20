@@ -92,8 +92,8 @@ type Rule = {
   preferredKey?: string
   /**
    * Write `preferredKey` even when only the own key is tagged; the own key is still read. On a
-   * footway or path `oneway` can only mean bicycles (pedestrians are never one-way), but
-   * `oneway:bicycle` says so.
+   * way that pedestrians use too, `oneway` would also apply to them; `oneway:bicycle` says it is
+   * about bicycles. TILDA reads both keys the same.
    */
   preferredKeyAlways?: (ctx: RuleContext) => boolean
   when?: (ctx: RuleContext) => boolean
@@ -339,7 +339,15 @@ const COMMON = define('common', [
     assumed: assumedOneway,
     // TILDA reads `oneway:bicycle` first (`derive_oneway.lua`): show that tag, `oneway` next to it is not used
     preferredKey: 'oneway:bicycle',
-    preferredKeyAlways: (ctx) => ctx.tags.highway === 'footway' || ctx.tags.highway === 'path',
+    // `oneway` on a way that pedestrians use reads as one-way for them too; a cycleway without
+    // foot traffic keeps `oneway` (as StreetComplete's cycleway direction quest does)
+    preferredKeyAlways: (ctx) =>
+      ctx.tags.highway === 'footway' ||
+      ctx.tags.highway === 'path' ||
+      (ctx.tags.highway === 'cycleway' &&
+        (ctx.tags.foot === 'yes' ||
+          ctx.tags.foot === 'designated' ||
+          ctx.tags.segregated === 'yes')),
     // a road side: only "both ways" is information, the direction follows from the side
     assumedOptions: ['no'],
     note: (ctx) => (ctx.side !== 'self' ? 'oneway_side' : undefined),

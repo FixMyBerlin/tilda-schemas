@@ -1,5 +1,17 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.6.0
+
+### Minor Changes
+
+- 3b53138: Roads and paths under construction (`highway=construction` + `construction=<class>`) count as that class, as TILDA reads them (`transform_lifecycle_tags.lua`). The core exports `highwayClass` and `isUnderConstruction` for this. In the tagging package such a road is a road again: `isRoad`, `extractOptions`, `roadAttributes`, the category planner, road widths and the path checks use the class. A way extracted from a road under construction is under construction too (`highway=construction` + `construction=cycleway|path|footway`), and so is a foot and cycle path merged from a part under construction. `withConstruction` turns a way's tags into that form.
+- 679d986: New export `onewayKey(tags)`: the key for the bicycle direction of a way of its own (`oneway:bicycle` on a way that pedestrians use too, `oneway` on a cycleway without foot traffic). The oneway row uses it, so editors need not rebuild the condition.
+
+### Patch Changes
+
+- Updated dependencies [3b53138]
+  - @tilda-geo/bicycle-infrastructure@0.4.0
+
 ## 0.5.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { processBikelanes } from '@tilda-geo/bicycle-infrastructure'
-import { attributeNote, lookupKeys, sideOnewayDefault } from '../src/index.ts'
+import { attributeNote, lookupKeys, onewayKey, sideOnewayDefault } from '../src/index.ts'
 import { requiredAttributes, roadAttributes } from './helpers.ts'
 
 function resultFor(tags: Record<string, string>, side: 'self' | 'left' | 'right') {
@@ -492,6 +492,9 @@ describe('roadAttributes', () => {
       expect(row.tagged).toEqual([{ key: 'oneway', value: 'yes' }])
       expect(row.state).toBe('ok')
     }
+    expect(onewayKey({ highway: 'cycleway', foot: 'designated' })).toBe('oneway:bicycle')
+    expect(onewayKey({ highway: 'construction', construction: 'path' })).toBe('oneway:bicycle')
+    expect(onewayKey({ highway: 'cycleway' })).toBe('oneway')
     // without oneway:bicycle a cycleway without foot traffic keeps oneway
     for (const plain of <Record<string, string>[]>[
       { highway: 'cycleway', oneway: 'yes' },

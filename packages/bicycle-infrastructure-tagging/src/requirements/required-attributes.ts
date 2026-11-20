@@ -340,15 +340,7 @@ const COMMON = define('common', [
     assumed: assumedOneway,
     // TILDA reads `oneway:bicycle` first (`derive_oneway.lua`): show that tag, `oneway` next to it is not used
     preferredKey: 'oneway:bicycle',
-    // `oneway` on a way that pedestrians use reads as one-way for them too; a cycleway without
-    // foot traffic keeps `oneway` (as StreetComplete's cycleway direction quest does)
-    preferredKeyAlways: (ctx) =>
-      highwayClass(ctx.tags) === 'footway' ||
-      highwayClass(ctx.tags) === 'path' ||
-      (highwayClass(ctx.tags) === 'cycleway' &&
-        (ctx.tags.foot === 'yes' ||
-          ctx.tags.foot === 'designated' ||
-          ctx.tags.segregated === 'yes')),
+    preferredKeyAlways: (ctx) => onewayKey(ctx.tags) === 'oneway:bicycle',
     // a road side: only "both ways" is information, the direction follows from the side
     assumedOptions: ['no'],
     note: (ctx) => (ctx.side !== 'self' ? 'oneway_side' : undefined),
@@ -840,6 +832,23 @@ const ROAD_CLASSES = new Set<string>([
   ...MINOR_ROAD_CLASSES,
 ])
 ROAD_CLASSES.delete('pedestrian')
+
+/**
+ * The key for the bicycle direction of a way of its own: `oneway:bicycle` on a way that
+ * pedestrians use too (footway, path, cycleway with `foot=yes|designated` or `segregated=yes`),
+ * where `oneway` would also apply to them; `oneway` on a cycleway without foot traffic (as
+ * StreetComplete's cycleway direction quest does). TILDA reads both keys the same.
+ */
+export function onewayKey(tags: OsmTags): 'oneway' | 'oneway:bicycle' {
+  const highway = highwayClass(tags)
+  if (highway === 'footway' || highway === 'path') return 'oneway:bicycle'
+  if (
+    highway === 'cycleway' &&
+    (tags.foot === 'yes' || tags.foot === 'designated' || tags.segregated === 'yes')
+  )
+    return 'oneway:bicycle'
+  return 'oneway'
+}
 
 export function isRoad(tags: OsmTags) {
   return ROAD_CLASSES.has(highwayClass(tags) ?? '')

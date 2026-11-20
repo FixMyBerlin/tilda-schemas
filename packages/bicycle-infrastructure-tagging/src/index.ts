@@ -84,6 +84,7 @@ export type { CategoryGroup } from './labels/category-groups.ts'
 export {
   ATTRIBUTE_IDS,
   isRoad,
+  onewayKey,
   lookupKeys,
   requiredAttributes,
   roadAttributes,

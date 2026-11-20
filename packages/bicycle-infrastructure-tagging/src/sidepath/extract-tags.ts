@@ -399,6 +399,13 @@ function copySideTags(target: OsmTags, side: OsmTags) {
 export type ExtractionOptions = {
   /** OsmTags a traffic sign implies; without it signs are not read */
   recommend?: SignRecommend
+  /**
+   * A track segregated from the sidewalk (`cycleway:<side>:segregated=yes`, variant `cycleway`):
+   * `path` (default) gives a segregated foot and cycle path; `twoLines` gives the cycleway line of
+   * a path mapped as two lines (`traffic_mode:<side>=foot` towards the sidewalk), for a sidewalk
+   * that stays a way of its own, e.g. one that is not under construction while the road is
+   */
+  segregatedTrack?: 'path' | 'twoLines'
   joinSigns?: JoinSigns
   config?: Partial<SidepathConfig>
 }
@@ -423,7 +430,8 @@ export function planExtraction(
 
   // a track that is segregated from the sidewalk (`cycleway:<side>:segregated=yes`): the new way is
   // a segregated foot and cycle path; the editor merges an existing sidewalk into it
-  const segregatedTrack = variant === 'cycleway' && cycleway.segregated === 'yes'
+  const segregated = variant === 'cycleway' && cycleway.segregated === 'yes'
+  const segregatedTrack = segregated && options.segregatedTrack !== 'twoLines'
 
   if (variant === 'cycleway' && !segregatedTrack) {
     const sign = signTags(cycleway.traffic_sign, recommend)
@@ -435,6 +443,11 @@ export function planExtraction(
     }
     const rest = { ...cycleway }
     delete rest.oneway
+    // the cycleway line of two lines: the sidewalk is the next line outwards, on the road's side
+    if (segregated) {
+      delete rest.segregated
+      wayTags[`traffic_mode:${side}`] = 'foot'
+    }
     copySideTags(wayTags, rest)
     // the key for the direction as the oneway row asks for it: on a way with foot traffic
     // `oneway` would also apply to pedestrians (like `combinedPathTags`)

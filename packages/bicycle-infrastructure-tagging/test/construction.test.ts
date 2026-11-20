@@ -55,17 +55,53 @@ describe('roads under construction', () => {
   })
 })
 
+describe('a segregated track of a road under construction', () => {
+  const road = { ...underConstruction, 'cycleway:both:segregated': 'yes' }
+
+  it('is a segregated foot and cycle path under construction by default', () => {
+    expect(planExtraction(road, 'cycleway', 'right').wayTags).toMatchObject({
+      highway: 'construction',
+      construction: 'path',
+      segregated: 'yes',
+    })
+  })
+
+  it('with twoLines the cycleway line under construction, next to an open sidewalk', () => {
+    expect(
+      planExtraction(road, 'cycleway', 'right', { segregatedTrack: 'twoLines' }).wayTags,
+    ).toEqual({
+      highway: 'construction',
+      construction: 'cycleway',
+      is_sidepath: 'yes',
+      'traffic_mode:right': 'foot',
+      oneway: 'yes',
+    })
+    expect(
+      planExtraction(road, 'cycleway', 'left', { segregatedTrack: 'twoLines' }).wayTags,
+    ).toMatchObject({ 'traffic_mode:left': 'foot', oneway: '-1' })
+  })
+})
+
 describe('foot and cycle path parts under construction', () => {
   const bike = { highway: 'construction', construction: 'cycleway', 'traffic_mode:right': 'foot' }
   const foot = { highway: 'footway', footway: 'sidewalk' }
 
-  it('are parts that merge, and the path is under construction', () => {
-    const selection = mergeSelection([
-      { id: 'a', tags: bike, changeset: 1, lengthMeters: 100 },
-      { id: 'b', tags: foot, changeset: 2, lengthMeters: 100 },
-    ])
-    expect(selection?.disabled).toBe(false)
-    const { tags, dropped } = combinedPathTags(bike, foot)
+  it('merge only when both are under construction, and the path is too', () => {
+    const footUnderConstruction = { highway: 'construction', construction: 'footway' }
+    const way = (id: string, tags: Record<string, string>, changeset: number) => ({
+      id,
+      tags,
+      changeset,
+      lengthMeters: 100,
+    })
+    expect(mergeSelection([way('a', bike, 1), way('b', footUnderConstruction, 2)])?.disabled).toBe(
+      false,
+    )
+    // one part open: they stay two lines
+    expect(mergeSelection([way('a', bike, 1), way('b', foot, 2)])).toEqual({
+      disabled: 'different_lifecycle',
+    })
+    const { tags, dropped } = combinedPathTags(bike, footUnderConstruction)
     expect(tags.highway).toBe('construction')
     expect(tags.construction).toBe('path')
     expect(dropped).toEqual([])

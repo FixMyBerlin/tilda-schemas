@@ -231,6 +231,8 @@ export type MergeWay = {
 export type MergeSelection =
   | { disabled: 'mixed' | 'lengths' }
   | { disabled: 'different_values'; key: string }
+  /** one part is under construction, the other is not: map them as two lines instead */
+  | { disabled: 'different_lifecycle' }
   | {
       disabled: false
       surviving: PartKind
@@ -270,6 +272,8 @@ export function mergeSelection(
   const foots = ways.filter((_way, index) => kinds[index] === 'foot')
   if (!bikes.length || !foots.length) return undefined
   if (bikes.length > 1 && foots.length > 1) return { disabled: 'mixed' }
+  if (new Set(ways.map((way) => isUnderConstruction(way.tags))).size > 1)
+    return { disabled: 'different_lifecycle' }
 
   const length = (list: MergeWay[]) => list.reduce((sum, way) => sum + way.lengthMeters, 0)
   const difference = Math.abs(length(bikes) - length(foots))

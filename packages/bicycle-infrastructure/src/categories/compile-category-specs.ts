@@ -64,7 +64,16 @@ function expandRefining(
       : spec
     // Subcategories inherit `copySurfaceSmoothnessFromParent` and `bicycleSurface`
     // (create_subcategories_adjoining_or_isolated.lua, tilda-geo 7acec52af).
-    return mkCategory(childSpec, resolveRefinedId(spec, child), condition)
+    const category = mkCategory(childSpec, resolveRefinedId(spec, child), condition)
+    if (child.position) {
+      category.position = child.position
+      // Without a `oneway` tag the position decides, not the category (StVO § 2 Abs. 4): one way
+      // next to a road, both ways away from roads; unknown position keeps the category default.
+      // https://github.com/FixMyBerlin/tilda-geo/pull/424
+      if (child.position === 'adjoining') category.implicitOneWay = true
+      if (child.position === 'isolated') category.implicitOneWay = false
+    }
+    return category
   })
 }
 

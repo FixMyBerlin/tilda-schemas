@@ -1,6 +1,7 @@
 /**
  * Port of topics/roads_bikelanes/bikelanes/derive_oneway.lua and
- * topics/roads_bikelanes/bikelanes/helper/side_line_reversed.lua (tilda-geo `6ec40d600`, `bac701775`).
+ * topics/roads_bikelanes/bikelanes/helper/side_line_reversed.lua (tilda-geo `6ec40d600`, `bac701775`,
+ * PR 424).
  *
  * OSM `oneway` values are relative to the drawing direction of the way:
  * `yes` flows with the way, `-1` against it, `no` in both directions.
@@ -48,13 +49,42 @@ export function defaultSideRunsAgainstWay(road: OsmTags, side: 'left' | 'right')
   return side === 'left'
 }
 
+/** What the oneway fallback of one side of a road needs to know about the other side */
+export interface OnewayContext {
+  /** The other side has cycling infrastructure (lane, track, `separate`, a sidewalk open to bicycles, …) */
+  otherSideHasCycling: boolean
+}
+
 /**
- * derive_oneway.lua. Without a tag the category decides (`implicitOneWay`), also for lanes and
- * tracks tagged on the road: lanes are `implicit_yes`, tracks and shared foot and cycle paths
- * `assumed_no`. This differs from the wiki default per side on purpose (tracks outside settlements
- * are often two-way without `oneway=no`); the line direction still follows the wiki default.
+ * Oneway fallback of a track tagged on the road (`cycleway:<side>=track`, a `*_adjoining` category
+ * with prefix `cycleway`): one-way when the other side of the road has cycling infrastructure, else
+ * two-way (also `not_expected` on a one-way road: then this is the only cycle path of the road).
+ * `undefined` for everything else. Trade-off and numbers:
+ * https://github.com/FixMyBerlin/tilda-geo/pull/424
  */
-function onewayValue(tags: OsmTags, category: BikelaneCategory): Oneway {
+function roadTrackIsOneWay(
+  tags: OsmTags,
+  category: BikelaneCategory,
+  context: OnewayContext | undefined,
+): boolean | undefined {
+  if (context === undefined || category.position !== 'adjoining') return undefined
+  if (tags._prefix !== 'cycleway' || tags._side === undefined || tags._side === 'self') {
+    return undefined
+  }
+  return context.otherSideHasCycling
+}
+
+/**
+ * derive_oneway.lua. Without a tag the category decides (`implicitOneWay`):
+ * - Lanes and `shared_lane`: `implicit_yes`.
+ * - Tracks, shared and segregated foot and cycle paths, footways with `bicycle=yes`: the position
+ *   decides (`compile-category-specs.ts`). Next to a road (`_adjoining`) `implicit_yes`, as in
+ *   StVO § 2 Abs. 4 and the wiki default for `cycleway:<side>:oneway`; away from roads (`_isolated`)
+ *   `assumed_no`; unknown position (`_adjoiningOrIsolated`) the category. A track tagged on the road
+ *   follows the other side instead, see `roadTrackIsOneWay`.
+ * The line direction follows the wiki default.
+ */
+function onewayValue(tags: OsmTags, category: BikelaneCategory, context?: OnewayContext): Oneway {
   const oneway = tags.oneway
   const onewayBicycle = tags['oneway:bicycle']
 
@@ -68,6 +98,9 @@ function onewayValue(tags: OsmTags, category: BikelaneCategory): Oneway {
   if (oneway === 'no') return 'no'
 
   if (tags.highway === 'service' || tags.highway === 'track') return 'assumed_no'
+
+  const roadTrackOneWay = roadTrackIsOneWay(tags, category, context)
+  if (roadTrackOneWay !== undefined) return roadTrackOneWay ? 'implicit_yes' : 'assumed_no'
 
   if (category.implicitOneWay) return 'implicit_yes'
 
@@ -92,12 +125,23 @@ function sideLineReversed(tags: OsmTags): boolean {
   return side === 'left'
 }
 
-/** The TILDA `oneway` value and whether the published line runs against the OSM way. */
-export function deriveOnewayDirection(tags: OsmTags, category: BikelaneCategory): OnewayDirection {
-  return { oneway: onewayValue(tags, category), lineReversed: sideLineReversed(tags) }
+/**
+ * The TILDA `oneway` value and whether the published line runs against the OSM way.
+ * `context` only for the sides of a road (`_side` left|right), see `OnewayContext`.
+ */
+export function deriveOnewayDirection(
+  tags: OsmTags,
+  category: BikelaneCategory,
+  context?: OnewayContext,
+): OnewayDirection {
+  return { oneway: onewayValue(tags, category, context), lineReversed: sideLineReversed(tags) }
 }
 
 /** Only the TILDA `oneway` value, see `deriveOnewayDirection`. */
-export function deriveOneway(tags: OsmTags, category: BikelaneCategory): Oneway {
-  return deriveOnewayDirection(tags, category).oneway
+export function deriveOneway(
+  tags: OsmTags,
+  category: BikelaneCategory,
+  context?: OnewayContext,
+): Oneway {
+  return deriveOnewayDirection(tags, category, context).oneway
 }

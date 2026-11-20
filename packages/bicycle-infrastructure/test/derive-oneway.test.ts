@@ -26,10 +26,51 @@ function sideTags(side: 'left' | 'right', sideOneway?: string, parent?: OsmTags)
   return tags
 }
 
-/** A lane: a category with `implicitOneWay` (tracks are `assumed_no`, see the last test). */
+/** A lane: a category with `implicitOneWay`. */
 const sideLane = (tags: OsmTags) => derive(tags, implicit)
 
+const roadTrack = { implicitOneWay: true, position: 'adjoining' } as BikelaneCategory
+
 describe('deriveOnewayDirection', () => {
+  // tilda-geo PR 424
+  describe('a track tagged on the road follows the other side', () => {
+    const track = (side: 'left' | 'right', tags: OsmTags = {}) => ({
+      ...sideTags(side),
+      _prefix: 'cycleway',
+      ...tags,
+    })
+
+    test('implicit_yes with cycling infrastructure on the other side', () => {
+      expect(
+        deriveOnewayDirection(track('right'), roadTrack, { otherSideHasCycling: true }).oneway,
+      ).toBe('implicit_yes')
+    })
+
+    test('assumed_no without cycling infrastructure on the other side', () => {
+      expect(
+        deriveOnewayDirection(track('right'), roadTrack, { otherSideHasCycling: false }).oneway,
+      ).toBe('assumed_no')
+    })
+
+    test('an explicit direction wins', () => {
+      expect(
+        deriveOnewayDirection(track('right', { oneway: 'no' }), roadTrack, {
+          otherSideHasCycling: true,
+        }).oneway,
+      ).toBe('no')
+    })
+
+    test('not for a sidewalk or the way itself', () => {
+      const context = { otherSideHasCycling: false }
+      expect(
+        deriveOnewayDirection(track('right', { _prefix: 'sidewalk' }), roadTrack, context).oneway,
+      ).toBe('implicit_yes')
+      expect(
+        deriveOnewayDirection({ highway: 'cycleway', _side: 'self' }, roadTrack, context).oneway,
+      ).toBe('implicit_yes')
+    })
+  })
+
   test('car_not_bike when oneway:bicycle=no and oneway=yes', () => {
     expect(derive({ oneway: 'yes', 'oneway:bicycle': 'no' }).oneway).toBe('car_not_bike')
   })
@@ -170,7 +211,7 @@ describe('deriveOnewayDirection', () => {
       expect(sideLane(sideTags('left', undefined, parent)).lineReversed).toBe(false)
     })
 
-    test('without a tag the category decides: a track is assumed_no, its line still follows the side', () => {
+    test('without a tag and context the category decides, the line still follows the side', () => {
       expect(derive(sideTags('left'), noImplicit)).toEqual({
         oneway: 'assumed_no',
         lineReversed: true,

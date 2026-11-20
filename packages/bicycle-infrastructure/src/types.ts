@@ -29,6 +29,8 @@ export type ImplicitOneWayConfidence = 'high' | 'medium' | 'low' | 'not_applicab
  */
 export type BicycleSurface = 'strip' | 'whole_way'
 
+export type SidepathPosition = 'adjoining' | 'isolated' | 'adjoiningOrIsolated'
+
 export interface BikelaneCategory {
   id: string
   infrastructureExists: boolean
@@ -37,6 +39,8 @@ export interface BikelaneCategory {
   copySurfaceSmoothnessFromParent: boolean
   /** How `surface:bicycle` applies, see `deriveBikelaneSurfaceTags`; undefined ignores it. */
   bicycleSurface?: BicycleSurface
+  /** Position to the road of the `_adjoining`/`_isolated`/`_adjoiningOrIsolated` subcategories */
+  position?: SidepathPosition
   /** Receives a decision-view of the tags; returns truthy when the category matches. */
   condition: (tags: OsmTags) => boolean | undefined
   /** Optional post-match mutation of the tags (mirrors LUA `process`). */

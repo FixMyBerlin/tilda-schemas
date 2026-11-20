@@ -56,7 +56,11 @@ export function advisoryOrExclusiveRefining(laneKey = 'lane') {
 }
 
 export const ADJOINING_OR_ISOLATED_REFINING = [
-  { idSuffix: '_adjoining', match: SIDEPATH_ADJOINING_PRED },
-  { idSuffix: '_isolated', match: SIDEPATH_ISOLATED_PRED },
-  { idSuffix: '_adjoiningOrIsolated', match: SIDEPATH_UNKNOWN_PRED },
+  { idSuffix: '_adjoining', match: SIDEPATH_ADJOINING_PRED, position: 'adjoining' },
+  { idSuffix: '_isolated', match: SIDEPATH_ISOLATED_PRED, position: 'isolated' },
+  {
+    idSuffix: '_adjoiningOrIsolated',
+    match: SIDEPATH_UNKNOWN_PRED,
+    position: 'adjoiningOrIsolated',
+  },
 ] as const

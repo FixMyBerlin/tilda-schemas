@@ -9,8 +9,9 @@ import type { OsmTags, Side } from '../types.ts'
  * Two rules, so each can be switched off on its own:
  * - `cycleway_oneway_wrong`: the tag most likely says the wrong direction
  * - `cycleway_oneway_redundant`: the tag repeats the default of a lane on the road. A track may
- *   keep it: there it also says "not in both directions", which the processing would assume
- *   without a tag (tracks are `assumed_no`).
+ *   keep it: there it also says "not in both directions". Without a tag the processing guesses the
+ *   direction of a track from the other side of the road (`assumed_no` when there is no cycling
+ *   infrastructure, tilda-geo PR 424), with low confidence.
  */
 
 export type CyclewayOnewayRuleId = 'cycleway_oneway_wrong' | 'cycleway_oneway_redundant'

@@ -4,7 +4,12 @@ import { extractValueFromLanes } from '../helpers/extract-value-from-lanes.ts'
  * Declarative category specs — single source of truth for match rules and gap analysis.
  * OSMnexus-inspired: base `match` + nested `refining` for subcategories.
  */
-import type { BicycleSurface, ImplicitOneWayConfidence, OsmTags } from '../types.ts'
+import type {
+  BicycleSurface,
+  ImplicitOneWayConfidence,
+  OsmTags,
+  SidepathPosition,
+} from '../types.ts'
 import {
   bicycleRoadBase,
   bicycleRoadVehicleDestination,
@@ -35,6 +40,8 @@ export interface RefiningChild {
   idSuffix: string
   match: TagPredicate
   implicitOneWayConfidence?: ImplicitOneWayConfidence
+  /** Sidepath subcategories: sets `position` and, for `adjoining`/`isolated`, `implicitOneWay` */
+  position?: SidepathPosition
 }
 
 export interface CategorySpec {

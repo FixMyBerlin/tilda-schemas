@@ -42,9 +42,24 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
   prepareTags(tags)
   const transformed = getTransformedObjects(tags, BIKELANE_TRANSFORMATIONS)
 
-  for (const t of transformed) {
+  // Categorize all sides first: the oneway fallback of a track on the road reads the other side
+  // (extract_bikelanes.lua, tilda-geo PR 424).
+  const sideHasCycling = { left: false, right: false }
+  const categories = transformed.map((t) => {
     t._length = tags._length
     const category = categorizeBikelane(t)
+    if (
+      category != null &&
+      (t._side === 'left' || t._side === 'right') &&
+      (category.infrastructureExists || category.id === 'separate_geometry')
+    ) {
+      sideHasCycling[t._side] = true
+    }
+    return category
+  })
+
+  for (const [index, t] of transformed.entries()) {
+    const category = categories[index]
     if (category == null) continue
 
     const result: BikelaneResult = {
@@ -56,7 +71,9 @@ export function processBikelanes(objectTags: OsmTags): BikelaneResult[] {
 
     if (category.infrastructureExists) {
       // Riding direction and line direction (tilda-geo `6ec40d600`, `bac701775`).
-      const direction = deriveOnewayDirection(t, category)
+      const direction = deriveOnewayDirection(t, category, {
+        otherSideHasCycling: sideHasCycling[t._side === 'left' ? 'right' : 'left'],
+      })
       result.oneway = direction.oneway
       result._lineReversed = direction.lineReversed
       if (t._side === 'left' || t._side === 'right') {

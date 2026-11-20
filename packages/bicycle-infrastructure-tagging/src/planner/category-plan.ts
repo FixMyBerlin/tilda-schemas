@@ -10,6 +10,7 @@ import {
   type TagPlanEntry,
   type TagReasonCode,
   writeKeyForSide,
+  highwayClass,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
   mappingChoiceId,
@@ -168,11 +169,11 @@ const ROAD_SIDE_CATEGORY =
 const NOT_A_ROAD_SIDE_CATEGORY =
   /^(bicycleRoad|cyclewayOnHighwayBetweenLanes$|cyclewayLink$|crossing$|pedestrianAreaBicycleYes$)/
 
-const isCarriageway = (tags: OsmTags) => !!tags.highway && CARRIAGEWAY_CLASSES.has(tags.highway)
+const isCarriageway = (tags: OsmTags) => CARRIAGEWAY_CLASSES.has(highwayClass(tags) ?? '')
 
 function isSidewalkFootway(tags: OsmTags) {
   return (
-    tags.highway === 'footway' &&
+    highwayClass(tags) === 'footway' &&
     (tags.footway === 'sidewalk' || tags['is_sidepath:of'] !== undefined)
   )
 }
@@ -195,7 +196,8 @@ export function categoryGeometryMismatch(
     return 'geometry_bicycle_road_on_sidewalk'
   }
   // A protected cycle lane can also be a way of its own (`highway=cycleway`, `is_sidepath=yes`)
-  const protectedOwnWay = target === 'cyclewayOnHighwayProtected' && tags.highway === 'cycleway'
+  const protectedOwnWay =
+    target === 'cyclewayOnHighwayProtected' && highwayClass(tags) === 'cycleway'
   if (
     (target.startsWith('cyclewayOnHighway') || target === 'sharedMotorVehicleLane') &&
     !isCarriageway(tags) &&
@@ -203,19 +205,23 @@ export function categoryGeometryMismatch(
   ) {
     return 'geometry_lane_needs_road'
   }
-  if (target.startsWith('sharedBusLane') && tags.highway !== 'cycleway' && !isCarriageway(tags)) {
+  if (
+    target.startsWith('sharedBusLane') &&
+    highwayClass(tags) !== 'cycleway' &&
+    !isCarriageway(tags)
+  ) {
     return 'geometry_bus_lane_needs_road'
   }
   if (target === 'crossing' && tags.footway === 'sidewalk') {
     return 'geometry_crossing_on_sidewalk'
   }
-  if (target === 'pedestrianAreaBicycleYes' && tags.highway !== 'pedestrian') {
+  if (target === 'pedestrianAreaBicycleYes' && highwayClass(tags) !== 'pedestrian') {
     return 'geometry_pedestrian_area_needs_pedestrian'
   }
   if (side === undefined) return undefined
 
   // With a side, also the rules between road centerline, road sides and ways of their own
-  const roadCenterline = side === 'self' && isCarriageway(tags) && tags.highway !== 'service'
+  const roadCenterline = side === 'self' && isCarriageway(tags) && highwayClass(tags) !== 'service'
   if (roadCenterline && PATH_CATEGORY.test(target)) return 'geometry_path_needs_road_side'
   if (roadCenterline && ROAD_SIDE_CATEGORY.test(target)) return 'geometry_lane_needs_road_side'
   if (side !== 'self' && NOT_A_ROAD_SIDE_CATEGORY.test(target)) return 'geometry_not_a_road_side'

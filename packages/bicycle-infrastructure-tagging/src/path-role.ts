@@ -1,3 +1,4 @@
+import { highwayClass } from '@tilda-geo/bicycle-infrastructure'
 import type { OsmTags, ResultSide } from './types.ts'
 
 /**
@@ -92,7 +93,7 @@ export function pathRole(tags: OsmTags, options: PathRoleOptions = {}): PathRole
 
   let carriesFoot: boolean
   let carriesBike: boolean
-  switch (tags.highway) {
+  switch (highwayClass(tags)) {
     case 'cycleway':
       carriesBike = true
       carriesFoot = allowed(tags.foot)
@@ -117,7 +118,7 @@ export function pathRole(tags: OsmTags, options: PathRoleOptions = {}): PathRole
   if (!carriesFoot && !carriesBike) return none
   // A sidewalk where bicycles are only allowed ("Radfahrer frei", TILDA `footwayBicycleYes`):
   // the foot line, not one line for both
-  const footDesignated = tags.highway === 'footway' || tags.foot === 'designated'
+  const footDesignated = highwayClass(tags) === 'footway' || tags.foot === 'designated'
   const bikeOnlyAllowed = tags.bicycle === 'yes' || tags.bicycle === 'permissive'
   if (carriesFoot && carriesBike && footDesignated && bikeOnlyAllowed) {
     return { ...none, style: 'twoLines', carriesFoot, carriesBike, part: 'foot' }

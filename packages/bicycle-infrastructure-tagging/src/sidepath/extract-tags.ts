@@ -4,11 +4,18 @@ import {
   getTransformedObjects,
   parseWidth,
   processBikelanes,
+  highwayClass,
+  isUnderConstruction,
 } from '@tilda-geo/bicycle-infrastructure'
 import type { OsmTags } from '../types.ts'
 import { misreadSharedOneway } from '../validations/cycleway-oneway.ts'
 import { roadWidthFromTags } from '../widths/width-tags.ts'
-import { combinedPathTags, type JoinSigns, type SignRecommend } from './merge-tags.ts'
+import {
+  combinedPathTags,
+  type JoinSigns,
+  type SignRecommend,
+  withConstruction,
+} from './merge-tags.ts'
 
 export type { SignRecommend }
 
@@ -98,7 +105,7 @@ export type ExtractOption = { variant: ExtractVariant; side: Side; protectedLane
 
 /** What can be extracted from this way, right side first */
 export function extractOptions(tags: OsmTags): ExtractOption[] {
-  if (!tags.highway || !ROAD_HIGHWAYS.has(tags.highway) || tags.area === 'yes') return []
+  if (!ROAD_HIGHWAYS.has(highwayClass(tags) ?? '') || tags.area === 'yes') return []
   const options: ExtractOption[] = []
   for (const side of ['right', 'left'] as const) {
     const cycleway = cyclewayKind(tags, side)
@@ -448,6 +455,8 @@ export function planExtraction(
   }
 
   if (wayTags.lit === undefined && road.lit) wayTags.lit = road.lit
+  // a road under construction: so is the new way (`highway=construction` + `construction=cycleway`)
+  if (isUnderConstruction(road)) wayTags = withConstruction(wayTags)
 
   // the road: the side becomes separate
   let roadTags = { ...road }

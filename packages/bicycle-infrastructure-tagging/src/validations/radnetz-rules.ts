@@ -1,3 +1,4 @@
+import { highwayClass } from '@tilda-geo/bicycle-infrastructure'
 import type { OsmTags } from '../types.ts'
 import {
   PART_WIDTH_KEYS,
@@ -20,7 +21,7 @@ import type { Rule, RuleHit } from './types.ts'
  * a road with `oneway=-1` (reason `reverse_road`).
  */
 
-const isPathWay = (tags: OsmTags) => PATH_HIGHWAYS.has(tags.highway ?? '')
+const isPathWay = (tags: OsmTags) => PATH_HIGHWAYS.has(highwayClass(tags) ?? '')
 
 const isUnsegregated = (tags: OsmTags) => tags.segregated === 'no'
 

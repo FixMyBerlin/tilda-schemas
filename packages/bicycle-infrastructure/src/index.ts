@@ -174,7 +174,7 @@ export {
 } from './categories/category-specs.ts'
 export type { CategorySpec, GapDiscriminator } from './categories/category-specs.ts'
 export { getTransformedObjects, BIKELANE_TRANSFORMATIONS } from './transform/transformations.ts'
-export { prepareTags } from './transform/prepare-tags.ts'
+export { highwayClass, isUnderConstruction, prepareTags } from './transform/prepare-tags.ts'
 // The highway taxonomy is part of the public domain model (ported from highway_classes.lua).
 // Re-exported so downstream tools (e.g. the Overpass query builder) use one source of truth.
 export {

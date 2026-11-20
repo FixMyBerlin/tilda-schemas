@@ -12,6 +12,7 @@ import {
   TRAFFIC_MODE_ALLOWED,
   TRUNK_MOTORWAY_CLASSES,
   writeKeyForSide,
+  highwayClass,
 } from '@tilda-geo/bicycle-infrastructure'
 import { sideOnewayDefault } from '../oneway.ts'
 import { pathRole } from '../path-role.ts'
@@ -342,9 +343,9 @@ const COMMON = define('common', [
     // `oneway` on a way that pedestrians use reads as one-way for them too; a cycleway without
     // foot traffic keeps `oneway` (as StreetComplete's cycleway direction quest does)
     preferredKeyAlways: (ctx) =>
-      ctx.tags.highway === 'footway' ||
-      ctx.tags.highway === 'path' ||
-      (ctx.tags.highway === 'cycleway' &&
+      highwayClass(ctx.tags) === 'footway' ||
+      highwayClass(ctx.tags) === 'path' ||
+      (highwayClass(ctx.tags) === 'cycleway' &&
         (ctx.tags.foot === 'yes' ||
           ctx.tags.foot === 'designated' ||
           ctx.tags.segregated === 'yes')),
@@ -841,7 +842,7 @@ const ROAD_CLASSES = new Set<string>([
 ROAD_CLASSES.delete('pedestrian')
 
 export function isRoad(tags: OsmTags) {
-  return !!tags.highway && ROAD_CLASSES.has(tags.highway)
+  return ROAD_CLASSES.has(highwayClass(tags) ?? '')
 }
 
 const ROAD = define('road', [

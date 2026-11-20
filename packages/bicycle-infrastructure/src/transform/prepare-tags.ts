@@ -16,11 +16,26 @@ function restrictedAccessTags(tags: OsmTags): string[] {
   return restricted
 }
 
+/**
+ * The highway class TILDA uses for a way: on a way under construction (`highway=construction` +
+ * `construction=<hw>`) the class it will have, else `highway`. The same test as
+ * `transformLifecycleTags`.
+ */
+export function highwayClass(tags: OsmTags): string | undefined {
+  if (!tags.highway) return undefined
+  return isUnderConstruction(tags) ? tags.construction : tags.highway
+}
+
+/** `construction=<hw>` names a highway class: TILDA reads the way as that class with `lifecycle=construction` */
+export function isUnderConstruction(tags: OsmTags): boolean {
+  return !!tags.highway && tags.construction != null && ALLOWED_HIGHWAYS.has(tags.construction)
+}
+
 /** transform_lifecycle_tags.lua — `highway=construction` + `construction=<hw>` → real highway. */
 export function transformLifecycleTags(tags: OsmTags): void {
   if (!tags.highway) return
 
-  if (tags.construction != null && ALLOWED_HIGHWAYS.has(tags.construction)) {
+  if (isUnderConstruction(tags)) {
     tags.highway = tags.construction
     tags.lifecycle = 'construction'
     tags.construction = undefined

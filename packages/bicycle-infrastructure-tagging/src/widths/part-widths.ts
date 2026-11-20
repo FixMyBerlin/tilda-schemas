@@ -1,4 +1,4 @@
-import { parseWidth } from '@tilda-geo/bicycle-infrastructure'
+import { parseWidth, highwayClass } from '@tilda-geo/bicycle-infrastructure'
 import { pathRole } from '../path-role.ts'
 import type { OsmTags } from '../types.ts'
 
@@ -83,7 +83,7 @@ export function partWidthWholeWay(
   options: PartWidthOptions = {},
 ): PartWidthWholeWay | undefined {
   const tolerance = options.toleranceMeters ?? DEFAULT_TOLERANCE
-  if (!PATH_HIGHWAYS.has(tags.highway ?? '')) return undefined
+  if (!PATH_HIGHWAYS.has(highwayClass(tags) ?? '')) return undefined
   const width = parseWidth(tags.width)
   if (width === undefined) return undefined
   for (const key of PART_WIDTH_KEYS) {

@@ -1,4 +1,4 @@
-import { parseWidth } from '@tilda-geo/bicycle-infrastructure'
+import { parseWidth, highwayClass } from '@tilda-geo/bicycle-infrastructure'
 import type { OsmTags } from '../types.ts'
 
 /**
@@ -63,8 +63,8 @@ function isOneway(tags: OsmTags) {
   return (
     tags.junction === 'roundabout' ||
     tags.junction === 'circular' ||
-    tags.highway === 'motorway' ||
-    tags.highway === 'motorway_link'
+    highwayClass(tags) === 'motorway' ||
+    highwayClass(tags) === 'motorway_link'
   )
 }
 
@@ -74,7 +74,8 @@ export function roadWidthFromTags(tags: OsmTags): { meters: number; explicit: bo
   if (explicit !== undefined) return { meters: explicit, explicit: true }
 
   const table = isOneway(tags) ? HIGHWAY_WIDTH_ONEWAY : HIGHWAY_WIDTH_NO_ONEWAY
-  return { meters: (tags.highway && table[tags.highway]) || DEFAULT_FALLBACK, explicit: false }
+  const highway = highwayClass(tags)
+  return { meters: (highway && table[highway]) || DEFAULT_FALLBACK, explicit: false }
 }
 
 /** Which part of the street `key` describes, or `undefined` if it is not a width key we draw */

@@ -162,6 +162,7 @@ export type {
 export {
   DEFAULT_MERGE_CONFIG,
   combinedPathTags,
+  withConstruction,
   commonTags,
   joinSignsPlain,
   mergeSelection,

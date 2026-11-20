@@ -1,4 +1,4 @@
-import { parseWidth } from '@tilda-geo/bicycle-infrastructure'
+import { parseWidth, isUnderConstruction } from '@tilda-geo/bicycle-infrastructure'
 import { pathRole } from '../path-role.ts'
 import type { OsmTags } from '../types.ts'
 import { formatMeters } from '../widths/part-widths.ts'
@@ -21,9 +21,27 @@ const PART_KEYS = ['surface', 'smoothness', 'surface:colour', 'sett:length']
 const META_PREFIXES = ['', 'source:', 'note:', 'check_date:']
 const SIGN_KEYS = ['traffic_sign', 'traffic_sign:forward', 'traffic_sign:backward']
 /** Keys set by the path itself, never copied from a part */
-const PATH_KEYS = new Set(['highway', 'bicycle', 'foot', 'segregated', 'oneway', 'is_sidepath'])
+const PATH_KEYS = new Set([
+  'highway',
+  'construction',
+  'bicycle',
+  'foot',
+  'segregated',
+  'oneway',
+  'is_sidepath',
+])
 const MAPILLARY_KEY = /(^|:)mapillary(:|$)/
 const TRAFFIC_MODE_SIDE = /^traffic_mode:(left|right|both)$/
+
+/**
+ * The tags of a way under construction: `highway=<class>` becomes `highway=construction` +
+ * `construction=<class>`, as for a road under construction. TILDA reads both the same way
+ * (`highwayClass`). A way that has no highway or already is under construction stays as it is.
+ */
+export function withConstruction(tags: OsmTags): OsmTags {
+  if (!tags.highway || tags.highway === 'construction') return tags
+  return { ...tags, highway: 'construction', construction: tags.highway }
+}
 
 /**
  * Which part of a foot and cycle path a way is: a cycleway, a footway, or neither. This is the
@@ -189,6 +207,10 @@ export function combinedPathTags(
       }
     }
   }
+
+  // a part under construction: so is the path
+  if (isUnderConstruction(bike) || isUnderConstruction(foot))
+    Object.assign(tags, withConstruction(tags))
 
   tags.oneway = 'no'
   // only where it says something: on a way that is not one-way, `oneway:bicycle=no` is the default

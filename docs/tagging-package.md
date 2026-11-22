@@ -90,10 +90,9 @@ A profile (`RequirementsProfile`) says what belongs to one dataset. Two ship wit
 | `profiles/radnetz-berlin`         | The infraVelo Radnetz dataset: feeds per tag, damage signs, width sources, reminders, part widths |
 | `profiles/tilda-geo` (`tildaGeo`) | TILDA itself: only the attributes the processing reads, no dataset                                |
 
-`tildaGeo` is the profile for "Pflichtangaben" without a dataset. It asks for what `extract_bikelanes.lua` exports (`width`, `source:width`, `width:effective`, `surface` with `sett:length`, `surface:colour`, `oneway` with `oneway:bicycle`, `traffic_sign`, `separation` / `traffic_mode` / `marking` / `buffer` per side) and for the tags that decide the category (`is_sidepath`, `segregated`, `lane`, `cycleway`, `traffic_mode:right=foot`). Compared to the Radnetz profile it leaves out, because TILDA does not read them:
+`tildaGeo` is the profile for "Pflichtangaben" without a dataset. It asks for what `extract_bikelanes.lua` exports (`width`, `source:width`, `width:effective`, `surface` with `sett:length`, `surface:colour`, `oneway` with `oneway:bicycle`, `traffic_sign`, `separation` / `traffic_mode` / `marking` / `buffer` per side) and for the tags that decide the category (`is_sidepath`, `segregated`, `lane`, `cycleway`, `traffic_mode:right=foot`). On a one-way road it also asks for `dual_carriageway`, as optional: TILDA does not read it, but it is good to know. Compared to the Radnetz profile it leaves out, because TILDA does not read them:
 
 - the width, width source and colour of a part of a segregated foot and cycle path (`cycleway:width`, `source:cycleway:width`, `cycleway:surface:colour`): the whole way has one `width` and one `surface:colour` (`partWidths: false`),
-- `dual_carriageway` of the road (`skipAttributes`),
 - the reminders (damage signs, barriers), the damage signs as `traffic_sign` options, the `feeds` and the skipped `cyclewayLink`.
 
 The traffic signs offered are the ones the category specs settle a category with (`categorySignOptions`) and `none` where a category works without a sign. The profile fields `skipAttributes` and `partWidths` are new; a profile without them behaves as before.

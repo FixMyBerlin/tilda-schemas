@@ -11,13 +11,13 @@ import type { RequirementsProfile } from '../requirements/types.ts'
  * `surface` (with `sett:length` for sett stones), `surface:colour`, `oneway` (with `oneway:bicycle`),
  * `traffic_sign`, and `separation`, `traffic_mode`, `marking` and `buffer` per side, plus the tags
  * that decide the category (`is_sidepath`, `segregated`, `lane`, `cycleway`, `traffic_mode:right=foot`).
- * The engine asks for exactly these.
+ * The engine asks for exactly these, plus `dual_carriageway` of a one-way road as optional ("good
+ * to know": TILDA does not read it, but it tells a one-way carriageway from a one-way street).
  *
  * Left out, compared to the Radnetz profile, because TILDA does not read them:
  * - the width and the width source of a part of a segregated path (`cycleway:width`,
  *   `source:cycleway:width`) and its colour (`cycleway:surface:colour`): TILDA reads `width`,
  *   `source:width` and `surface:colour` of the whole way (`partWidths: false`),
- * - `dual_carriageway` of the road (an infraVelo attribute),
  * - the reminders (damage signs and barriers are a Radnetz task),
  * - the damage signs as `traffic_sign` options,
  * - the infraVelo attributes a tag feeds (`feeds`), and the skipped category `cyclewayLink`.
@@ -38,6 +38,5 @@ export const tildaGeo: RequirementsProfile = {
   bufferOptions: ['no', '0.25', '0.5', '0.75', '1'],
   skipCategories: [],
   reminders: [],
-  skipAttributes: ['dual_carriageway'],
   partWidths: false,
 }

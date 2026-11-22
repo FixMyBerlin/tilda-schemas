@@ -85,17 +85,19 @@ describe('profile tilda-geo', () => {
     expect([...fewer]).toEqual(['cycleway_width'])
   })
 
-  it('a road list has no dual_carriageway', () => {
+  it('a one-way road asks for dual_carriageway as optional, like the Radnetz profile', () => {
     const tags = { highway: 'residential', oneway: 'yes' }
     expect(isRoad(tags)).toBe(true)
-    expect(ids(roadAttributes(tags, { profile: radnetzBerlin }))).toContain('dual_carriageway')
-    expect(ids(roadAttributes(tags, { profile: tildaGeo }))).not.toContain('dual_carriageway')
-    expect(ids(roadAttributes(tags, { profile: tildaGeo }))).toEqual([
+    const attributes = roadAttributes(tags, { profile: tildaGeo })
+    expect(ids(attributes)).toEqual([
       'oneway',
       'oneway_bicycle',
+      'dual_carriageway',
       'surface',
       'cycleway',
     ])
+    expect(attributes.find((a) => a.id === 'dual_carriageway')?.optional).toBe(true)
+    expect(ids(roadAttributes(tags, { profile: radnetzBerlin }))).toContain('dual_carriageway')
   })
 
   it('has attributes for every category, and none feeds an infraVelo attribute', () => {

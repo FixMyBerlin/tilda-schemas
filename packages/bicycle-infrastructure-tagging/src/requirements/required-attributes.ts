@@ -211,11 +211,17 @@ function onewayBicycleTag(ctx: RuleContext) {
 }
 
 /**
- * The oneway default, as a tag value, where it is reliable: on a road side always (never ask for
- * `cycleway:<side>:oneway`; see `sideOnewayDefault`), else TILDA's default for the category.
+ * The oneway default, as a tag value, where it is reliable: on a road side the direction of its
+ * traffic (never ask for `cycleway:<side>:oneway`; see `sideOnewayDefault`), else TILDA's default
+ * for the category. Not on a road side that TILDA reads as both ways (`assumed_no`): a track with
+ * no cycling infrastructure on the other side of the road (tilda-geo PR 424), or a service road.
+ * That guess has low confidence, so the mapper confirms or tags the direction.
  */
 function assumedOneway(ctx: RuleContext) {
-  if (ctx.side !== 'self') return sideOnewayDefault(ctx.tags, ctx.side)
+  if (ctx.side !== 'self') {
+    if (!ctx.isTarget && ctx.result?.oneway === 'assumed_no') return undefined
+    return sideOnewayDefault(ctx.tags, ctx.side)
+  }
   if (!RELIABLE_ONEWAY_DEFAULT.has(ctx.category)) return undefined
   const category = CATEGORY_DEFINITIONS.find((c) => c.id === ctx.category)
   return category?.implicitOneWay ? 'yes' : 'no'

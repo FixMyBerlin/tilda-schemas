@@ -78,7 +78,30 @@ describe('riding direction on a road side', () => {
 })
 
 describe('cyclewayOnewayFindings', () => {
-  it('a track on the right of a two-way road: yes repeats the default, -1 is real information', () => {
+  it('a track keeps its direction (TILDA may read it as both ways), a lane does not need it', () => {
+    const road = {
+      highway: 'secondary',
+      'cycleway:left:oneway': '-1',
+      'cycleway:right:oneway': 'yes',
+    }
+    expect(cyclewayOnewayFindings({ ...road, 'cycleway:both': 'track' })).toEqual([])
+    expect(
+      cyclewayOnewayFindings({
+        highway: 'secondary',
+        'cycleway:left': 'no',
+        'cycleway:right': 'track',
+        'cycleway:right:oneway': 'yes',
+      }),
+    ).toEqual([])
+    expect(
+      cyclewayOnewayFindings({ ...road, 'cycleway:both': 'lane' }).map((f) => [f.key, f.rule]),
+    ).toEqual([
+      ['cycleway:left:oneway', 'cycleway_oneway_redundant'],
+      ['cycleway:right:oneway', 'cycleway_oneway_redundant'],
+    ])
+  })
+
+  it('on the right of a two-way road: yes repeats the default, -1 is real information', () => {
     expect(
       cyclewayOnewayFindings({ highway: 'residential', 'cycleway:right:oneway': 'yes' }),
     ).toEqual([
@@ -146,7 +169,11 @@ describe('extraction of cycleway:both:oneway=yes (Berlin)', () => {
     planExtraction(road, 'cycleway', side, { recommend: undefined })
 
   it('two-way road: the left track runs against the way, the right one with it', () => {
-    const road = { highway: 'residential', 'cycleway:both': 'track', 'cycleway:both:oneway': 'yes' }
+    const road = {
+      highway: 'residential',
+      'cycleway:both': 'track',
+      'cycleway:both:oneway': 'yes',
+    }
     const left = plan(road, 'left')
     expect(left.wayTags.oneway).toBe('-1')
     expect(left.roadTags).toEqual({

@@ -289,7 +289,7 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(colour.default).toBeUndefined()
   })
 
-  it('a track on a road side: oneway is never asked for, only "both ways" is offered', () => {
+  it('a track with a lane or track on the other side: runs with its side, like a lane', () => {
     const tags = { highway: 'secondary', 'cycleway:left': 'track', 'cycleway:right': 'track' }
     const left = byId(requiredAttributes(resultFor(tags, 'left'), tags)).oneway
     const right = byId(requiredAttributes(resultFor(tags, 'right'), tags)).oneway
@@ -298,6 +298,22 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(left.default).toBe('cycleway:left:oneway=-1')
     expect(left.note).toBe('oneway_side')
     expect(left.options).toEqual(['no'])
+    expect(right.default).toBe('cycleway:right:oneway=yes')
+  })
+
+  it('a track with nothing on the other side: TILDA guesses both ways, the mapper confirms', () => {
+    const tags = { highway: 'secondary', 'cycleway:left': 'no', 'cycleway:right': 'track' }
+    const right = byId(requiredAttributes(resultFor(tags, 'right'), tags)).oneway
+    expect(right.tilda).toBe('assumed_no')
+    expect(right.state).toBe('guess')
+    expect(right.default).toBeUndefined()
+    expect(right.options).toEqual(['yes', 'no', '-1'])
+  })
+
+  it('a lane with nothing on the other side: still runs with its side', () => {
+    const tags = { highway: 'secondary', 'cycleway:left': 'no', 'cycleway:right': 'lane' }
+    const right = byId(requiredAttributes(resultFor(tags, 'right'), tags)).oneway
+    expect(right.state).toBe('assumed')
     expect(right.default).toBe('cycleway:right:oneway=yes')
   })
 

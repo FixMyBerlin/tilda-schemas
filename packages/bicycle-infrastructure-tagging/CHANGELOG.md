@@ -1,5 +1,28 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.8.0
+
+### Minor Changes
+
+- cd28439: The oneway row offers its values by context, and says what each one means (`RequiredAttribute.optionMeanings`, texts in `OPTION_MEANING_TEXTS` via `optionMeaningText`):
+
+  - A way of its own offers `yes` and `no`, no longer `-1`: a way ridden against its line is reversed instead. A tagged `-1` still counts.
+  - A road side offers its default and `no`. On the left of a two-way road it also offers `yes` (a left lane ridden in the line's direction), and on a one-way road open to bicycles the contraflow value.
+
+- 429d0e7: New Radnetz rule `oneway_reverse_way`: a way of its own for cycling (not a road centerline) with `oneway:bicycle=-1`, or `oneway=-1` without `oneway:bicycle`, gets a warning to reverse the way instead. Its fix has the new flag `TagFix.reverseWay`: the app reverses the way with its own function, then `change` flips the `oneway` keys from `-1` to `yes`. `applyTagFix` reverses the tags itself (`reverseTags`).
+- 1193f3a: - A road side can now be set to "Separat geführt (eigene Linie)" / "Drawn as a separate way" (`SEPARATE_KIND`, offered by `groupMappingKinds(side)` for `left` and `right`). `planForMappingChoice` plans `cycleway:<side>=separate` and removes the side's sub keys, as the extraction does. A side tagged `separate` shows it as its current state.
+  - Extraction: a side marked as a crossing (`cycleway:<side>:track=crossing`, `…:lane=crossing`) gives a crossing way (`cycleway=crossing`, `path=crossing`) without `is_sidepath`. The new option `asCrossing` forces one.
+  - `extractOptions(tags, { plainLanes: true })` also offers plain bike lanes, as a line and as a crossing. `ExtractOption` has the new fields `lane` and `crossing`.
+  - `extractAndMergeSides` and `isCrossingSide` are new.
+  - `combinedPathTags` merges a foot crossing and a bike crossing into `path=crossing` (or `path=traffic_island`).
+- 0f51c11: - The `tilda-geo` profile asks for `dual_carriageway` on one-way roads too, as an optional attribute ("good to know"), like the Radnetz profile. Before, it left it out.
+
+### Patch Changes
+
+- 7adb7fb: A track tagged on the road with no cycling infrastructure on the other side no longer shows "one direction" as its default: TILDA reads it as both ways (`assumed_no`, tilda-geo PR 424), so the oneway row is now a guess the mapper confirms. Lanes keep their default. `cycleway_oneway_redundant` still leaves the direction of a track alone.
+- Updated dependencies [518069f]
+  - @tilda-geo/bicycle-infrastructure@0.6.0
+
 ## 0.7.1
 
 ### Patch Changes

@@ -60,8 +60,11 @@ export interface BikelaneResult {
   lifecycle?: string | null
   oneway?: string
   /**
-   * Whether the published line of a lane or track tagged on the road runs against the OSM way
-   * (`_line_reversed` in LUA, tilda-geo `6ec40d600`). Lines of the way itself keep its direction.
+   * Whether the published line runs against the OSM way (`_line_reversed` in LUA,
+   * `line_direction.lua`): lines point in the riding direction. A lane or track tagged on the road
+   * follows `cycleway:<side>:oneway` and the side rule (tilda-geo `6ec40d600`); the way itself runs
+   * against its line on `oneway=-1` or `oneway:bicycle=-1` (tilda-geo `f752a49a6`). TILDA also swaps
+   * the forward/backward and left/right values of a reversed line; this result keeps them as tagged.
    */
   _lineReversed?: boolean
   /** Sideways offset in meters of left|right lanes, signed relative to the published line. */

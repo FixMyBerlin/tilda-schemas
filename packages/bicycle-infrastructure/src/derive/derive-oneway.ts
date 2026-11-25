@@ -108,13 +108,16 @@ function onewayValue(tags: OsmTags, category: BikelaneCategory, context?: Oneway
 }
 
 /**
- * side_line_reversed.lua. One-way lines point in the riding direction; `no` or any other value
- * keeps the side rule of two-way roads. `tags` are the transformed tags: for `_side` left|right
- * `oneway` is `cycleway:<side>:oneway`.
+ * `bikelane_reversed` of `line_direction.lua`. One-way lines point in the riding direction; `no` or
+ * any other value keeps the side rule of two-way roads. The way itself (`_side` self) runs against
+ * its line on `oneway=-1` or `oneway:bicycle=-1` (`way_reversed`; with `oneway=-1` and
+ * `oneway:bicycle=no` it follows the motor vehicles). `tags` are the transformed tags: for `_side`
+ * left|right `oneway` is `cycleway:<side>:oneway`.
  */
 function sideLineReversed(tags: OsmTags): boolean {
   const side = tags._side
-  if (side !== 'left' && side !== 'right') return false
+  if (side !== 'left' && side !== 'right')
+    return tags.oneway === '-1' || tags['oneway:bicycle'] === '-1'
 
   const direction = tags['oneway:bicycle'] ?? tags.oneway
   if (direction === '-1') return true

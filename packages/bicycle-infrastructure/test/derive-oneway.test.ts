@@ -95,11 +95,11 @@ describe('deriveOnewayDirection', () => {
       })
     })
 
-    // The line keeps the drawing direction in `bikelanes`; only routing reverses it.
-    test('oneway=-1 is an explicit oneway, the line keeps the drawing direction', () => {
+    // The line points in the riding direction (`way_reversed`, tilda-geo f752a49a6)
+    test('oneway=-1 is an explicit oneway, the line runs against the way', () => {
       expect(derive({ highway: 'cycleway', _side: 'self', oneway: '-1' })).toEqual({
         oneway: 'yes',
-        lineReversed: false,
+        lineReversed: true,
       })
     })
 
@@ -114,17 +114,17 @@ describe('deriveOnewayDirection', () => {
       })
     })
 
-    test('oneway:bicycle=-1 is an explicit oneway', () => {
+    test('oneway:bicycle=-1 is an explicit oneway, the line runs against the way', () => {
       expect(derive({ highway: 'cycleway', 'oneway:bicycle': '-1' })).toEqual({
         oneway: 'yes',
-        lineReversed: false,
+        lineReversed: true,
       })
     })
 
-    test('car_not_bike keeps the drawing direction', () => {
+    test('car_not_bike: the line follows the motor vehicles', () => {
       expect(derive({ highway: 'residential', oneway: '-1', 'oneway:bicycle': 'no' })).toEqual({
         oneway: 'car_not_bike',
-        lineReversed: false,
+        lineReversed: true,
       })
       expect(derive({ highway: 'residential', oneway: 'yes', 'oneway:bicycle': 'no' })).toEqual({
         oneway: 'car_not_bike',

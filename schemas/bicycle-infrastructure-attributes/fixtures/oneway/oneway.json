@@ -98,8 +98,8 @@
     }
   },
   {
-    "name": "oneway=-1 on a separate way is an explicit oneway; the line keeps the drawing direction (only routing reverses it)",
-    "osm": "tilda-geo 6ec40d600, bac701775",
+    "name": "oneway=-1 on a separate way is an explicit oneway; the line runs against the way (tilda-geo f752a49a6)",
+    "osm": "tilda-geo 6ec40d600, bac701775, f752a49a6",
     "input": {
       "highway": "cycleway",
       "is_sidepath": "yes",
@@ -110,7 +110,7 @@
     },
     "expect": {
       "oneway": "yes",
-      "_lineReversed": false,
+      "_lineReversed": true,
       "offset": null
     }
   },
@@ -145,7 +145,7 @@
     }
   },
   {
-    "name": "oneway:bicycle=-1 is an explicit oneway; the line keeps the drawing direction",
+    "name": "oneway:bicycle=-1 is an explicit oneway; the line runs against the way",
     "input": {
       "highway": "cycleway",
       "traffic_sign": "DE:237",
@@ -156,11 +156,12 @@
     },
     "expect": {
       "oneway": "yes",
-      "_lineReversed": false
-    }
+      "_lineReversed": true
+    },
+    "osm": "tilda-geo f752a49a6"
   },
   {
-    "name": "oneway:bicycle=no on a oneway=-1 way → car_not_bike (tilda-geo ef8fcdebf)",
+    "name": "oneway:bicycle=no on a oneway=-1 way → car_not_bike (tilda-geo ef8fcdebf), the line follows the motor vehicles",
     "input": {
       "highway": "cycleway",
       "traffic_sign": "DE:237",
@@ -172,8 +173,9 @@
     },
     "expect": {
       "oneway": "car_not_bike",
-      "_lineReversed": false
-    }
+      "_lineReversed": true
+    },
+    "osm": "tilda-geo f752a49a6"
   },
   {
     "name": "oneway:bicycle=no on a oneway=yes way → car_not_bike, line with the way",
@@ -192,7 +194,7 @@
     }
   },
   {
-    "name": "bicycle road on a oneway=-1 road with oneway:bicycle=no → car_not_bike",
+    "name": "bicycle road on a oneway=-1 road with oneway:bicycle=no → car_not_bike, the line follows the motor vehicles",
     "input": {
       "highway": "residential",
       "bicycle_road": "yes",
@@ -205,8 +207,9 @@
     "expect": {
       "category": "bicycleRoad",
       "oneway": "car_not_bike",
-      "_lineReversed": false
-    }
+      "_lineReversed": true
+    },
+    "osm": "tilda-geo f752a49a6"
   },
   {
     "name": "missing oneway keeps the category default and runs with the way (implicit_yes)",
@@ -256,8 +259,8 @@
     }
   },
   {
-    "name": "oneway=-1 uses traffic_sign:backward",
-    "osm": "tilda-geo 6ec40d600, bac701775",
+    "name": "oneway=-1 uses traffic_sign:backward, the line runs against the way",
+    "osm": "tilda-geo 6ec40d600, bac701775, f752a49a6",
     "input": {
       "highway": "cycleway",
       "oneway": "-1",
@@ -271,7 +274,7 @@
       "category": "cycleway_adjoiningOrIsolated",
       "traffic_sign": "DE:237",
       "oneway": "yes",
-      "_lineReversed": false
+      "_lineReversed": true
     }
   },
   {

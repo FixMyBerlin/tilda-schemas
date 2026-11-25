@@ -170,6 +170,11 @@ const CASES: Record<string, RuleCase> = {
     quiet: { ...ROAD, 'cycleway:right': 'track', 'cycleway:right:oneway': 'yes' },
     options: RADNETZ,
   },
+  oneway_reverse_way: {
+    trigger: { highway: 'cycleway', oneway: '-1' },
+    quiet: { highway: 'cycleway', oneway: 'yes' },
+    options: RADNETZ,
+  },
 }
 
 const ids = (findings: Finding[]) => findings.map((finding) => finding.ruleId)
@@ -743,5 +748,63 @@ describe('unexpected_oneway_direction texts', () => {
         ).toStartWith('k=')
       }
     }
+  })
+})
+
+describe('oneway_reverse_way: reverse a cycle path that runs against its line', () => {
+  const find = (tags: OsmTags) =>
+    validateTags(tags, RADNETZ).find((f) => f.ruleId === 'oneway_reverse_way')
+
+  test('oneway=-1 on a cycleway: reversing gives oneway=yes', () => {
+    const tags = {
+      highway: 'cycleway',
+      oneway: '-1',
+      'traffic_mode:left': 'foot',
+      'width:forward': '2',
+    }
+    const finding = find(tags)!
+    expect(finding.scope).toBe('self')
+    expect(finding.keys).toEqual(['oneway'])
+    const fix = finding.fixes[0]!
+    expect(fix.reverseWay).toBe(true)
+    expect(fix.change).toEqual({ oneway: { from: '-1', to: 'yes' } })
+    expect(renderMessage(fix.message, 'de')).toBe('Weg umdrehen (Richtung dann yes)')
+    expect(applyTagFix(tags, fix)).toEqual({
+      highway: 'cycleway',
+      oneway: 'yes',
+      'traffic_mode:right': 'foot',
+      'width:backward': '2',
+    })
+  })
+
+  test('oneway:bicycle=-1 on a foot and cycle path: both oneway keys flip', () => {
+    const tags = {
+      highway: 'path',
+      bicycle: 'designated',
+      foot: 'designated',
+      oneway: 'no',
+      'oneway:bicycle': '-1',
+    }
+    const fix = find(tags)!.fixes[0]!
+    expect(fix.change).toEqual({ 'oneway:bicycle': { from: '-1', to: 'yes' } })
+    expect(applyTagFix(tags, fix)['oneway:bicycle']).toBe('yes')
+    expect(renderMessage(find(tags)!.message, 'en')).toContain('oneway:bicycle=-1')
+
+    const both = { highway: 'cycleway', oneway: '-1', 'oneway:bicycle': '-1' }
+    expect(find(both)!.fixes[0]!.change).toEqual({
+      oneway: { from: '-1', to: 'yes' },
+      'oneway:bicycle': { from: '-1', to: 'yes' },
+    })
+  })
+
+  test('quiet on a road centerline, when bicycles ride with the line or both ways, and for a plain footway', () => {
+    expect(find({ highway: 'residential', oneway: '-1' })).toBeUndefined()
+    expect(find({ highway: 'cycleway', oneway: '-1', 'oneway:bicycle': 'yes' })).toBeUndefined()
+    expect(find({ highway: 'cycleway', oneway: '-1', 'oneway:bicycle': 'no' })).toBeUndefined()
+    expect(find({ highway: 'footway', oneway: '-1' })).toBeUndefined()
+    expect(find({ highway: 'footway', bicycle: 'yes', oneway: '-1' })).toBeDefined()
+    expect(ids(validateTags({ highway: 'cycleway', oneway: '-1' }))).not.toContain(
+      'oneway_reverse_way',
+    )
   })
 })

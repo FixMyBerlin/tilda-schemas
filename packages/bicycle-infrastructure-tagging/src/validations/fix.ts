@@ -1,9 +1,13 @@
+import { reverseTags } from '../sidepath/merge-tags.ts'
 import type { OsmTags } from '../types.ts'
 import type { TagFix } from './types.ts'
 
-/** The tags after the fix: `remove`, then `add`, then `change`. Returns a new object. */
+/**
+ * The tags after the fix: reversed for `reverseWay`, then `remove`, `add` and `change`. Returns a new
+ * object.
+ */
 export function applyTagFix(tags: OsmTags, fix: TagFix): OsmTags {
-  const next: OsmTags = { ...tags }
+  const next: OsmTags = fix.reverseWay ? reverseTags(tags) : { ...tags }
   for (const key of fix.remove ?? []) delete next[key]
   for (const [key, value] of Object.entries(fix.add ?? {})) next[key] = value
   for (const [key, { to }] of Object.entries(fix.change ?? {})) next[key] = to

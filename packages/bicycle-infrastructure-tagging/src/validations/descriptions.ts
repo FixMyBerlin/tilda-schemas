@@ -64,6 +64,8 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
       'Ein Gehweg (highway=footway, footway=sidewalk) ist für Rad- und Fußverkehr bestimmt (bicycle=designated, foot=designated oder nicht getaggt). Ein Geh- und Radweg wird als highway=path mit is_sidepath=yes getaggt. bicycle=yes (Radfahrer frei) bleibt ein Gehweg.',
     cycleway_oneway_redundant:
       'cycleway:…:oneway nennt die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Das Tag ist überflüssig. Bei Radwegen im Seitenraum (track) bleibt es: dort sagt es auch, dass der Radweg nicht in beide Richtungen befahren wird.',
+    oneway_reverse_way:
+      'Ein eigener Weg für den Radverkehr (Radweg, Geh- und Radweg, Gehweg mit Rad frei, keine Straßenmittellinie) hat oneway:bicycle=-1 oder oneway=-1 ohne oneway:bicycle: Radverkehr fährt gegen die Linienrichtung. Besser den Weg umdrehen und yes taggen. Dann zeigt die Linie in Fahrtrichtung, und ein Weg, der versehentlich falsch herum gezeichnet ist (etwa neben einem separat gemappten Gehweg, bei dem die Richtung egal ist), fällt eher auf. Die Korrektur dreht den Weg um; alle oneway-Tags wechseln yes ↔ -1.',
   },
   en: {
     crossing_too_long:
@@ -120,6 +122,8 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
       'A sidewalk (highway=footway, footway=sidewalk) is designated for bicycles and pedestrians (bicycle=designated, foot=designated or not tagged). A foot and cycle path is tagged highway=path with is_sidepath=yes. bicycle=yes (bicycles allowed) stays a sidewalk.',
     cycleway_oneway_redundant:
       'cycleway:…:oneway names the direction the bike lane on this side runs in anyway. The tag is not needed. Cycle tracks (track) keep it: there it also says that the track is not used in both directions.',
+    oneway_reverse_way:
+      'A way of its own for cycling (a cycleway, a foot and cycle path, a footway with bicycles allowed, not a road centerline) has oneway:bicycle=-1, or oneway=-1 without oneway:bicycle: bicycles ride against the line. Better reverse the way and tag yes. Then the line points in the riding direction, and a way drawn the wrong way round by mistake (for example next to a separately mapped sidewalk, whose direction does not matter) is easier to spot. The fix reverses the way; every oneway tag flips yes ↔ -1.',
   },
 }
 

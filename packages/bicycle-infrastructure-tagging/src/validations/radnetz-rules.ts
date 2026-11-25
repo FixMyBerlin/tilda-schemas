@@ -1,4 +1,5 @@
 import { highwayClass } from '@tilda-geo/bicycle-infrastructure'
+import { isRoad } from '../requirements/required-attributes.ts'
 import type { OsmTags } from '../types.ts'
 import {
   PART_WIDTH_KEYS,
@@ -291,6 +292,47 @@ const sidewalkSharedPath: Rule = {
   },
 }
 
+/** `oneway` keys a reversed way flips (`yes` ↔ `-1`), as `reverseTags` does */
+const FLIPPED_ONEWAY: Readonly<Record<string, string>> = { yes: '-1', '1': '-1', '-1': 'yes' }
+
+/**
+ * A way of its own for cycling (a cycleway, a foot and cycle path, a footway with bicycles allowed, not a
+ * road centerline) whose bicycles ride against its line: `oneway:bicycle=-1`, or `oneway=-1` without
+ * `oneway:bicycle`. Better reverse the way and tag `yes`: then the line shows the riding direction, and a
+ * mapper who writes `yes` on a way drawn the wrong way round (often after drawing it next to a sidewalk,
+ * whose direction does not matter) is easier to spot. The fix reverses the way; every `oneway` key flips.
+ */
+const onewayReverseWay: Rule = {
+  id: 'oneway_reverse_way',
+  severity: 'warning',
+  source: 'radnetz',
+  appliesTo: ['self'],
+  keys: ['oneway', 'oneway:bicycle'],
+  message: { code: 'oneway_reverse_way' },
+  check({ tags, bikelanes }) {
+    const bicycle = tags['oneway:bicycle']
+    const against = bicycle === '-1' || (bicycle === undefined && tags.oneway === '-1')
+    if (!against || isRoad(tags)) return []
+    const self = bikelanes().find((result) => result._side === 'self')
+    if (!self?._infrastructureExists) return []
+    const key = bicycle === '-1' ? 'oneway:bicycle' : 'oneway'
+    const change: Record<string, { from: string; to: string }> = {}
+    for (const [k, value] of Object.entries(tags)) {
+      if (k !== 'oneway' && !k.startsWith('oneway:')) continue
+      const to = value === undefined ? undefined : FLIPPED_ONEWAY[value]
+      if (to !== undefined) change[k] = { from: value!, to }
+    }
+    return [
+      {
+        scope: 'self',
+        keys: Object.keys(change),
+        message: { params: { key } },
+        fixes: [{ message: { code: 'fix.reverse_way', params: {} }, reverseWay: true, change }],
+      },
+    ]
+  },
+}
+
 export const RADNETZ_RULES: readonly Rule[] = [
   widthPartSum,
   widthPartWhole,
@@ -299,4 +341,5 @@ export const RADNETZ_RULES: readonly Rule[] = [
   cyclewayOnewayContraflowMissing,
   cyclewayOnewayRedundant,
   sidewalkSharedPath,
+  onewayReverseWay,
 ]

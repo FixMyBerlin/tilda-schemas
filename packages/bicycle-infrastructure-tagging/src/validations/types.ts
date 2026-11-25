@@ -36,6 +36,13 @@ export interface TagFix {
   add?: Readonly<Record<string, string>>
   change?: Readonly<Record<string, { from: string; to: string }>>
   remove?: readonly string[]
+  /**
+   * Reverse the way first: the app runs its own reverse function (node order and the keys that follow
+   * the way, `:forward`/`:backward`, `:left`/`:right`), then applies the tag changes. `change` holds the
+   * `oneway` keys that flip (`-1` → `yes`), because editors keep `oneway` when they reverse a way (iD
+   * does). `applyTagFix` reverses the keys of the tags with `reverseTags`.
+   */
+  reverseWay?: true
 }
 
 /** One thing a rule found in the tags */

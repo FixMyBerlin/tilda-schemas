@@ -76,8 +76,11 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Gehweg mit bicycle=designated und foot=designated: Das ist ein gemeinsamer oder getrennter Geh- und Radweg, also highway=path mit is_sidepath=yes.',
     cycleway_oneway_redundant:
       '{key}={value} ist die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Bei Streifen auf der Fahrbahn ist das Tag überflüssig.',
+    oneway_reverse_way:
+      '{key}=-1: Radverkehr fährt gegen die Linienrichtung. Besser den Weg umdrehen, dann gilt {key}=yes und die Linie zeigt in Fahrtrichtung.',
     // fixes
     'fix.remove_tags': '{keys} entfernen',
+    'fix.reverse_way': 'Weg umdrehen (Richtung dann yes)',
     'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
     'fix.contraflow_left': '{key} entfernen und cycleway:left:oneway=-1 setzen',
@@ -151,7 +154,10 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       'Sidewalk with bicycle=designated and foot=designated: this is a shared or segregated foot and cycle path, so highway=path with is_sidepath=yes.',
     cycleway_oneway_redundant:
       '{key}={value} is the direction the bike lane on this side runs in anyway. For lanes on the road the tag is not needed.',
+    oneway_reverse_way:
+      '{key}=-1: bicycles ride against the line. Better reverse the way: then {key}=yes holds and the line points in the riding direction.',
     'fix.remove_tags': 'Remove {keys}',
+    'fix.reverse_way': 'Reverse the way (direction then yes)',
     'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
     'fix.contraflow_left': 'Remove {key} and set cycleway:left:oneway=-1',

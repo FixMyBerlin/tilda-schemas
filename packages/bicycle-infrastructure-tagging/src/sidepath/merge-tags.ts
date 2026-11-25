@@ -33,6 +33,17 @@ const PATH_KEYS = new Set([
 const MAPILLARY_KEY = /(^|:)mapillary(:|$)/
 const TRAFFIC_MODE_SIDE = /^traffic_mode:(left|right|both)$/
 
+/** The values of `cycleway=` / `footway=` / `path=` that make a way a crossing, as TILDA reads them */
+const CROSSING_VALUES = new Set(['crossing', 'traffic_island'])
+const CROSSING_KEYS = ['cycleway', 'footway', 'path']
+
+/** `crossing` or `traffic_island` of a way's own class key (`cycleway=crossing` on a cycleway) */
+function crossingValue(tags: OsmTags): string | undefined {
+  const highway = tags.highway === 'construction' ? tags.construction : tags.highway
+  const value = highway ? tags[highway] : undefined
+  return value !== undefined && CROSSING_VALUES.has(value) ? value : undefined
+}
+
 /**
  * The tags of a way under construction: `highway=<class>` becomes `highway=construction` +
  * `construction=<class>`, as for a road under construction. TILDA reads both the same way
@@ -211,6 +222,15 @@ export function combinedPathTags(
   // a part under construction: so is the path
   if (isUnderConstruction(bike) || isUnderConstruction(foot))
     Object.assign(tags, withConstruction(tags))
+
+  // a foot crossing and a bike crossing are one crossing of the path: `path=crossing`, as TILDA
+  // reads a crossing on a `highway=path`, not `footway=crossing` and `cycleway=crossing` side by side
+  const crossing = crossingValue(bike) ?? crossingValue(foot)
+  if (crossing) {
+    for (const key of CROSSING_KEYS) if (CROSSING_VALUES.has(tags[key] ?? '')) delete tags[key]
+    tags[tags.highway === 'construction' ? tags.construction! : tags.highway!] = crossing
+    delete tags.is_sidepath
+  }
 
   tags.oneway = 'no'
   // only where it says something: on a way that is not one-way, `oneway:bicycle=no` is the default

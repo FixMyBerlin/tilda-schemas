@@ -13,10 +13,12 @@ import {
   highwayClass,
 } from '@tilda-geo/bicycle-infrastructure'
 import {
+  SEPARATE_KIND,
   mappingChoiceId,
   resolveMappingChoice,
   type MappingChoice,
 } from '../mapping-targets/mapping-targets.ts'
+import { separateSide } from '../sidepath/extract-tags.ts'
 import type { OsmTags, ResultSide } from '../types.ts'
 
 /**
@@ -92,6 +94,8 @@ export const PLAN_CONFLICT_CODES = [
   'geometry_isolated_not_a_road_side',
   /** a mapping target for a way of its own (two lines) planned for a road side */
   'geometry_needs_separate_way',
+  /** "drawn as a separate way" (`SEPARATE_KIND`) planned for the way itself, not a road side */
+  'geometry_separate_needs_road_side',
   /** `planForMappingChoice` with a kind that is not in `MAPPING_KINDS` */
   'unknown_mapping_kind',
   /** the planned tags still classify as another category; `params.target`, `params.result` */
@@ -467,6 +471,7 @@ export function planForMappingChoice(
       { choiceId: mappingChoiceId(choice) },
     )
   }
+  if (resolved.choice.kind === SEPARATE_KIND.id) return planSeparateSide(tags, side, resolved.id)
   // two lines: the footway may already be tagged on the left of the cycleway; TILDA reads both sides
   const fixed = { ...resolved.fixed }
   if (
@@ -485,6 +490,51 @@ export function planForMappingChoice(
     { choiceId: resolved.id },
     resolved.lifecycle,
   )
+}
+
+/**
+ * The road side is drawn as a way of its own: `cycleway:<side>=separate`, and the side's sub keys
+ * (`cycleway:<side>:*`, with their `source:` / `note:` / `check_date:`) are removed, as the
+ * extraction does. `cycleway:both` and its sub keys are split into the sides first; sides that end
+ * up equal merge back into `cycleway:both`.
+ */
+function planSeparateSide(tags: OsmTags, side: ResultSide, choiceId: string): CategoryChangePlan {
+  const target = SEPARATE_KIND.id
+  if (side === 'self') {
+    return conflictPlan(
+      tags,
+      target,
+      side,
+      { code: 'geometry_separate_needs_road_side', key: 'side', value: side },
+      { choiceId },
+    )
+  }
+  const next = separateSide(tags, 'cycleway', side)
+  const presence = new Set([`cycleway:${side}`, 'cycleway:both'])
+  const splitFrom = tags['cycleway:both'] !== undefined ? 'cycleway:both' : 'cycleway'
+  const add: PlannedAdd[] = []
+  const change: PlannedChange[] = []
+  for (const [key, value] of Object.entries(next)) {
+    const from = tags[key]
+    if (value === undefined || from === value) continue
+    const why = presence.has(key)
+      ? { code: 'mapping_target' as const }
+      : { code: 'split_both_sides' as const, params: { from: splitFrom } }
+    if (from === undefined) add.push({ key, value, ...why })
+    else change.push({ key, from, to: value, ...why })
+  }
+  const remove = Object.keys(tags).filter((key) => next[key] === undefined)
+  const plan: CategoryChangePlan = {
+    choiceId,
+    targetCategoryId: target,
+    currentCategoryId: categoryForSide(tags, side) ?? null,
+    aligned: false,
+    add,
+    change,
+    remove,
+    conflicts: [],
+  }
+  return { ...plan, aligned: categoryForSide(applyCategoryPlan(tags, plan), side) === target }
 }
 
 /**

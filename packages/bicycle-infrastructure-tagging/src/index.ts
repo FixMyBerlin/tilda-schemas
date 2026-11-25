@@ -41,6 +41,7 @@ export {
   MAPPING_OPTION_LABELS,
   MAPPING_TARGET_GROUPS,
   MAPPING_TARGET_GROUP_LABELS,
+  SEPARATE_KIND,
   allMappingChoices,
   categoryMappingGroup,
   groupMappingKinds,
@@ -143,7 +144,9 @@ export {
   DEFAULT_SIDEPATH_CONFIG,
   cyclewayKind,
   cyclewayOneway,
+  extractAndMergeSides,
   extractOptions,
+  isCrossingSide,
   planExtraction,
   resolveSharedOneway,
   setDirectionalValue,
@@ -154,6 +157,7 @@ export {
 } from './sidepath/extract-tags.ts'
 export type {
   ExtractOption,
+  ExtractOptionsSettings,
   ExtractVariant,
   ExtractionOptions,
   ExtractionPlan,

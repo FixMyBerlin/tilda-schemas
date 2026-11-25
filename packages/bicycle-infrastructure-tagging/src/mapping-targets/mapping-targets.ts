@@ -32,6 +32,8 @@ export type MappingTargetGroupId =
   | 'sidewalk'
   | 'mixed'
   | 'needsClarification'
+  /** Not a group of tilda-geo's legend: a road side drawn as a way of its own (`SEPARATE_KIND`) */
+  | 'separateWay'
 
 export interface MappingTargetGroup {
   id: MappingTargetGroupId
@@ -105,6 +107,7 @@ export const MAPPING_TARGET_GROUP_LABELS: Readonly<
     sidewalk: 'Fußverkehr mit Rad frei',
     mixed: 'Führung mit Kfz (explizit)',
     needsClarification: 'Führungsform unklar',
+    separateWay: 'Eigene Linie',
   },
   en: {
     separated: 'Physically separated from motor traffic',
@@ -113,13 +116,21 @@ export const MAPPING_TARGET_GROUP_LABELS: Readonly<
     sidewalk: 'Footway, bicycles allowed',
     mixed: 'Shared with motor traffic (explicit)',
     needsClarification: 'Unclear',
+    separateWay: 'Separate way',
   },
 }
 
-/** The group of a TILDA category, or `undefined` for categories tilda-geo's legend does not show */
+/**
+ * The group of a TILDA category, or `undefined` for categories tilda-geo's legend does not show.
+ * `separate_geometry` (a road side drawn as a way of its own) is `separateWay`.
+ */
 export function categoryMappingGroup(categoryId: string): MappingTargetGroupId | undefined {
+  if (categoryId === SEPARATE_CATEGORY) return 'separateWay'
   return MAPPING_TARGET_GROUPS.find((group) => group.categories.includes(categoryId))?.id
 }
+
+/** What TILDA reads for `cycleway:<side>=separate`: the side is drawn as a way of its own */
+const SEPARATE_CATEGORY = 'separate_geometry'
 
 export type MappingTargetLanguage = 'de' | 'en'
 export type MappingPosition = 'adjoining' | 'isolated'
@@ -244,7 +255,20 @@ function buildKinds(): MappingKind[] {
 /** The entries of the kind select, ordered by group (`MAPPING_TARGET_GROUPS`) */
 export const MAPPING_KINDS: readonly MappingKind[] = buildKinds()
 
+/**
+ * A road side drawn as a way of its own (`cycleway:<side>=separate`): the mapper drew the cycleway
+ * by hand, or extracted it once and continued it. Only for a road side, never in `MAPPING_KINDS`
+ * (those are kinds a way of its own can be); `groupMappingKinds(side)` adds it for a road side.
+ * `planForMappingChoice` sets the side to `separate` and removes its sub keys, like the extraction.
+ */
+export const SEPARATE_KIND: MappingKind = {
+  id: SEPARATE_CATEGORY,
+  group: 'separateWay',
+  categories: [SEPARATE_CATEGORY],
+}
+
 export function mappingKindById(id: string): MappingKind | undefined {
+  if (id === SEPARATE_KIND.id) return SEPARATE_KIND
   return MAPPING_KINDS.find((kind) => kind.id === id)
 }
 
@@ -258,12 +282,20 @@ export function mappingChoiceForCategory(categoryId: string): MappingChoice | un
     : { kind: kind.id }
 }
 
-/** `MAPPING_KINDS` sorted into their groups, empty groups left out */
-export function groupMappingKinds(): { id: MappingTargetGroupId; kinds: MappingKind[] }[] {
-  return MAPPING_TARGET_GROUPS.map((group) => ({
+/**
+ * `MAPPING_KINDS` sorted into their groups, empty groups left out. With a road side (`left`,
+ * `right`) also the group `separateWay` with `SEPARATE_KIND`, at the end.
+ */
+export function groupMappingKinds(
+  side?: ResultSide,
+): { id: MappingTargetGroupId; kinds: MappingKind[] }[] {
+  const groups = MAPPING_TARGET_GROUPS.map((group) => ({
     id: group.id,
     kinds: MAPPING_KINDS.filter((kind) => kind.group === group.id),
   })).filter((group) => group.kinds.length)
+  if (side === 'left' || side === 'right')
+    groups.push({ id: 'separateWay', kinds: [SEPARATE_KIND] })
+  return groups
 }
 
 function categoryOf(kind: MappingKind, position: MappingPosition | undefined): string {
@@ -281,7 +313,7 @@ export function mappingChoiceOptions(
 ): MappingChoiceOptions {
   const kind = mappingKindById(choice.kind)
   const none: MappingChoiceOptions = { position: [], sign: [], lines: [], lifecycle: [] }
-  if (!kind) return none
+  if (!kind || kind === SEPARATE_KIND) return none
   const position: MappingPosition[] =
     kind.categories.length < 2 ? [] : side === 'self' ? ['adjoining', 'isolated'] : ['adjoining']
   const categoryId = categoryOf(kind, choice.position)
@@ -425,6 +457,7 @@ const CATEGORY_LABELS_EN: Readonly<Record<string, string>> = {
 
 /** Names of the kinds; the German ones come from tilda-geo's category labels */
 function kindLabelOf(kind: MappingKind, lang: MappingTargetLanguage): string {
+  if (kind === SEPARATE_KIND) return SEPARATE_KIND_LABELS[lang]
   if (lang === 'en') {
     if (kind.categories.length === 1) return CATEGORY_LABELS_EN[kind.id] ?? kind.id
     return KIND_LABELS_EN[kind.id] ?? kind.id
@@ -435,6 +468,11 @@ function kindLabelOf(kind: MappingKind, lang: MappingTargetLanguage): string {
     kind.id
   // "Radweg (Straßenbegleitend oder selbstständig geführt; …)" → "Radweg"
   return kind.categories.length > 1 ? label.replace(/\s*\(.*$/, '') : label
+}
+
+const SEPARATE_KIND_LABELS: Readonly<Record<MappingTargetLanguage, string>> = {
+  de: 'Separat geführt (eigene Linie)',
+  en: 'Drawn as a separate way',
 }
 
 const KIND_LABELS_EN: Readonly<Record<string, string>> = {

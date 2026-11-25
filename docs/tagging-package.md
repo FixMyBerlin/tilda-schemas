@@ -24,6 +24,7 @@ Stays in the fork: `checks.ts` (key-value DB), `width_indicator.ts`, `offset_lin
 - `parking=no` gives no traffic mode (the fork said `no`).
 - A lane to extract is protected only by what the core rates as `cyclewayOnHighwayProtected` (its set of `separation` values and `traffic_mode`), not by any `separation` other than `no`.
 - Riding direction on a road side is `defaultSideRunsAgainstWay` of the core (tilda-geo `6ec40d600`, the wiki default). The left side of a one-way road runs with the road (`yes`, the fork's extraction said `-1`), also with `oneway:bicycle=no`: a contraflow lane needs an explicit `cycleway:left:oneway=-1`; on a `oneway=-1` road both sides run against the way; a roundabout is a one-way road. A road side that TILDA reads as both ways (`assumed_no`: a track with no cycling infrastructure on the other side, tilda-geo PR 424, or a service road) gets no default: the oneway row is a guess the mapper confirms. `cycleway_oneway_redundant` never flags the direction of a track: there it also says "not both ways".
+- Crossings (fork commits `eaa217bcb`, `0b23d217b`, `6c9b8834f`, `d463a3b3b`): a side marked as a crossing (`cycleway:<side>:track=crossing` or `:lane=crossing`, also `:both:` or without a side, `isCrossingSide`) or extracted with `asCrossing` gives the new way `<class>=crossing` (`cycleway=crossing`, `path=crossing`) and no `is_sidepath`. `extractOptions(tags, { plainLanes: true })` also offers plain bike lanes, as a line and as a crossing; `extractAndMergeSides` never includes lanes or crossings. `combinedPathTags` turns a foot crossing and a bike crossing into `path=crossing` (or `path=traffic_island`), without `is_sidepath`.
 - Widths are read with `parseWidth` of the core: `width=150cm` is 1.5 m in extract and merge (the fork read 150 m), values the LUA cannot read are skipped.
 - `pathRole` decides what a foot and cycle path is. A mode counts when it is `designated`, `yes` or `permissive`; a `highway=path` carries only what is tagged, unless the category says `footAndCycleway*`.
 - Option lists (surface, separation, marking, traffic mode, surface colour) come from the sanitizers of the core.
@@ -63,7 +64,7 @@ TILDA knows "shared foot and cycle path"; whether it is signed, under constructi
 
 ### Groups
 
-The groups follow the legend "Führungsform einfach" of tilda-geo (`subcat_bikelanes.const.ts`, category lists from `layers/bikelanes_default.ts`): `separated`, `lane`, `foot`, `sidewalk`, `mixed`, `needsClarification` (no targets). German names are tilda-geo's, English ones ours (`MAPPING_TARGET_GROUP_LABELS`).
+The groups follow the legend "Führungsform einfach" of tilda-geo (`subcat_bikelanes.const.ts`, category lists from `layers/bikelanes_default.ts`): `separated`, `lane`, `foot`, `sidewalk`, `mixed`, `needsClarification` (no targets). A road side also gets the group `separateWay` with `SEPARATE_KIND` (`groupMappingKinds(side)`): "Separat geführt (eigene Linie)" plans `cycleway:<side>=separate` and removes the side's sub keys, as the extraction does. German names are tilda-geo's, English ones ours (`MAPPING_TARGET_GROUP_LABELS`).
 
 Differences to the groups of the iD fork (`CATEGORY_GROUPS`, kept for the fork):
 

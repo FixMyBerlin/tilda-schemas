@@ -102,23 +102,95 @@ export function cyclewayKind(tags: OsmTags, side: Side): 'track' | 'protected' |
   return undefined
 }
 
-export type ExtractOption = { variant: ExtractVariant; side: Side; protectedLane: boolean }
+export type ExtractOption = {
+  variant: ExtractVariant
+  side: Side
+  protectedLane: boolean
+  /**
+   * A bike lane on the road (`cycleway:<side>=lane`, not a protected lane), only with
+   * `extractOptions(tags, { plainLanes: true })`: `line` extracts it as a line along the road,
+   * `crossing` as a crossing way
+   */
+  lane?: 'line' | 'crossing'
+  /**
+   * The new way is a crossing (`cycleway=crossing`, `path=crossing`): the side is marked as one
+   * (`isCrossingSide`) or this is the lane entry `crossing`. Pass it to `planExtraction` as
+   * `asCrossing`.
+   */
+  crossing: boolean
+}
+
+export type ExtractOptionsSettings = {
+  /**
+   * Also offer bike lanes on the road (`cycleway:<side>=lane`, `opposite_lane` on the left), each
+   * as a line and as a crossing; a lane marked as a crossing only as a crossing. Off by default:
+   * a painted lane usually stays on the road.
+   */
+  plainLanes?: boolean
+}
+
+/** The keys of a side that mark a crossing (`cycleway:right:track=crossing`) */
+const CROSSING_MARK_KEYS = ['track', 'lane']
+
+/**
+ * The cycle track or lane of this side is marked as a crossing: `cycleway:<side>:track=crossing`
+ * or `…:lane=crossing`, also with `:both:` or without a side. It is extracted as a crossing way
+ * and never merged with the sidewalk.
+ */
+export function isCrossingSide(road: OsmTags, side: Side): boolean {
+  return CROSSING_MARK_KEYS.some((key) =>
+    [`cycleway:${side}:${key}`, `cycleway:both:${key}`, `cycleway:${key}`].some(
+      (sideKey) => road[sideKey] === 'crossing',
+    ),
+  )
+}
+
+/** A bike lane on this side that is not a protected lane (`opposite_lane` only on the left) */
+function isPlainLaneSide(road: OsmTags, side: Side) {
+  const value = cyclewayValue(road, side)
+  const lane = value === 'lane' || (value === 'opposite_lane' && side === 'left')
+  return lane && cyclewayKind(road, side) === undefined
+}
 
 /** What can be extracted from this way, right side first */
-export function extractOptions(tags: OsmTags): ExtractOption[] {
+export function extractOptions(
+  tags: OsmTags,
+  settings: ExtractOptionsSettings = {},
+): ExtractOption[] {
   if (!ROAD_HIGHWAYS.has(highwayClass(tags) ?? '') || tags.area === 'yes') return []
   const options: ExtractOption[] = []
+  const lanes: ExtractOption[] = []
   for (const side of ['right', 'left'] as const) {
     const cycleway = cyclewayKind(tags, side)
     const sidewalk = sidewalkValue(tags, side) === 'yes'
+    const crossing = isCrossingSide(tags, side)
     if (cycleway)
-      options.push({ variant: 'cycleway', side, protectedLane: cycleway === 'protected' })
-    if (sidewalk) options.push({ variant: 'sidewalk', side, protectedLane: false })
+      options.push({ variant: 'cycleway', side, protectedLane: cycleway === 'protected', crossing })
+    if (sidewalk) options.push({ variant: 'sidewalk', side, protectedLane: false, crossing: false })
     if (cycleway === 'track' && sidewalk)
-      options.push({ variant: 'path', side, protectedLane: false })
+      options.push({ variant: 'path', side, protectedLane: false, crossing })
+    if (settings.plainLanes && isPlainLaneSide(tags, side)) {
+      const base = { variant: 'cycleway', side, protectedLane: false } as const
+      if (!crossing) lanes.push({ ...base, lane: 'line', crossing: false })
+      lanes.push({ ...base, lane: 'crossing', crossing: true })
+    }
   }
-  // protected lanes are offered, but not recommended: keep them at the end
-  return [...options.filter((o) => !o.protectedLane), ...options.filter((o) => o.protectedLane)]
+  // protected lanes are offered, but not recommended: keep them at the end, then the plain lanes
+  return [
+    ...options.filter((o) => !o.protectedLane),
+    ...options.filter((o) => o.protectedLane),
+    ...lanes,
+  ]
+}
+
+/**
+ * The sides whose cycle track can be extracted and merged with the sidewalk in one step: never a
+ * protected or plain lane (they stay next to the road), never a crossing.
+ */
+export function extractAndMergeSides(tags: OsmTags): Side[] {
+  return extractOptions(tags)
+    .filter((o) => o.variant === 'cycleway' && !o.protectedLane && !o.crossing)
+    .map((o) => o.side)
 }
 
 /** Tags the sign implies for a way: highway (cycleway/path/footway), access and segregated, normalized sign */
@@ -344,8 +416,22 @@ function mergeSides(tags: OsmTags, prefix: SidepathPrefix): OsmTags {
   return result
 }
 
+/**
+ * The new way as a crossing, as TILDA reads one: `cycleway=crossing` on a cycleway, `path=crossing`
+ * on a path (under construction the key of the `construction` value), never `track=crossing` or
+ * `lane=crossing`. A crossing runs across the road, not along it: no `is_sidepath`.
+ */
+function asCrossingWay(tags: OsmTags): OsmTags {
+  const result = { ...tags }
+  for (const key of CROSSING_MARK_KEYS) if (result[key] === 'crossing') delete result[key]
+  const highway = result.highway === 'construction' ? result.construction : result.highway
+  if (highway) result[highway] = 'crossing'
+  delete result.is_sidepath
+  return result
+}
+
 /** The road side becomes `separate`; its sub-keys (and `source:`/`note:`/`check_date:` variants) go to the new way */
-function separateSide(tags: OsmTags, prefix: SidepathPrefix, side: Side): OsmTags {
+export function separateSide(tags: OsmTags, prefix: SidepathPrefix, side: Side): OsmTags {
   let result = splitSides(tags, prefix)
   const sidePrefix = `${prefix}:${side}`
   for (const key of Object.keys(result)) {
@@ -406,6 +492,11 @@ export type ExtractionOptions = {
    * that stays a way of its own, e.g. one that is not under construction while the road is
    */
   segregatedTrack?: 'path' | 'twoLines'
+  /**
+   * Extract the bike part as a crossing although the side is not marked as one (a plain lane "as a
+   * crossing", `ExtractOption.crossing`). A side marked as a crossing (`isCrossingSide`) always is one.
+   */
+  asCrossing?: boolean
   joinSigns?: JoinSigns
   config?: Partial<SidepathConfig>
 }
@@ -485,6 +576,8 @@ export function planExtraction(
   if (wayTags.lit === undefined && road.lit) wayTags.lit = road.lit
   // a road under construction: so is the new way (`highway=construction` + `construction=cycleway`)
   if (isUnderConstruction(road)) wayTags = withConstruction(wayTags)
+  if (variant !== 'sidewalk' && (options.asCrossing || isCrossingSide(road, side)))
+    wayTags = asCrossingWay(wayTags)
 
   // the road: the side becomes separate
   let roadTags = { ...road }

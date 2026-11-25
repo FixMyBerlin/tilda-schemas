@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 import { processBikelanes } from '@tilda-geo/bicycle-infrastructure'
-import { attributeNote, lookupKeys, onewayKey, sideOnewayDefault } from '../src/index.ts'
+import {
+  attributeNote,
+  lookupKeys,
+  onewayKey,
+  optionMeaningText,
+  sideOnewayDefault,
+} from '../src/index.ts'
 import { requiredAttributes, roadAttributes } from './helpers.ts'
 
 function resultFor(tags: Record<string, string>, side: 'self' | 'left' | 'right') {
@@ -297,8 +303,28 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(left.key).toBe('cycleway:left:oneway')
     expect(left.default).toBe('cycleway:left:oneway=-1')
     expect(left.note).toBe('oneway_side')
-    expect(left.options).toEqual(['no'])
+    // a left lane ridden in the line's direction is the one other direction worth tagging
+    expect(left.options).toEqual(['no', 'yes'])
+    expect(left.optionMeanings).toEqual({ '-1': 'with_traffic', no: 'both', yes: 'left_with_line' })
     expect(right.default).toBe('cycleway:right:oneway=yes')
+    expect(right.options).toEqual(['no'])
+  })
+
+  it('oneway values by context: no -1 on a way of its own, the contraflow lane on a one-way road', () => {
+    const cycleway = { highway: 'cycleway' }
+    const own = byId(requiredAttributes(resultFor(cycleway, 'self'), cycleway)).oneway
+    expect(own.options).toEqual(['yes', 'no'])
+    expect(optionMeaningText(own, 'yes', 'de')?.label).toBe('nur in Linienrichtung')
+
+    const oneWay = { highway: 'residential', oneway: 'yes', 'cycleway:both': 'lane' }
+    const left = byId(requiredAttributes(resultFor(oneWay, 'left'), oneWay)).oneway
+    expect(left.default).toBe('cycleway:left:oneway=yes')
+    expect(left.options).toEqual(['no'])
+
+    const contraflow = { ...oneWay, 'oneway:bicycle': 'no' }
+    const lane = byId(requiredAttributes(resultFor(contraflow, 'left'), contraflow)).oneway
+    expect(lane.options).toEqual(['no', '-1'])
+    expect(optionMeaningText(lane, '-1', 'en')?.label).toBe('against the one-way')
   })
 
   it('a track with nothing on the other side: TILDA guesses both ways, the mapper confirms', () => {
@@ -307,7 +333,7 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(right.tilda).toBe('assumed_no')
     expect(right.state).toBe('guess')
     expect(right.default).toBeUndefined()
-    expect(right.options).toEqual(['yes', 'no', '-1'])
+    expect(right.options).toEqual(['yes', 'no'])
   })
 
   it('a lane with nothing on the other side: still runs with its side', () => {

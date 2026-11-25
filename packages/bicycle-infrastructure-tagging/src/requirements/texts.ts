@@ -117,6 +117,74 @@ export const ATTRIBUTE_HINTS: Texts = {
   },
 }
 
+export type OptionMeaningText = { label: string; hint: string }
+
+/** What a value means where it is offered (`RequiredAttribute.optionMeanings`), by id */
+export const OPTION_MEANING_TEXTS: Record<MessageLanguage, Record<string, OptionMeaningText>> = {
+  de: {
+    with_line: {
+      label: 'nur in Linienrichtung',
+      hint: 'Radverkehr fährt nur in Zeichenrichtung dieses Wegs. Fährt er andersherum, drehe den Weg um, statt -1 zu taggen.',
+    },
+    against_line: {
+      label: 'nur gegen die Linienrichtung',
+      hint: 'Radverkehr fährt nur gegen die Zeichenrichtung dieses Wegs. Besser den Weg umdrehen und „yes“ taggen.',
+    },
+    both: {
+      label: 'beide Richtungen',
+      hint: 'Radverkehr darf hier in beide Richtungen fahren.',
+    },
+    with_traffic: {
+      label: 'mit dem Verkehr auf dieser Seite',
+      hint: 'Radverkehr fährt in der Richtung des Verkehrs auf dieser Straßenseite. Das gilt auch ohne Tag.',
+    },
+    left_with_line: {
+      label: 'links, in Linienrichtung',
+      hint: 'Nur wenn die Radinfrastruktur links an der Fahrbahn liegt und trotzdem in Zeichenrichtung der Straßenlinie befahren wird, also wie der Verkehr auf der rechten Seite. Ohne Angabe gilt links -1 (gegen die Linienrichtung), das stimmt fast immer.',
+    },
+    contraflow: {
+      label: 'gegen die Einbahnstraße',
+      hint: 'Ein Radfahrstreifen in Gegenrichtung der Einbahnstraße. Ohne Angabe fährt der Radverkehr auf dieser Seite mit der Einbahnstraße.',
+    },
+  },
+  en: {
+    with_line: {
+      label: 'only in the line’s direction',
+      hint: 'Bicycles ride only in the drawing direction of this way. If they ride the other way, reverse the way instead of tagging -1.',
+    },
+    against_line: {
+      label: 'only against the line’s direction',
+      hint: 'Bicycles ride only against the drawing direction of this way. Better reverse the way and tag “yes”.',
+    },
+    both: {
+      label: 'both ways',
+      hint: 'Bicycles may ride both ways here.',
+    },
+    with_traffic: {
+      label: 'with the traffic on this side',
+      hint: 'Bicycles ride in the direction of the traffic on this side of the road. This holds without a tag too.',
+    },
+    left_with_line: {
+      label: 'left, in the line’s direction',
+      hint: 'Only if the bike infrastructure is on the left of the carriageway and still ridden in the drawing direction of the road, like the traffic on the right. Without a tag the left side is -1 (against the line), which is almost always right.',
+    },
+    contraflow: {
+      label: 'against the one-way',
+      hint: 'A contraflow lane of the one-way road. Without a tag bicycles on this side ride with the one-way.',
+    },
+  },
+}
+
+/** The words for a value of an attribute (`RequiredAttribute.optionMeanings`), or `undefined` */
+export function optionMeaningText(
+  attribute: Pick<RequiredAttribute, 'optionMeanings'>,
+  value: string,
+  language: MessageLanguage,
+): OptionMeaningText | undefined {
+  const meaning = attribute.optionMeanings?.[value]
+  return meaning ? OPTION_MEANING_TEXTS[language][meaning] : undefined
+}
+
 export type ReminderText = { title: string; text: string }
 
 /** Reminders of `reminders()`, by id. */

@@ -106,10 +106,12 @@ export {
   attributeLabel,
   attributeNote,
   attributeStateLabel,
+  OPTION_MEANING_TEXTS,
+  optionMeaningText,
   qaStateLabel,
   reminderText,
 } from './requirements/texts.ts'
-export type { ReminderText } from './requirements/texts.ts'
+export type { OptionMeaningText, ReminderText } from './requirements/texts.ts'
 export type {
   AttributeState,
   ReminderRule,

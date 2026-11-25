@@ -89,6 +89,12 @@ export type RequiredAttribute = {
   default?: string
   /** `assumed`: id of the text that says what the missing tag means */
   note?: string
+  /**
+   * What each value of `options` means here, as the id of a text (`optionMeaningText`): `-1` on a
+   * way of its own is "against the line", on the left of a road "with the traffic". Only for
+   * attributes whose values need words (`oneway`).
+   */
+  optionMeanings?: Record<string, string>
   /** conditional attributes: a missing value is not an error */
   optional: boolean
   /** id of a text that says when the attribute applies at all */

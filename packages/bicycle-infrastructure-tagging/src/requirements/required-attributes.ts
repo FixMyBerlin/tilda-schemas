@@ -17,6 +17,7 @@ import {
 import { sideOnewayDefault } from '../oneway.ts'
 import { pathRole } from '../path-role.ts'
 import type { BikelaneResult, OsmTags, ResultSide } from '../types.ts'
+import { contraflowSide } from '../validations/cycleway-oneway.ts'
 import type {
   AttributeState,
   RequiredAttribute,
@@ -73,6 +74,8 @@ type Rule = {
   assumed?: (ctx: RuleContext) => string | undefined
   /** values offered for an `assumed` attribute (default: `options` without the default value) */
   assumedOptions?: readonly string[]
+  /** what each value means here, as text ids (`RequiredAttribute.optionMeanings`) */
+  optionMeanings?: (ctx: RuleContext) => Record<string, string>
   /** id of the text for an `assumed` attribute (default: a generic text) */
   note?: string | ((ctx: RuleContext) => string | undefined)
   /** id of the text that frames when the attribute applies at all, in every state */
@@ -227,6 +230,30 @@ function assumedOneway(ctx: RuleContext) {
   return category?.implicitOneWay ? 'yes' : 'no'
 }
 
+/**
+ * The direction values a mapper can pick, with what they mean here.
+ * - A way of its own: `yes` (with the line) and `no`. `-1` is never offered: a way ridden against
+ *   its line is reversed instead. A tagged `-1` still counts.
+ * - A road side: the side's default (with its traffic, `sideOnewayDefault`) and `no`, plus the one
+ *   other direction that is real information: `yes` on the left of a two-way road (a left lane
+ *   ridden in the line's direction), and the contraflow lane of a one-way road open to bicycles
+ *   (`contraflowSide`).
+ */
+function onewayMeanings(ctx: RuleContext): Record<string, string> {
+  if (ctx.side === 'self') return { yes: 'with_line', no: 'both', '-1': 'against_line' }
+  const fallback = sideOnewayDefault(ctx.tags, ctx.side)
+  const meanings: Record<string, string> = { [fallback]: 'with_traffic', no: 'both' }
+  const contraflow = contraflowSide(ctx.tags)
+  if (contraflow?.side === ctx.side) meanings[contraflow.value] = 'contraflow'
+  else if (ctx.side === 'left' && fallback === '-1') meanings.yes = 'left_with_line'
+  return meanings
+}
+
+function onewayOptions(ctx: RuleContext): string[] {
+  if (ctx.side === 'self') return ['yes', 'no']
+  return Object.keys(onewayMeanings(ctx))
+}
+
 /** The width was tagged in this session: then say where the value comes from (not for existing widths) */
 function widthEdited(key: string) {
   return (ctx: RuleContext) =>
@@ -339,7 +366,8 @@ const COMMON = define('common', [
   {
     id: 'oneway',
     key: 'oneway',
-    options: ['yes', 'no', '-1'],
+    options: onewayOptions,
+    optionMeanings: onewayMeanings,
     tilda: field('oneway'),
     guesses: ['assumed_no', 'implicit_yes'],
     // lanes on the road run with the traffic, bicycle roads are two-way: TILDA's default is reliable there
@@ -347,8 +375,6 @@ const COMMON = define('common', [
     // TILDA reads `oneway:bicycle` first (`derive_oneway.lua`): show that tag, `oneway` next to it is not used
     preferredKey: 'oneway:bicycle',
     preferredKeyAlways: (ctx) => onewayKey(ctx.tags) === 'oneway:bicycle',
-    // a road side: only "both ways" is information, the direction follows from the side
-    assumedOptions: ['no'],
     note: (ctx) => (ctx.side !== 'self' ? 'oneway_side' : undefined),
   },
 ])
@@ -768,6 +794,7 @@ function evaluate(rules: Rule[], ctx: RuleContext): RequiredAttribute[] {
             ? rule.note(ctx)
             : rule.note
           : undefined,
+      ...(rule.optionMeanings ? { optionMeanings: rule.optionMeanings(ctx) } : {}),
       optional,
       hint: rule.hint,
       feeds: [...(ctx.profile.feeds[`${ruleSet}:${rule.id}`] ?? [])],

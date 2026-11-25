@@ -333,7 +333,14 @@ describe('defaults (WORKDOC feature 32)', () => {
     expect(right.tilda).toBe('assumed_no')
     expect(right.state).toBe('guess')
     expect(right.default).toBeUndefined()
-    expect(right.options).toEqual(['yes', 'no'])
+    // the buttons follow what TILDA reads: both ways first
+    expect(right.options).toEqual(['no', 'yes'])
+    const left = { highway: 'secondary', 'cycleway:left': 'track', 'cycleway:right': 'no' }
+    expect(byId(requiredAttributes(resultFor(left, 'left'), left)).oneway.options).toEqual([
+      'no',
+      '-1',
+      'yes',
+    ])
   })
 
   it('a lane with nothing on the other side: still runs with its side', () => {

@@ -234,7 +234,8 @@ function assumedOneway(ctx: RuleContext) {
  * The direction values a mapper can pick, with what they mean here.
  * - A way of its own: `yes` (with the line) and `no`. `-1` is never offered: a way ridden against
  *   its line is reversed instead. A tagged `-1` still counts.
- * - A road side: the side's default (with its traffic, `sideOnewayDefault`) and `no`, plus the one
+ * - A road side: the side's default (with its traffic, `sideOnewayDefault`) and `no` (first where TILDA
+ *   reads the side as both ways), plus the one
  *   other direction that is real information: `yes` on the left of a two-way road (a left lane
  *   ridden in the line's direction), and the contraflow lane of a one-way road open to bicycles
  *   (`contraflowSide`).
@@ -242,7 +243,11 @@ function assumedOneway(ctx: RuleContext) {
 function onewayMeanings(ctx: RuleContext): Record<string, string> {
   if (ctx.side === 'self') return { yes: 'with_line', no: 'both', '-1': 'against_line' }
   const fallback = sideOnewayDefault(ctx.tags, ctx.side)
-  const meanings: Record<string, string> = { [fallback]: 'with_traffic', no: 'both' }
+  // TILDA reads the side as both ways (`assumed_no`, see `assumedOneway`): that value comes first
+  const twoWay = !ctx.isTarget && ctx.result?.oneway === 'assumed_no'
+  const meanings: Record<string, string> = twoWay
+    ? { no: 'both', [fallback]: 'with_traffic' }
+    : { [fallback]: 'with_traffic', no: 'both' }
   const contraflow = contraflowSide(ctx.tags)
   if (contraflow?.side === ctx.side) meanings[contraflow.value] = 'contraflow'
   else if (ctx.side === 'left' && fallback === '-1') meanings.yes = 'left_with_line'

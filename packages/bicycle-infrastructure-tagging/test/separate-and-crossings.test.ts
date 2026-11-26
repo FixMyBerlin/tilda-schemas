@@ -186,10 +186,14 @@ describe('extracting a crossing', () => {
     }
     expect(extracted(road, 'cycleway').wayTags).toEqual({
       highway: 'cycleway',
-      is_sidepath: 'yes',
+      cycleway: 'lane',
       surface: 'asphalt',
       oneway: 'yes',
     })
+    const exclusive = { ...road, 'cycleway:right:lane': 'exclusive' }
+    const line = extracted(exclusive, 'cycleway').wayTags
+    expect(line).toMatchObject({ cycleway: 'lane', lane: 'exclusive' })
+    expect(processBikelanes(line).map((r) => r.category)).toEqual(['cyclewayOnHighway_exclusive'])
     expect(extracted(road, 'cycleway', true).wayTags).toEqual({
       highway: 'cycleway',
       cycleway: 'crossing',

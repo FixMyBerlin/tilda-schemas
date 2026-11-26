@@ -88,6 +88,12 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'fix.remove_tags': '{keys} entfernen',
     'fix.reverse_way': 'Weg umdrehen (Richtung dann yes)',
     'fix.reverse_way_line': 'Weg umdrehen (yes bleibt)',
+    'lane_from_path.traffic_sign':
+      'Das Verkehrszeichen „{sign}“ galt für den Geh- und Radweg. Bitte prüfen, welches Zeichen jetzt für Gehweg und Radfahrstreifen gilt.',
+    'lane_from_path.footway_width':
+      'Die Breite {width} galt für den ganzen Weg und wurde entfernt. Bitte die Breite des Gehwegs erfassen.',
+    'lane_from_path.road_use_sidepath':
+      'An der Straße steht {keys}=use_sidepath. Mit dem Radfahrstreifen auf der Fahrbahn passt das wohl nicht mehr: bitte prüfen.',
     'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
     'fix.contraflow_left': '{key} entfernen und cycleway:left:oneway=-1 setzen',
@@ -172,6 +178,12 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'fix.remove_tags': 'Remove {keys}',
     'fix.reverse_way': 'Reverse the way (direction then yes)',
     'fix.reverse_way_line': 'Reverse the way (yes stays)',
+    'lane_from_path.traffic_sign':
+      'The traffic sign “{sign}” was for the foot and cycle path. Please check which signs now apply to the sidewalk and the bike lane.',
+    'lane_from_path.footway_width':
+      'The width {width} was for the whole path and was removed. Please map the width of the sidewalk.',
+    'lane_from_path.road_use_sidepath':
+      'The road has {keys}=use_sidepath. With the bike lane on the carriageway that likely no longer fits: please check.',
     'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
     'fix.contraflow_left': 'Remove {key} and set cycleway:left:oneway=-1',

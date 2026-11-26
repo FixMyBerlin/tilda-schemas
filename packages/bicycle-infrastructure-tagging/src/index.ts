@@ -187,8 +187,18 @@ export type {
   SignRecommend,
 } from './sidepath/merge-tags.ts'
 
+export {
+  canPlanLaneFromSegregatedPath,
+  planLaneFromSegregatedPath,
+} from './sidepath/lane-from-path.ts'
+export type {
+  LaneFromPathOptions,
+  LaneFromPathPlan,
+  LaneFromPathTarget,
+} from './sidepath/lane-from-path.ts'
+
 // Geometry: how a way of its own runs next to its road
-export { lineRelationToRoad, pickSidepathRoad } from './geometry/line-relation.ts'
+export { lineRelationToRoad, pickSidepathRoad, wayPlacement } from './geometry/line-relation.ts'
 export type {
   LineRelation,
   LineRelationOptions,

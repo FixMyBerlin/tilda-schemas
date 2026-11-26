@@ -140,6 +140,27 @@ function sideOf(list: readonly Vote[], options: Required<LineRelationOptions>) {
 }
 
 /**
+ * Where a way lies next to a road line, by geometry only (no tags): on which side of the road line,
+ * and whether it is drawn in the direction of the road line (`along`). The same votes as
+ * `lineRelationToRoad`; `undefined` when they do not agree.
+ */
+export function wayPlacement(
+  way: readonly LonLat[],
+  road: readonly LonLat[],
+  options: LineRelationOptions = {},
+): { side: 'left' | 'right'; along: boolean } | undefined {
+  const settings = { ...DEFAULTS, ...options }
+  const found = sideOf(votes(way, road, settings), settings)
+  if (!found) return undefined
+  const along = found.votes.filter((vote) => vote.along).length
+  const runsAlong = along * 2 >= found.votes.length
+  if ((runsAlong ? along : found.votes.length - along) < found.votes.length * settings.majority) {
+    return undefined
+  }
+  return { side: found.side, along: runsAlong }
+}
+
+/**
  * How the line of a way of its own runs next to a road: on which side of the road line it lies, and
  * whether it runs with the traffic on that side (`sideOnewayDefault` of the road) or against it.
  *
@@ -156,24 +177,19 @@ export function lineRelationToRoad(
   road: WayGeometry,
   options: LineRelationOptions = {},
 ): LineRelation | undefined {
-  const settings = { ...DEFAULTS, ...options }
   if (road.tags.junction === 'roundabout' || road.tags.junction === 'circular') return undefined
-  const found = sideOf(votes(way, road.coords, settings), settings)
-  if (!found) return undefined
-  const along = found.votes.filter((vote) => vote.along).length
-  const runsAlong = along * 2 >= found.votes.length
-  if ((runsAlong ? along : found.votes.length - along) < found.votes.length * settings.majority) {
-    return undefined
-  }
-  const expected = sideOnewayDefault(road.tags, found.side)
-  const other = sideOnewayDefault(road.tags, found.side === 'left' ? 'right' : 'left')
+  const placement = wayPlacement(way, road.coords, options)
+  if (!placement) return undefined
+  const { side, along: runsAlong } = placement
+  const expected = sideOnewayDefault(road.tags, side)
+  const other = sideOnewayDefault(road.tags, side === 'left' ? 'right' : 'left')
   // one-way road: both sides run the same way; its left side (in the direction of travel) gives none
   if (expected === other) {
     const leftOfTraffic = expected === 'yes' ? 'left' : 'right'
-    if (found.side === leftOfTraffic) return undefined
+    if (side === leftOfTraffic) return undefined
   }
   return {
-    side: found.side,
+    side,
     line: runsAlong === (expected === 'yes') ? 'with_traffic' : 'against_traffic',
   }
 }

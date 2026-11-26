@@ -573,11 +573,21 @@ export function planExtraction(
     )
   }
 
+  // a bike lane on the carriageway drawn as a line stays a lane (`cycleway=lane` + `lane=*`), as
+  // TILDA reads it; without it the line would be a cycle track (`cycleway_adjoining`)
+  const crossingWay = variant !== 'sidewalk' && (options.asCrossing || isCrossingSide(road, side))
+  if (variant === 'cycleway' && isPlainLaneSide(road, side) && !crossingWay) {
+    delete wayTags.is_sidepath
+    wayTags = { highway: wayTags.highway ?? 'cycleway', cycleway: 'lane', ...wayTags }
+    const laneKind = [`cycleway:${side}:lane`, 'cycleway:both:lane', 'cycleway:lane']
+      .map((key) => road[key])
+      .find((value) => value !== undefined && value !== 'crossing')
+    if (laneKind) wayTags.lane = laneKind
+  }
   if (wayTags.lit === undefined && road.lit) wayTags.lit = road.lit
   // a road under construction: so is the new way (`highway=construction` + `construction=cycleway`)
   if (isUnderConstruction(road)) wayTags = withConstruction(wayTags)
-  if (variant !== 'sidewalk' && (options.asCrossing || isCrossingSide(road, side)))
-    wayTags = asCrossingWay(wayTags)
+  if (crossingWay) wayTags = asCrossingWay(wayTags)
 
   // the road: the side becomes separate
   let roadTags = { ...road }

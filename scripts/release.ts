@@ -10,12 +10,12 @@
  *   bun run release --dry-run  show what would happen, changes nothing
  *
  * npm asks for 2FA, which needs a terminal. An agent starts this in a terminal tab.
- * Without an npm session it starts `npm login` first.
+ * Without an npm session it starts `npm login` first. npm's browser approval opens by itself.
  * A publish that stopped halfway is safe to re-run: versions on npm are skipped.
  */
 
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -48,6 +48,33 @@ const run = (command: string, args: string[], cwd = ROOT) => {
 const read = (command: string, args: string[]) => {
   const result = spawnSync(command, args, { cwd: ROOT, encoding: 'utf8' })
   return { ok: result.status === 0, out: (result.stdout ?? '').trim() }
+}
+
+/**
+ * Presses ENTER at npm's "Press ENTER to open in the browser", so the approval page opens at once
+ * and does not expire while the terminal tab is out of sight. Everything else passes through, so a
+ * one-time password can still be typed.
+ */
+const OPEN_APPROVAL = `set timeout -1
+spawn -noecho {*}$argv
+interact {
+  -o -nobuffer "Press ENTER to open in the browser" { send -- "\\r" }
+}
+lassign [wait] pid spawnid os_error status
+exit $status
+`
+
+/** npm with its browser approval opened at once (`expect` ships with macOS). */
+const runNpm = (args: string[]) => {
+  if (!process.stdin.isTTY || !read('which', ['expect']).ok) return run('npm', args)
+  const dir = mkdtempSync(join(tmpdir(), 'release-expect-'))
+  const script = join(dir, 'open-approval.exp')
+  writeFileSync(script, OPEN_APPROVAL)
+  try {
+    run('expect', ['-f', script, 'npm', ...args])
+  } finally {
+    rmSync(dir, { recursive: true })
+  }
 }
 
 const readManifest = (dir: string) =>
@@ -106,7 +133,7 @@ if (!dryRun && !process.stdin.isTTY) {
 if (!read('npm', ['whoami']).ok) {
   if (!process.stdin.isTTY) fail('Not logged in to npm. Run: npm login')
   console.log('Not logged in to npm. Starting npm login.')
-  run('npm', ['login'])
+  runNpm(['login'])
   if (!read('npm', ['whoami']).ok) fail('Still not logged in to npm.')
 }
 
@@ -161,7 +188,7 @@ for (const pkg of toPublish) {
   ]).out
   if (packedManifest.includes('workspace:'))
     fail(`The tarball of ${pkg.name} still has workspace: versions.`)
-  run('npm', ['publish', join(packDir, String(tarball)), '--access', 'public', '--tag', 'latest'])
+  runNpm(['publish', join(packDir, String(tarball)), '--access', 'public', '--tag', 'latest'])
   rmSync(packDir, { recursive: true })
 }
 

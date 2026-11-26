@@ -151,10 +151,6 @@ const MACRO_CATEGORY_SUGGESTIONS: Record<string, { key: string; value: string }[
     { key: 'highway', value: 'cycleway' },
     { key: 'cycleway', value: 'share_busway' },
   ],
-  crossing: [
-    { key: 'highway', value: 'cycleway' },
-    { key: 'cycleway', value: 'crossing' },
-  ],
 }
 
 const CARRIAGEWAY_CLASSES = new Set<string>([

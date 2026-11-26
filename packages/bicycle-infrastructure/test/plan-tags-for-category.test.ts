@@ -275,6 +275,20 @@ describe('reason codes', () => {
     })
   })
 
+  test('a crossing keeps a path or a footway, other ways become a cycleway crossing', () => {
+    const edits = (tags: Record<string, string>) => {
+      const plan = planTagsForCategory(tags, 'crossing')
+      expect(plan.aligned).toBe(true)
+      return [...plan.add, ...plan.change].map((e) => `${e.key}=${'to' in e ? e.to : e.value}`)
+    }
+    expect(edits({ highway: 'path', bicycle: 'designated', foot: 'designated' })).toEqual([
+      'path=crossing',
+    ])
+    expect(edits({ highway: 'path' }).sort()).toEqual(['bicycle=designated', 'path=crossing'])
+    expect(edits({ highway: 'footway' }).sort()).toEqual(['bicycle=yes', 'footway=crossing'])
+    expect(edits({ highway: 'service' }).sort()).toEqual(['cycleway=crossing', 'highway=cycleway'])
+  })
+
   test('a fixed tag of a mapping target says so', () => {
     const plan = planTagsForCategory(
       { highway: 'path', bicycle: 'designated', foot: 'designated' },

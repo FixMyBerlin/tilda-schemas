@@ -111,6 +111,10 @@ export const TAG_REASON_CODES = [
   'protected_lane_parking',
   'protected_lane_sidepath',
   'cycleway_crossing',
+  /** a foot and cycle path stays `highway=path`: `path=crossing` with bicycles allowed */
+  'path_crossing',
+  /** a footway stays `highway=footway`: `footway=crossing` with bicycles allowed */
+  'footway_crossing',
   /** `{from}`: `cycleway:both` (or `cycleway`) split into `cycleway:left` and `cycleway:right` */
   'split_both_sides',
   /** `{key}`: the `cycleway:<side>` (or `sidewalk:<side>`) value the category needs on that side */
@@ -371,6 +375,23 @@ const eqAtom = (
   reasonCode,
 })
 
+/** `highway=<value>` as it is: never written, so the alternative only holds on that class */
+const keepHighway = (value: string, reason: string, reasonCode: TagReasonCode): PlanAtom => ({
+  key: 'highway',
+  accepts: (v) => v === value,
+  reason,
+  reasonCode,
+})
+
+/** `bicycle=yes` or `designated`; writes `value` when neither is tagged */
+const bicycleAllowed = (value: string, reason: string, reasonCode: TagReasonCode): PlanAtom => ({
+  key: 'bicycle',
+  accepts: (v) => v === 'yes' || v === 'designated',
+  value,
+  reason,
+  reasonCode,
+})
+
 /** A protected cycle lane runs along a road: on a way of its own that is `is_sidepath=yes` */
 const pblSidepath: PlanAtom = {
   key: 'is_sidepath',
@@ -511,10 +532,22 @@ const MACRO_PLAN_ALTERNATIVES: Record<string, PlanAlternative[]> = {
       ),
     ],
   ],
+  // A crossing keeps the class of the way: on a path or footway people walk too. Only other ways
+  // become `highway=cycleway` (`highway` costs most, so a path never turns into a cycleway).
   crossing: [
     [
       eqAtom('highway', 'cycleway', 'Cycleway crossing', 'cycleway_crossing'),
       eqAtom('cycleway', 'crossing', 'Cycleway crossing', 'cycleway_crossing'),
+    ],
+    [
+      keepHighway('path', 'Foot and cycle path crossing', 'path_crossing'),
+      eqAtom('path', 'crossing', 'Foot and cycle path crossing', 'path_crossing'),
+      bicycleAllowed('designated', 'Foot and cycle path crossing', 'path_crossing'),
+    ],
+    [
+      keepHighway('footway', 'Footway crossing with bicycles allowed', 'footway_crossing'),
+      eqAtom('footway', 'crossing', 'Footway crossing with bicycles allowed', 'footway_crossing'),
+      bicycleAllowed('yes', 'Footway crossing with bicycles allowed', 'footway_crossing'),
     ],
   ],
 }

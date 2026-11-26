@@ -52,6 +52,10 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'category_requirement.lifecycle_not_reached':
       'Ein vorhandener Lebenszyklus „{result}“ geht vor „{lifecycle}“.',
     'category_requirement.cycleway_crossing': 'Die Querung eines Radwegs.',
+    'category_requirement.path_crossing':
+      'Die Querung eines Geh- und Radwegs: bleibt highway=path, mit path=crossing.',
+    'category_requirement.footway_crossing':
+      'Die Querung eines Gehwegs, auf der Radfahren erlaubt ist: bleibt highway=footway, mit footway=crossing.',
     'category_requirement.split_both_sides':
       '{from} gilt für beide Seiten und wird auf die Seiten aufgeteilt.',
     'category_requirement.side_presence':
@@ -124,6 +128,10 @@ export const PLAN_MESSAGES: Record<MessageLanguage, Record<string, string>> = {
     'category_requirement.lifecycle_not_reached':
       'An existing lifecycle “{result}” wins over “{lifecycle}”.',
     'category_requirement.cycleway_crossing': 'The crossing of a cycleway.',
+    'category_requirement.path_crossing':
+      'The crossing of a foot and cycle path: stays highway=path, with path=crossing.',
+    'category_requirement.footway_crossing':
+      'The crossing of a footway where cycling is allowed: stays highway=footway, with footway=crossing.',
     'category_requirement.split_both_sides':
       '{from} covers both sides and is split into the sides.',
     'category_requirement.side_presence': '{key} says there is bike infrastructure on this side.',

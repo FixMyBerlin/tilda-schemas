@@ -57,8 +57,33 @@ describe('planCategoryChange', () => {
   it('suggests tags for bus lanes and crossings on a way of their own', () => {
     const bus = planCategoryChange({ highway: 'cycleway' }, 'sharedBusLaneBikeWithBus', 'self')
     expect(bus.add.map((e) => `${e.key}=${e.value}`)).toContain('lane=share_busway')
-    const crossing = planCategoryChange({ highway: 'footway' }, 'crossing', 'self')
+    const crossing = planCategoryChange({ highway: 'service' }, 'crossing', 'self')
     expect(crossing.change.map((e) => e.to)).toContain('cycleway')
+  })
+
+  it('a crossing keeps the path or footway: people walk there too', () => {
+    const tagsOf = (tags: Record<string, string>) => {
+      const plan = planCategoryChange(tags, 'crossing', 'self')
+      expect(plan.aligned).toBe(true)
+      return applyCategoryPlan(tags, plan)
+    }
+    const path = { highway: 'path', bicycle: 'designated', foot: 'designated' }
+    expect(tagsOf(path)).toEqual({ ...path, path: 'crossing' })
+    expect(tagsOf({ highway: 'path' })).toEqual({
+      highway: 'path',
+      path: 'crossing',
+      bicycle: 'designated',
+    })
+    expect(tagsOf({ highway: 'footway' })).toEqual({
+      highway: 'footway',
+      footway: 'crossing',
+      bicycle: 'yes',
+    })
+    expect(tagsOf({ highway: 'footway', bicycle: 'designated' })).toMatchObject({
+      highway: 'footway',
+      bicycle: 'designated',
+    })
+    expect(tagsOf({ highway: 'cycleway' })).toEqual({ highway: 'cycleway', cycleway: 'crossing' })
   })
 
   it('geometry mismatches are codes', () => {

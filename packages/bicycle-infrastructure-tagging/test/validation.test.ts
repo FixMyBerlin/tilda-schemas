@@ -175,6 +175,11 @@ const CASES: Record<string, RuleCase> = {
     quiet: { highway: 'cycleway', oneway: 'yes' },
     options: RADNETZ,
   },
+  sidepath_line_against_traffic: {
+    trigger: { highway: 'cycleway', oneway: 'yes' },
+    quiet: { highway: 'cycleway', oneway: 'no' },
+    options: { ...RADNETZ, lineRelation: { side: 'right', line: 'against_traffic' } },
+  },
 }
 
 const ids = (findings: Finding[]) => findings.map((finding) => finding.ruleId)
@@ -630,7 +635,19 @@ describe('fixes', () => {
       for (const finding of validateTags(rule_case.trigger, options)) {
         for (const fix of finding.fixes) {
           const next = applyTagFix(rule_case.trigger, fix)
-          const again = validateTags(next, options).filter(
+          // a reversed way runs the other way next to its road
+          const relation = options.lineRelation
+          const after: ValidationOptions =
+            fix.reverseWay && relation
+              ? {
+                  ...options,
+                  lineRelation: {
+                    ...relation,
+                    line: relation.line === 'with_traffic' ? 'against_traffic' : 'with_traffic',
+                  },
+                }
+              : options
+          const again = validateTags(next, after).filter(
             (f) => f.ruleId === finding.ruleId && f.keys.join() === finding.keys.join(),
           )
           expect(again, `${id}: ${fix.message.code}`).toEqual([])

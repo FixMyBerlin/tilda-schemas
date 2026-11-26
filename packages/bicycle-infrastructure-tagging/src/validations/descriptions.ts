@@ -66,6 +66,8 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
       'cycleway:…:oneway nennt die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Das Tag ist überflüssig. Bei Radwegen im Seitenraum (track) bleibt es: dort sagt es auch, dass der Radweg nicht in beide Richtungen befahren wird.',
     oneway_reverse_way:
       'Ein eigener Weg für den Radverkehr (Radweg, Geh- und Radweg, Gehweg mit Rad frei, keine Straßenmittellinie) hat oneway:bicycle=-1 oder oneway=-1 ohne oneway:bicycle: Radverkehr fährt gegen die Linienrichtung. Besser den Weg umdrehen und yes taggen. Dann zeigt die Linie in Fahrtrichtung, und ein Weg, der versehentlich falsch herum gezeichnet ist (etwa neben einem separat gemappten Gehweg, bei dem die Richtung egal ist), fällt eher auf. Die Korrektur dreht den Weg um; alle oneway-Tags wechseln yes ↔ -1.',
+    sidepath_line_against_traffic:
+      'Ein eigener Weg für den Radverkehr im Seitenraum hat oneway=yes bzw. oneway:bicycle=yes (nur in Linienrichtung), aber seine Linie läuft gegen den Verkehr auf der Straßenseite daneben. Fast immer ist der Weg falsch herum gezeichnet. Braucht die Geometrie: Das Paket wählt die Straße (zuerst eine mit cycleway:<Seite>=separate, dann sidewalk:<Seite>=separate, dann die nächste) und vergleicht die Linienrichtung mit dem Verkehr auf dieser Seite. Keine Aussage an Kreisverkehren, auf der linken Seite von Einbahnstraßen und bei kurzen Stücken an Kreuzungen. Die Korrektur dreht den Weg um; yes bleibt.',
   },
   en: {
     crossing_too_long:
@@ -124,6 +126,8 @@ export const RULE_DESCRIPTIONS: Record<MessageLanguage, Record<string, string>> 
       'cycleway:…:oneway names the direction the bike lane on this side runs in anyway. The tag is not needed. Cycle tracks (track) keep it: there it also says that the track is not used in both directions.',
     oneway_reverse_way:
       'A way of its own for cycling (a cycleway, a foot and cycle path, a footway with bicycles allowed, not a road centerline) has oneway:bicycle=-1, or oneway=-1 without oneway:bicycle: bicycles ride against the line. Better reverse the way and tag yes. Then the line points in the riding direction, and a way drawn the wrong way round by mistake (for example next to a separately mapped sidewalk, whose direction does not matter) is easier to spot. The fix reverses the way; every oneway tag flips yes ↔ -1.',
+    sidepath_line_against_traffic:
+      'A way of its own for cycling in the side space has oneway=yes or oneway:bicycle=yes (only in the line’s direction), but its line runs against the traffic on the road side next to it. Almost always the way is drawn the wrong way round. Needs the geometry: the package picks the road (first one with cycleway:<side>=separate, then sidewalk:<side>=separate, then the nearest) and compares the line’s direction with the traffic on that side. No finding at roundabouts, on the left of one-way roads and for short pieces at junctions. The fix reverses the way; yes stays.',
   },
 }
 

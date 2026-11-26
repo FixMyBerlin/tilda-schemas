@@ -124,15 +124,23 @@ export const OPTION_MEANING_TEXTS: Record<MessageLanguage, Record<string, Option
   de: {
     with_line: {
       label: 'nur in Linienrichtung',
-      hint: 'Radverkehr fährt nur in Zeichenrichtung dieses Wegs. Fährt er andersherum, drehe den Weg um, statt -1 zu taggen.',
+      hint: 'Erst im Editor nachsehen, in welche Richtung die Linie läuft (Pfeil). Radverkehr fährt nur in Linienrichtung. Fährt er andersherum, den Weg umdrehen, nicht -1 taggen.',
+    },
+    with_line_with_traffic: {
+      label: 'nur in Linienrichtung – mit dem Verkehr daneben',
+      hint: 'Die Linie läuft in Fahrtrichtung des Verkehrs auf der Straßenseite daneben. So ist ein Einrichtungsradweg richtig gezeichnet.',
+    },
+    with_line_against_traffic: {
+      label: 'nur in Linienrichtung – gegen den Verkehr daneben',
+      hint: 'Die Linienrichtung läuft gegen den Verkehr auf der Straßenseite daneben. Fast immer ist der Weg falsch herum gezeichnet: Weg umdrehen. Nur so lassen, wenn der Radweg hier wirklich gegen den Verkehr führt (z. B. links freigegeben).',
     },
     against_line: {
       label: 'nur gegen die Linienrichtung',
-      hint: 'Radverkehr fährt nur gegen die Zeichenrichtung dieses Wegs. Besser den Weg umdrehen und „yes“ taggen.',
+      hint: 'Radverkehr fährt nur gegen die Linienrichtung. Besser den Weg umdrehen und „yes“ taggen.',
     },
     both: {
       label: 'beide Richtungen',
-      hint: 'Radverkehr darf hier in beide Richtungen fahren.',
+      hint: 'Zweirichtungsradweg: Radverkehr darf in beide Richtungen fahren. Die Linienrichtung ist dann egal.',
     },
     with_traffic: {
       label: 'mit dem Verkehr auf dieser Seite',
@@ -150,15 +158,23 @@ export const OPTION_MEANING_TEXTS: Record<MessageLanguage, Record<string, Option
   en: {
     with_line: {
       label: 'only in the line’s direction',
-      hint: 'Bicycles ride only in the drawing direction of this way. If they ride the other way, reverse the way instead of tagging -1.',
+      hint: 'First check in the editor which way the line runs (arrow). Bicycles ride only in the line’s direction. If they ride the other way, reverse the way, do not tag -1.',
+    },
+    with_line_with_traffic: {
+      label: 'only in the line’s direction – with the traffic alongside',
+      hint: 'The line runs with the traffic on the road side next to it. This is how a one-way cycle path is drawn.',
+    },
+    with_line_against_traffic: {
+      label: 'only in the line’s direction – against the traffic alongside',
+      hint: 'The line’s direction runs against the traffic on the road side next to it. Almost always the way is drawn the wrong way round: reverse the way. Keep it only if the path really runs against the traffic here (e.g. a signed left-side path).',
     },
     against_line: {
       label: 'only against the line’s direction',
-      hint: 'Bicycles ride only against the drawing direction of this way. Better reverse the way and tag “yes”.',
+      hint: 'Bicycles ride only against the line’s direction. Better reverse the way and tag “yes”.',
     },
     both: {
       label: 'both ways',
-      hint: 'Bicycles may ride both ways here.',
+      hint: 'Two-way path: bicycles may ride both ways. The line’s direction does not matter then.',
     },
     with_traffic: {
       label: 'with the traffic on this side',

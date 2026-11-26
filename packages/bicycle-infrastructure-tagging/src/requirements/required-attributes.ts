@@ -14,6 +14,7 @@ import {
   writeKeyForSide,
   highwayClass,
 } from '@tilda-geo/bicycle-infrastructure'
+import type { LineRelation } from '../geometry/line-relation.ts'
 import { sideOnewayDefault } from '../oneway.ts'
 import { pathRole } from '../path-role.ts'
 import type { BikelaneResult, OsmTags, ResultSide } from '../types.ts'
@@ -45,6 +46,8 @@ type RuleContext = {
   /** keys changed in this editing session (tagged now, compared to the downloaded data) */
   edited: ReadonlySet<string>
   profile: RequirementsProfile
+  /** how the line of a way of its own runs next to its road (`RequirementOptions.lineRelation`) */
+  lineRelation: LineRelation | undefined
   /** tagged value for an own-way key on this side */
   value: (key: string) => string | undefined
 }
@@ -233,7 +236,8 @@ function assumedOneway(ctx: RuleContext) {
 /**
  * The direction values a mapper can pick, with what they mean here.
  * - A way of its own: `yes` (with the line) and `no`. `-1` is never offered: a way ridden against
- *   its line is reversed instead. A tagged `-1` still counts.
+ *   its line is reversed instead. A tagged `-1` still counts. With `options.lineRelation` the meaning
+ *   of `yes` says whether the line runs with or against the traffic on the road side next to it.
  * - A road side: the side's default (with its traffic, `sideOnewayDefault`) and `no` (first where TILDA
  *   reads the side as both ways), plus the one
  *   other direction that is real information: `yes` on the left of a two-way road (a left lane
@@ -241,7 +245,11 @@ function assumedOneway(ctx: RuleContext) {
  *   (`contraflowSide`).
  */
 function onewayMeanings(ctx: RuleContext): Record<string, string> {
-  if (ctx.side === 'self') return { yes: 'with_line', no: 'both', '-1': 'against_line' }
+  if (ctx.side === 'self') {
+    // with the geometry, say how the line runs next to the road (`lineRelationToRoad`)
+    const yes = ctx.lineRelation === undefined ? 'with_line' : `with_line_${ctx.lineRelation.line}`
+    return { yes, no: 'both', '-1': 'against_line' }
+  }
   const fallback = sideOnewayDefault(ctx.tags, ctx.side)
   // TILDA reads the side as both ways (`assumed_no`, see `assumedOneway`): that value comes first
   const twoWay = !ctx.isTarget && ctx.result?.oneway === 'assumed_no'
@@ -825,6 +833,7 @@ function contextFor(
     isTarget,
     edited: options.edited ?? new Set(),
     profile: options.profile,
+    lineRelation: options.lineRelation,
     value: (key) =>
       lookupKeys(key, side, prefix)
         .map((k) => tags[k])

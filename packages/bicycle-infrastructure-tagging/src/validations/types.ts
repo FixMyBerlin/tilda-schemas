@@ -1,3 +1,4 @@
+import type { LineRelation } from '../geometry/line-relation.ts'
 import type { BikelaneResult, OsmTags } from '../types.ts'
 
 /**
@@ -70,6 +71,11 @@ export interface ValidationOptions {
   profile?: ValidationProfile
   /** Length of the way in meters. Only `crossing_too_long` reads it; without it that rule cannot trigger. */
   length?: number
+  /**
+   * How the line of the way runs next to its road (`lineRelationToRoad`, from the geometry the editor
+   * has). Only `sidepath_line_against_traffic` reads it; without it that rule cannot trigger.
+   */
+  lineRelation?: LineRelation
   /** Run only these rules (ids) */
   only?: readonly string[]
   /** Do not run these rules (ids), e.g. when the app has a rule of its own for it or a person turned it off */
@@ -85,7 +91,7 @@ export interface RuleHit {
   fixes?: readonly TagFix[]
 }
 
-/** What a rule may look at. Plain tags only: no geometry, no neighbours. */
+/** What a rule may look at. Plain tags only: no geometry, no neighbours (an app passes what it measured in `options`). */
 export interface RuleContext {
   /** The tags of the way, including `_length` when `options.length` is set */
   readonly tags: OsmTags

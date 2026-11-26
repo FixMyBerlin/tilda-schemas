@@ -15,6 +15,14 @@ export { MESSAGES, isMessageLanguage, renderMessage } from './messages.ts'
 export type { MessageLanguage } from './messages.ts'
 export { RULE_DESCRIPTIONS, ruleDescription } from './descriptions.ts'
 export { applyTagFix } from './fix.ts'
+export { sidepathDirectionFindings } from './sidepath-direction.ts'
+export { lineRelationToRoad, pickSidepathRoad } from '../geometry/line-relation.ts'
+export type {
+  LineRelation,
+  LineRelationOptions,
+  LonLat,
+  WayGeometry,
+} from '../geometry/line-relation.ts'
 export { RADNETZ_RULES } from './radnetz-rules.ts'
 export { TILDA_GEO_RULES } from './tilda-geo-rules.ts'
 export type {

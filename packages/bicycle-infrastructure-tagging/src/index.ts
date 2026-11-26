@@ -187,6 +187,15 @@ export type {
   SignRecommend,
 } from './sidepath/merge-tags.ts'
 
+// Geometry: how a way of its own runs next to its road
+export { lineRelationToRoad, pickSidepathRoad } from './geometry/line-relation.ts'
+export type {
+  LineRelation,
+  LineRelationOptions,
+  LonLat,
+  WayGeometry,
+} from './geometry/line-relation.ts'
+
 // Validation rules (also the subpath `@tilda-geo/bicycle-infrastructure-tagging/validation`)
 export {
   CYCLEWAY_ONEWAY_KEYS,
@@ -202,6 +211,7 @@ export {
   renderMessage,
   ruleById,
   ruleDescription,
+  sidepathDirectionFindings,
   validateTags,
 } from './validations/index.ts'
 export type {

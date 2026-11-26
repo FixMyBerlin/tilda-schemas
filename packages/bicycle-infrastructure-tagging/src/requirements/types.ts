@@ -1,3 +1,4 @@
+import type { LineRelation } from '../geometry/line-relation.ts'
 import type { BikelaneResult, OsmTags } from '../types.ts'
 
 /**
@@ -109,6 +110,11 @@ export interface RequirementOptions {
   targetCategory?: string
   /** keys changed in this editing session (tagged now, compared to the downloaded data) */
   edited?: ReadonlySet<string>
+  /**
+   * How the line of a way of its own runs next to its road (`lineRelationToRoad`, from the geometry
+   * the editor has). Then the meaning of `oneway=yes` says whether that is with the traffic.
+   */
+  lineRelation?: LineRelation
 }
 
 export type { BikelaneResult }

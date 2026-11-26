@@ -78,9 +78,16 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       '{key}={value} ist die Richtung, in der der Radfahrstreifen dieser Seite ohnehin fährt. Bei Streifen auf der Fahrbahn ist das Tag überflüssig.',
     oneway_reverse_way:
       '{key}=-1: Radverkehr fährt gegen die Linienrichtung. Besser den Weg umdrehen, dann gilt {key}=yes und die Linie zeigt in Fahrtrichtung.',
+    sidepath_line_against_traffic:
+      '{key}=yes: Radverkehr fährt nur in Linienrichtung, aber die Linie läuft gegen den Verkehr auf der Straßenseite daneben. Meist ist der Weg falsch herum gezeichnet.',
+    'sidepath_line_against_traffic.left':
+      '{key}=yes: Radverkehr fährt nur in Linienrichtung, aber die Linie läuft gegen den Verkehr auf der linken Straßenseite daneben. Meist ist der Weg falsch herum gezeichnet.',
+    'sidepath_line_against_traffic.right':
+      '{key}=yes: Radverkehr fährt nur in Linienrichtung, aber die Linie läuft gegen den Verkehr auf der rechten Straßenseite daneben. Meist ist der Weg falsch herum gezeichnet.',
     // fixes
     'fix.remove_tags': '{keys} entfernen',
     'fix.reverse_way': 'Weg umdrehen (Richtung dann yes)',
+    'fix.reverse_way_line': 'Weg umdrehen (yes bleibt)',
     'fix.sidewalk_shared_path': 'Als highway=path mit is_sidepath=yes taggen',
     'fix.set_tag': '{key}={value} setzen',
     'fix.contraflow_left': '{key} entfernen und cycleway:left:oneway=-1 setzen',
@@ -156,8 +163,15 @@ export const MESSAGES: Record<MessageLanguage, Record<string, string>> = {
       '{key}={value} is the direction the bike lane on this side runs in anyway. For lanes on the road the tag is not needed.',
     oneway_reverse_way:
       '{key}=-1: bicycles ride against the line. Better reverse the way: then {key}=yes holds and the line points in the riding direction.',
+    sidepath_line_against_traffic:
+      '{key}=yes: bicycles ride only in the line’s direction, but the line runs against the traffic on the road side next to it. Most likely the way is drawn the wrong way round.',
+    'sidepath_line_against_traffic.left':
+      '{key}=yes: bicycles ride only in the line’s direction, but the line runs against the traffic on the left side of the road next to it. Most likely the way is drawn the wrong way round.',
+    'sidepath_line_against_traffic.right':
+      '{key}=yes: bicycles ride only in the line’s direction, but the line runs against the traffic on the right side of the road next to it. Most likely the way is drawn the wrong way round.',
     'fix.remove_tags': 'Remove {keys}',
     'fix.reverse_way': 'Reverse the way (direction then yes)',
+    'fix.reverse_way_line': 'Reverse the way (yes stays)',
     'fix.sidewalk_shared_path': 'Tag as highway=path with is_sidepath=yes',
     'fix.set_tag': 'Set {key}={value}',
     'fix.contraflow_left': 'Remove {key} and set cycleway:left:oneway=-1',

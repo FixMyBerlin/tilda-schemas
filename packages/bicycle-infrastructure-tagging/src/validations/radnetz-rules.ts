@@ -333,6 +333,55 @@ const onewayReverseWay: Rule = {
   },
 }
 
+/**
+ * A way of its own for cycling with `yes` (only in the line's direction), whose line runs against the
+ * traffic on the road side next to it: almost always drawn the wrong way round. Needs the geometry:
+ * `options.lineRelation` (`lineRelationToRoad`, or `sidepathDirectionFindings`).
+ */
+/** The `oneway` keys a reverse would flip, set back to their value */
+function keepOneway(tags: OsmTags) {
+  const change: Record<string, { from: string; to: string }> = {}
+  for (const [key, value] of Object.entries(tags)) {
+    if (key !== 'oneway' && !key.startsWith('oneway:')) continue
+    if (value !== undefined && FLIPPED_ONEWAY[value] !== undefined)
+      change[key] = { from: value, to: value }
+  }
+  return change
+}
+
+const sidepathLineAgainstTraffic: Rule = {
+  id: 'sidepath_line_against_traffic',
+  severity: 'warning',
+  source: 'radnetz',
+  appliesTo: ['self'],
+  keys: ['oneway', 'oneway:bicycle'],
+  message: { code: 'sidepath_line_against_traffic' },
+  check({ tags, options, bikelanes }) {
+    const relation = options.lineRelation
+    if (relation?.line !== 'against_traffic' || isRoad(tags)) return []
+    const key = tags['oneway:bicycle'] !== undefined ? 'oneway:bicycle' : 'oneway'
+    if (tags[key] !== 'yes') return []
+    const self = bikelanes().find((result) => result._side === 'self')
+    if (!self?._infrastructureExists) return []
+    return [
+      {
+        scope: 'self',
+        keys: [key],
+        message: { code: `sidepath_line_against_traffic.${relation.side}`, params: { key } },
+        // the line was wrong, not the tag: the oneway values stay as they are (`change` sets them
+        // back after the reverse, for editors whose reverse flips them and for `applyTagFix`)
+        fixes: [
+          {
+            message: { code: 'fix.reverse_way_line', params: {} },
+            reverseWay: true,
+            change: keepOneway(tags),
+          },
+        ],
+      },
+    ]
+  },
+}
+
 export const RADNETZ_RULES: readonly Rule[] = [
   widthPartSum,
   widthPartWhole,
@@ -342,4 +391,5 @@ export const RADNETZ_RULES: readonly Rule[] = [
   cyclewayOnewayRedundant,
   sidewalkSharedPath,
   onewayReverseWay,
+  sidepathLineAgainstTraffic,
 ]

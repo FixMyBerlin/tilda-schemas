@@ -1,5 +1,11 @@
 # @tilda-geo/bicycle-infrastructure
 
+## 0.6.1
+
+### Patch Changes
+
+- f5e10b1: Planning a crossing keeps the class of the way: a `highway=path` gets `path=crossing` (with `bicycle=designated` if cycling is not allowed yet), a `highway=footway` gets `footway=crossing` (with `bicycle=yes`). Only other ways become `highway=cycleway` + `cycleway=crossing`. Before, every crossing became a cycleway, also where people walk.
+
 ## 0.6.0
 
 ### Minor Changes

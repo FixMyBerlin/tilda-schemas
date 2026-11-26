@@ -1,5 +1,22 @@
 # @tilda-geo/bicycle-infrastructure-tagging
 
+## 0.9.0
+
+### Minor Changes
+
+- 97f9c89: New: extract the bike lane from a segregated foot and cycle path that is really a sidewalk next to a bike lane on the carriageway. `canPlanLaneFromSegregatedPath(tags)` says when it fits; `planLaneFromSegregatedPath(path, road, { roadSide, pathAlongRoad, target: 'line' | 'centerline', lane })` gives the tags of the sidewalk, of the lane (as a line of its own or on the road) and of the road, plus `review` messages for what is not guessed (traffic sign, width of the whole path, `bicycle=use_sidepath`). `wayPlacement(way, road)` gives the side and drawing direction of a way next to a road.
+
+  Fix: a plain bike lane extracted from the road as a line (`planExtraction`) keeps `cycleway=lane` and its `lane=*`, so TILDA reads it as a lane, not as a cycle track.
+
+- 6bb9049: Line direction of cycle paths next to a road. `lineRelationToRoad` says whether the line of a way of its own runs with or against the traffic on the road side next to it, `pickSidepathRoad` picks the right road out of the roads near the way (a road that maps the side as separate before the nearest one), and the new rule `sidepath_line_against_traffic` (Radnetz profile, via `sidepathDirectionFindings` or `ValidationOptions.lineRelation`) finds `oneway=yes` / `oneway:bicycle=yes` whose line runs against the traffic; its fix reverses the way and keeps `yes`. With `RequirementOptions.lineRelation` the meaning of `yes` says "with the traffic alongside" or "against the traffic alongside". The texts of the oneway meanings speak of the line's direction ("Linienrichtung") and say to check it in the editor first.
+
+### Patch Changes
+
+- f5e10b1: Planning a crossing keeps the class of the way: a `highway=path` gets `path=crossing` (with `bicycle=designated` if cycling is not allowed yet), a `highway=footway` gets `footway=crossing` (with `bicycle=yes`). Only other ways become `highway=cycleway` + `cycleway=crossing`. Before, every crossing became a cycleway, also where people walk.
+- bbb6980: On a road side that TILDA reads as both ways (a track with no cycling infrastructure on the other side), the oneway row offers "both ways" (`no`) first, then the direction of the side, so the buttons follow what TILDA reads.
+- Updated dependencies [f5e10b1]
+  - @tilda-geo/bicycle-infrastructure@0.6.1
+
 ## 0.8.0
 
 ### Minor Changes

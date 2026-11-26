@@ -199,7 +199,7 @@ function separateRank(tags: OsmTags, side: 'left' | 'right') {
   const separate = (prefix: string) =>
     [`${prefix}:${side}`, `${prefix}:both`, prefix].some((key) => tags[key] === 'separate')
   if (separate('cycleway')) return 0
-  if (separate('sidewalk')) return 1
+  if (separate('sidewalk') || separate('sidewalk:bicycle')) return 1
   return 2
 }
 
@@ -208,7 +208,8 @@ function separateRank(tags: OsmTags, side: 'left' | 'right') {
  * roads within 25 m). The nearest road is often the wrong one: a service road between the path and
  * the carriageway, or a parallel one-way street. So first a road that maps this side as separate
  * (`cycleway:<side>=separate`, `cycleway:both=separate`, `cycleway=separate`), then one with
- * `sidewalk:<side>|both=separate` or `sidewalk=separate`, then the nearest. `<side>` is the side of
+ * `sidewalk:<side>|both=separate` or `sidewalk=separate` (also `sidewalk:bicycle:<side>|both`,
+ * `sidewalk:bicycle`), then the nearest. `<side>` is the side of
  * that road the way lies on. Only roads the way runs parallel to count (see `lineRelationToRoad`).
  */
 export function pickSidepathRoad<Road extends WayGeometry>(

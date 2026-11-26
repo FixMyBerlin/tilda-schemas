@@ -91,6 +91,9 @@ describe('pickSidepathRoad', () => {
     const sidewalk = road({ 'sidewalk:right': 'separate' })
     expect(pickSidepathRoad(path, [service, sidewalk])).toBe(sidewalk)
     expect(pickSidepathRoad(path, [sidewalk, cycleway])).toBe(cycleway)
+    const sidewalkBicycle = road({ 'sidewalk:bicycle:right': 'separate' })
+    expect(pickSidepathRoad(path, [service, sidewalkBicycle])).toBe(sidewalkBicycle)
+    expect(pickSidepathRoad(path, [sidewalkBicycle, cycleway])).toBe(cycleway)
     // separate on the other side does not count
     expect(pickSidepathRoad(path, [service, road({ 'cycleway:left': 'separate' })])).toBe(service)
   })

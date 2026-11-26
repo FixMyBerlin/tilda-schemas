@@ -127,6 +127,45 @@ describe('planLaneFromSegregatedPath', () => {
   })
 })
 
+describe('road keys that name their own side', () => {
+  const segregated = {
+    highway: 'path',
+    bicycle: 'designated',
+    foot: 'designated',
+    segregated: 'yes',
+    'cycleway:width': '1.6',
+  }
+
+  it('sidewalk:bicycle:<side> and :both stay as they are', () => {
+    for (const target of ['line', 'centerline'] as const) {
+      const right = planLaneFromSegregatedPath(
+        segregated,
+        { highway: 'secondary', 'sidewalk:bicycle:right': 'separate' },
+        { roadSide: 'right', pathAlongRoad: true, target },
+      )
+      expect(right.roadTags).toMatchObject({
+        'sidewalk:bicycle:right': 'separate',
+        'sidewalk:right': 'separate',
+      })
+      expect(Object.keys(right.roadTags).filter((key) => key.includes('bicycle:'))).toEqual([
+        'sidewalk:bicycle:right',
+      ])
+    }
+    const left = planLaneFromSegregatedPath(
+      segregated,
+      { highway: 'secondary', 'sidewalk:bicycle:both': 'separate', 'sidewalk:surface': 'x' },
+      { roadSide: 'left', pathAlongRoad: false, target: 'line' },
+    )
+    expect(left.roadTags).toEqual({
+      highway: 'secondary',
+      'sidewalk:bicycle:both': 'separate',
+      'sidewalk:left': 'separate',
+      'sidewalk:right:surface': 'x',
+      'cycleway:left': 'separate',
+    })
+  })
+})
+
 describe('wayPlacement', () => {
   const METER = 1 / 111_195
   const roadLine: LonLat[] = [

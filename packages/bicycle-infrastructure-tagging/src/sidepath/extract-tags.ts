@@ -392,8 +392,13 @@ export function splitSides(tags: OsmTags, prefix: SidepathPrefix): OsmTags {
   for (const [key, value] of Object.entries(tags)) {
     if (!isSidedSubKey(key, prefix) || key === `${prefix}:both`) continue
     const rest = key.slice(prefix.length + 1)
-    const first = rest.split(':')[0]
+    const parts = rest.split(':')
+    const first = parts[0]
     if (first === 'left' || first === 'right') continue
+    // a key that names its own side further in (`sidewalk:bicycle:right`, `sidewalk:bicycle:both`)
+    // is not a property of both sides: it stays as it is
+    if (parts.slice(1).some((part) => part === 'left' || part === 'right' || part === 'both'))
+      continue
     const subKey = first === 'both' ? rest.slice('both:'.length) : rest // `cycleway:both:surface` / `cycleway:surface`
     for (const side of ['left', 'right']) {
       const sideKey = `${prefix}:${side}:${subKey}`

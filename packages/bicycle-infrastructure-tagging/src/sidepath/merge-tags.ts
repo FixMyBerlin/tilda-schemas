@@ -62,23 +62,54 @@ export function partKind(tags: OsmTags): PartKind | undefined {
   return pathRole(tags).part
 }
 
-/** Tags of a way that runs the other way: directions and sides swap */
+const REVERSE_SWAP: Readonly<Record<string, string>> = {
+  forward: 'backward',
+  backward: 'forward',
+  left: 'right',
+  right: 'left',
+}
+/** Keys whose parts after them name a side of the road (`cycleway:right`, `sidewalk:bicycle:left`) */
+const ROAD_SIDE_PREFIXES = new Set(['cycleway', 'sidewalk', 'parking'])
+const ROAD_SIDES = new Set(['left', 'right', 'both'])
+/** Keys whose side is read in the riding direction of a one-way way (Proposal:Separation) */
+const RIDING_SIDE_KEYS = new Set(['separation', 'marking', 'buffer', 'traffic_mode'])
+const ONE_WAY_VALUES = new Set(['yes', '1', '-1'])
+
+function reverseKey(key: string, oneWay: boolean): string {
+  const parts = key.split(':')
+  const prefix = parts.findIndex((part) => ROAD_SIDE_PREFIXES.has(part))
+  const roadSide =
+    prefix === -1 ? -1 : parts.findIndex((part, i) => i > prefix && ROAD_SIDES.has(part))
+  return parts
+    .map((part, i) => {
+      if (part !== 'left' && part !== 'right') return REVERSE_SWAP[part] ?? part
+      // on a road side: the side of the road swaps, a second side is read in the lane's riding direction
+      if (roadSide !== -1) return i === roadSide ? REVERSE_SWAP[part]! : part
+      // on a one-way way of its own: read in the riding direction, which does not change
+      if (oneWay && RIDING_SIDE_KEYS.has(parts[i - 1] ?? '')) return part
+      return REVERSE_SWAP[part]!
+    })
+    .join(':')
+}
+
+/**
+ * Tags of the same way drawn the other way round ("redraw"): nothing changes in the real world.
+ * - `forward` / `backward` swap; `oneway` values relative to the line turn (`yes` ↔ `-1`), so the
+ *   riding direction stays.
+ * - On a road side (`cycleway:<side>…`, `sidewalk:<side>…`, `parking:<side>…`) only the side of the
+ *   road swaps (`both` stays). A second side (`cycleway:right:separation:left`,
+ *   `cycleway:both:marking:left`) is read in the lane's riding direction (Proposal:Separation,
+ *   tilda-geo processing `e9dc145`) and stays, also on a lane in both directions.
+ * - On a way of its own, `separation`, `marking`, `buffer` and `traffic_mode` sides are read in the
+ *   riding direction when the way is one-way for bicycles (`oneway:bicycle`, else `oneway`, is
+ *   `yes` or `-1`): they stay. On a two-way way they refer to the line and swap, as all other sides.
+ *
+ * See Maid `docs/research/reverse-side-keys.md` for the cases.
+ */
 export function reverseTags(tags: OsmTags): OsmTags {
-  const swap: Record<string, string> = {
-    forward: 'backward',
-    backward: 'forward',
-    left: 'right',
-    right: 'left',
-  }
+  const oneWay = ONE_WAY_VALUES.has(tags['oneway:bicycle'] ?? tags.oneway ?? '')
   const result: OsmTags = {}
-  for (const [key, value] of Object.entries(tags)) {
-    result[
-      key
-        .split(':')
-        .map((part) => swap[part] ?? part)
-        .join(':')
-    ] = value
-  }
+  for (const [key, value] of Object.entries(tags)) result[reverseKey(key, oneWay)] = value
   // `oneway` values are relative to the drawing direction; `no` and other values stay
   for (const key of Object.keys(result)) {
     if (key !== 'oneway' && !key.startsWith('oneway:') && !/:oneway(:|$)/.test(key)) continue

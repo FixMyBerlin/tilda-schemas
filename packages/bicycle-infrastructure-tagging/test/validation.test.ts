@@ -789,7 +789,8 @@ describe('oneway_reverse_way: reverse a cycle path that runs against its line', 
     expect(applyTagFix(tags, fix)).toEqual({
       highway: 'cycleway',
       oneway: 'yes',
-      'traffic_mode:right': 'foot',
+      // read in the riding direction, which a reverse keeps
+      'traffic_mode:left': 'foot',
       'width:backward': '2',
     })
   })

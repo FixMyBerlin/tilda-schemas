@@ -210,18 +210,18 @@ describe('combinedPathTags', () => {
 })
 
 describe('reverseTags', () => {
-  it('swaps directions, sides and oneway', () => {
+  it('swaps directions, line sides and oneway', () => {
     expect(
       reverseTags({
         oneway: 'yes',
         'traffic_sign:forward': 'DE:237',
-        'separation:left': 'kerb',
+        'shoulder:left': 'yes',
         surface: 'asphalt',
       }),
     ).toEqual({
       oneway: '-1',
       'traffic_sign:backward': 'DE:237',
-      'separation:right': 'kerb',
+      'shoulder:right': 'yes',
       surface: 'asphalt',
     })
   })
@@ -239,6 +239,110 @@ describe('reverseTags', () => {
       'oneway:bicycle': '-1',
       'cycleway:right:oneway': 'yes',
       'cycleway:left:oneway': 'no',
+    })
+  })
+
+  // rows A to G of Maid `docs/research/reverse-side-keys.md`, redraw model
+  it('A: keeps the second side of both lanes on a two-way road', () => {
+    const tags = {
+      highway: 'residential',
+      'cycleway:both': 'lane',
+      'cycleway:both:marking:left': 'dashed_line',
+    }
+    expect(reverseTags(tags)).toEqual(tags)
+  })
+
+  it('B: swaps the road sides and turns their oneway values', () => {
+    expect(
+      reverseTags({
+        'cycleway:left:oneway': '-1',
+        'cycleway:right:oneway': 'yes',
+      }),
+    ).toEqual({ 'cycleway:right:oneway': 'yes', 'cycleway:left:oneway': '-1' })
+  })
+
+  it('C: swaps the road side, keeps the second side', () => {
+    expect(reverseTags({ 'cycleway:right:separation:left': 'bollard' })).toEqual({
+      'cycleway:left:separation:left': 'bollard',
+    })
+  })
+
+  it('D: keeps the second side of a two-way lane', () => {
+    expect(
+      reverseTags({
+        'cycleway:right:oneway': 'no',
+        'cycleway:right:separation:left': 'kerb',
+      }),
+    ).toEqual({
+      'cycleway:left:oneway': 'no',
+      'cycleway:left:separation:left': 'kerb',
+    })
+  })
+
+  it('E: keeps the second side on a one-way road', () => {
+    expect(
+      reverseTags({
+        oneway: 'yes',
+        'cycleway:right': 'lane',
+        'cycleway:right:separation:left': 'bollard',
+      }),
+    ).toEqual({
+      oneway: '-1',
+      'cycleway:left': 'lane',
+      'cycleway:left:separation:left': 'bollard',
+    })
+  })
+
+  it('F: keeps the sides of a one-way cycleway', () => {
+    expect(
+      reverseTags({
+        highway: 'cycleway',
+        oneway: 'yes',
+        'separation:left': 'kerb',
+      }),
+    ).toEqual({ highway: 'cycleway', oneway: '-1', 'separation:left': 'kerb' })
+    expect(
+      reverseTags({
+        highway: 'path',
+        'oneway:bicycle': '-1',
+        'buffer:right': '0.5',
+      }),
+    ).toEqual({
+      highway: 'path',
+      'oneway:bicycle': 'yes',
+      'buffer:right': '0.5',
+    })
+  })
+
+  it('G: swaps the sides of a two-way cycleway', () => {
+    expect(reverseTags({ highway: 'cycleway', 'separation:left': 'kerb' })).toEqual({
+      highway: 'cycleway',
+      'separation:right': 'kerb',
+    })
+    expect(
+      reverseTags({
+        highway: 'cycleway',
+        oneway: 'yes',
+        'oneway:bicycle': 'no',
+        'separation:left': 'kerb',
+      }),
+    ).toEqual({
+      highway: 'cycleway',
+      oneway: '-1',
+      'oneway:bicycle': 'no',
+      'separation:right': 'kerb',
+    })
+  })
+
+  it('swaps the road side named further in and under a meta prefix', () => {
+    expect(
+      reverseTags({
+        'sidewalk:bicycle:left': 'yes',
+        'source:cycleway:right:separation:left': 'survey',
+      }),
+    ).toEqual({
+      'sidewalk:bicycle:right': 'yes',
+      'source:cycleway:left:separation:left': 'survey',
     })
   })
 })

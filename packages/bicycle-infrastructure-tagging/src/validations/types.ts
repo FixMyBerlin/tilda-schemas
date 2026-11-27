@@ -41,7 +41,8 @@ export interface TagFix {
    * Reverse the way first: the app runs its own reverse function (node order and the keys that follow
    * the way, `:forward`/`:backward`, `:left`/`:right`), then applies the tag changes. `change` holds the
    * `oneway` keys that flip (`-1` → `yes`), because editors keep `oneway` when they reverse a way (iD
-   * does). `applyTagFix` reverses the keys of the tags with `reverseTags`.
+   * does). `applyTagFix` reverses the keys of the tags with `reverseTags`: the side of the road swaps,
+   * a second side and the sides of a one-way way of its own are read in the riding direction and stay.
    */
   reverseWay?: true
 }
